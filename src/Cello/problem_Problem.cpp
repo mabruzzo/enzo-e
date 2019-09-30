@@ -574,8 +574,9 @@ Boundary * Problem::create_boundary_
     axis_enum axis = (axis_enum) config->boundary_axis[index];
     face_enum face = (face_enum) config->boundary_face[index];
 
-    return new BoundaryValue (axis,face,value,
-			      config->boundary_field_list[index]);
+    return new BoundaryValue
+      (axis, face, value, config->boundary_field_list[index],
+       config->method_frame_transform_use_frame_transform, &boundary_list_);
 
   } else if (type == "periodic") {
 
@@ -847,6 +848,15 @@ Method * Problem::create_method_
        config->method_close_files_seconds_delay[index_method],
        config->method_close_files_group_size[index_method]);
       
+  } else if (name == "frame_transform") {
+    method = new MethodFrameTransform
+      (config->method_frame_transform_track_component,
+       config->method_frame_transform_weight_field,
+       config->method_frame_transform_cycle_update,
+       config->method_frame_transform_update_start,
+       config->method_frame_transform_update_step,
+       config->method_frame_transform_weight_threshold,
+       config->method_frame_transform_threshold_type);
   }
   return method;
 }
