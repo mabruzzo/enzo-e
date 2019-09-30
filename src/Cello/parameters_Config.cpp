@@ -120,6 +120,15 @@ void Config::pup (PUP::er &p)
   p | method_trace_name;
   p | method_null_dt;
 
+  p | method_frame_transform_use_frame_transform;
+  PUParray(p,method_frame_transform_track_component,3);
+  p | method_frame_transform_weight_field;
+  p | method_frame_transform_cycle_update;
+  p | method_frame_transform_update_start;
+  p | method_frame_transform_update_step;
+  p | method_frame_transform_weight_threshold;
+  p | method_frame_transform_threshold_type;
+
   // Monitor
 
   p | monitor_debug;
@@ -772,6 +781,51 @@ void Config::read_method_ (Parameters * p) throw()
   method_null_dt = p->value_float
     ("Method:null:dt",std::numeric_limits<double>::max());
 
+
+  method_frame_transform_use_frame_transform = false;
+  for (size_t i=0; i<method_list.size(); i++) {
+    if (method_list[i] == "frame_transform"){
+      method_frame_transform_use_frame_transform=true;
+    }
+  }
+
+  if (method_frame_transform_use_frame_transform){
+    int list_length = p->list_length
+      ("Method:frame_transform:track_component");
+    ASSERT("Config::read_method_",
+	   ("Method:frame_transform:track_component must have 3 "
+	    "entries or have a length matching Mesh:root_rank"),
+	   (list_length == 3) || (list_length == mesh_root_rank));
+    for (int i=0; i<3; i++) {
+      method_frame_transform_track_component[i] = p->list_value_logical
+	(i, "Method:frame_transform:track_component", false);
+    }
+
+    // Make sure the following was specifed
+    std::string method_name_ = "Method:frame_transform:cycle_based_update";
+    ASSERT1 ("Config::read_method_", "A logical value is requred for %s",
+	     method_name_.c_str(), parameter_logical == p->type(method_name_));
+    method_frame_transform_cycle_update = p->value_logical(method_name_, true);
+
+    if (method_frame_transform_cycle_update){
+      method_frame_transform_update_start = p->value_integer
+	("Method:frame_transform:update_start",  0);
+      method_frame_transform_update_step  = p->value_integer
+	("Method:frame_transform:update_stride", 1);
+    } else {
+      method_frame_transform_update_start = p->value_float
+	("Method:frame_transform:update_start",  0.0);
+      method_frame_transform_update_step  = p->value_float
+	("Method:frame_transform:update_stride", 1.0);
+    }
+  }
+  method_frame_transform_weight_field = p->value_string
+    ("Method:frame_transform:weight_field", "");
+  method_frame_transform_weight_threshold = p->value_float
+    ("Method:frame_transform:weight_threshold", 0.);
+  method_frame_transform_threshold_type = p->value_string
+    ("Method:frame_transform:threshold_type", "ignore");
+  
 }
 
 //----------------------------------------------------------------------

@@ -143,6 +143,24 @@ public: // interface
   bool stop() const throw() 
   { return stop_; };
 
+  /// Return current frame velocity
+  void frame_velocity
+  (double * vx, double * vy = 0, double * vz = 0) const throw()
+  {
+    if (vx) { *vx = frame_velocity_[0]; }
+    if (vy) { *vy = frame_velocity_[1]; }
+    if (vz) { *vz = frame_velocity_[2]; }
+  }
+
+  /// Return current origin offset
+  void origin_offset
+  (double * dx, double * dy = 0, double * dz = 0) const throw()
+  {
+    if (dx) { *dx = origin_offset_[0]; }
+    if (dy) { *dy = origin_offset_[1]; }
+    if (dz) { *dz = origin_offset_[2]; }
+  }
+
   /// Return whether this Block is a leaf in the octree array
   bool is_leaf() const 
   { return is_leaf_ && ! (index_.level() < 0); }
@@ -764,6 +782,11 @@ protected:
   /// Check if Block should have been deleted
   void check_delete_();
 
+public:
+  /// Synchronize after calculation of passive scalar mass and momentum
+  /// (transform the current reference frame)
+  void p_method_frame_transform_end(CkReductionMsg * msg);
+
 public: // virtual functions
 
   /// Set state
@@ -790,6 +813,14 @@ public: // virtual functions
   /// Set Block's stopping criteria
   void set_stop (double stop) throw()
   { stop_  = stop; }
+
+  /// Set Block's current velocity frame
+  void set_frame_velocity(double vx, double vy = 0, double vz = 0) throw()
+  { frame_velocity_[0] = vx; frame_velocity_[1] = vy; frame_velocity_[2] = vz;}
+
+  /// Set Block's origin offset
+  void set_origin_offset(double dx, double dy = 0, double dz = 0) throw()
+  { origin_offset_[0] = dx;  origin_offset_[1] = dy;  origin_offset_[2] = dz;}
 
   /// Initialize Block
   virtual void initialize ();
@@ -967,6 +998,16 @@ protected: // attributes
 
   /// Current stopping criteria
   bool stop_;
+
+  //--------------------------------------------------
+
+  /// Current reference frame velocity (measured w.r.t. initial frame). Always
+  /// starts at {0.,0,.0.}. Only modified by MethodFrameTransform
+  double frame_velocity_[3];
+
+  /// Current offset ({dx,dy,dz}) of the origin (w.r.t. initial frame). Always
+  /// starts at {0.,0,.0.}. Only modified by MethodFrameTransform
+  double origin_offset_[3];
 
   //--------------------------------------------------
 

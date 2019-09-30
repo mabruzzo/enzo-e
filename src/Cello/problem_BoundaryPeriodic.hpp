@@ -54,6 +54,9 @@ public: // virtual functions
 			axis_enum axis = axis_all) const throw()
   { };
 
+  virtual std::string name () throw()
+  { return "periodic"; }
+
 };
 
 #endif /* PROBLEM_BOUNDARY_PERIODIC_HPP */
