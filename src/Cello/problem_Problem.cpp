@@ -570,8 +570,9 @@ Boundary * Problem::create_boundary_
     axis_enum axis = (axis_enum) config->boundary_axis[index];
     face_enum face = (face_enum) config->boundary_face[index];
 
-    return new BoundaryValue (axis,face,value,
-			      config->boundary_field_list[index]);
+    return new BoundaryValue
+      (axis, face, value, config->boundary_field_list[index],
+       config->method_frame_transform_use_frame_transform, &boundary_list_);
 
   } else if (type == "periodic") {
 
@@ -811,6 +812,12 @@ Method * Problem::create_method_
     method = new MethodTrace(config->method_courant[index_method],
 			     config->method_timestep[index_method],
 			     config->method_trace_name[index_method]);
+  } else if (name == "scalar_frame_transform") {
+    method = new MethodScalarFrameTransform
+      (config->method_frame_transform_track_component,
+       config->method_frame_transform_passive_scalar,
+       config->method_frame_transform_initial_cycle,
+       config->method_frame_transform_update_stride);
   }
   return method;
 }
