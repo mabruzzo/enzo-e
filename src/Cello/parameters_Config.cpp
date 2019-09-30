@@ -113,6 +113,12 @@ void Config::pup (PUP::er &p)
   p | method_timestep;
   p | method_trace_name;
 
+  p | method_frame_transform_use_frame_transform;
+  PUParray(p,method_frame_transform_track_component,3);
+  p | method_frame_transform_passive_scalar;
+  p | method_frame_transform_initial_cycle;
+  p | method_frame_transform_update_stride;
+
   // Monitor
 
   p | monitor_debug;
@@ -740,6 +746,34 @@ void Config::read_method_ (Parameters * p) throw()
     method_trace_name[index_method] = p->value_string
       (full_name + ":name", "trace");
   }
+
+
+  method_frame_transform_use_frame_transform = false;
+  for (size_t i=0; i<method_list.size(); i++) {
+    if (method_list[i] == "scalar_frame_transform"){
+      method_frame_transform_use_frame_transform=true;
+    }
+  }
+
+  if (method_frame_transform_use_frame_transform){
+    int list_length = p->list_length
+      ("Method:scalar_frame_transform:track_component");
+    ASSERT("Config::read_method_",
+	   ("Method:scalar_frame_transform:track_component must have 3 "
+	    "entries or have a length matching Mesh:root_rank"),
+	   (list_length == 3) || (list_length == mesh_root_rank));
+    for (int i=0; i<3; i++) {
+      method_frame_transform_track_component[i] = p->list_value_logical
+	(i, "Method:scalar_frame_transform:track_component", false);
+    }
+  }
+  method_frame_transform_passive_scalar = p->value_string
+    ("Method:scalar_frame_transform:passive_scalar", "");
+  method_frame_transform_initial_cycle = p->value_integer
+    ("Method:scalar_frame_transform:initial_cycle", initial_cycle);
+  method_frame_transform_update_stride = p->value_integer
+    ("Method:scalar_frame_transform:update_stride",1);
+  
 }
 
 //----------------------------------------------------------------------

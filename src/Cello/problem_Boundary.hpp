@@ -81,6 +81,9 @@ public: // virtual functions
 			face_enum face = face_all,
 			axis_enum axis = axis_all) const throw() = 0;
 
+  /// Return the name of this Boundary
+  virtual std::string name () throw () = 0;
+
   /// Return which faces are periodic
   void periodicity(bool p3[3]) const throw() {
     for (int axis=0; axis<3; axis++) {
