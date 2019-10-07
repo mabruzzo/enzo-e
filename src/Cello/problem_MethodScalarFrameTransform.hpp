@@ -20,6 +20,7 @@ public: // interface
   /// Create a new MethodScalarFrameTransform object
   MethodScalarFrameTransform(bool component_transform[3],
 			     std::string passive_scalar,
+			     bool ignore_neg_scalar,
 			     int initial_cycle, int update_stride);
 
   /// Charm++ PUP::able declarations
@@ -30,6 +31,7 @@ public: // interface
     : Method (m),
       component_transform_(), // initialize to (false,false,false)
       passive_scalar_(""),
+      ignore_neg_scalar_(false),
       initial_cycle_(0),
       update_stride_(1)
   { }
@@ -77,6 +79,9 @@ protected: // attributes
 
   /// Name of the passively advected scalar to transform
   std::string passive_scalar_;
+
+  /// Whether negative scalar values should be ignored
+  bool ignore_neg_scalar_;
 
   /// Cycle to start tracking the velocity and perform the transform
   int initial_cycle_;

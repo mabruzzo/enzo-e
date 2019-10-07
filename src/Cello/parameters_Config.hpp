@@ -83,6 +83,7 @@ public: // interface
     method_frame_transform_use_frame_transform(),
     method_frame_transform_track_component(),
     method_frame_transform_passive_scalar(),
+    method_frame_transform_ignore_neg_scalar(),
     method_frame_transform_initial_cycle(),
     method_frame_transform_update_stride(),
     monitor_debug(false),
@@ -236,6 +237,7 @@ public: // interface
       method_frame_transform_use_frame_transform(),
       method_frame_transform_track_component(),
       method_frame_transform_passive_scalar(),
+      method_frame_transform_ignore_neg_scalar(),
       method_frame_transform_initial_cycle(),
       method_frame_transform_update_stride(),
       monitor_debug(false),
@@ -437,6 +439,7 @@ public: // attributes
   bool                       method_frame_transform_use_frame_transform;
   bool                       method_frame_transform_track_component[3];
   std::string                method_frame_transform_passive_scalar;
+  bool                       method_frame_transform_ignore_neg_scalar;
   int                        method_frame_transform_initial_cycle;
   int                        method_frame_transform_update_stride;
 
