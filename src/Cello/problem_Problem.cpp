@@ -815,6 +815,7 @@ Method * Problem::create_method_
     method = new MethodScalarFrameTransform
       (config->method_frame_transform_track_component,
        config->method_frame_transform_passive_scalar,
+       config->method_frame_transform_ignore_neg_scalar,
        config->method_frame_transform_initial_cycle,
        config->method_frame_transform_update_stride);
   }

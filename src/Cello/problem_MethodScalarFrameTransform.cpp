@@ -29,14 +29,15 @@
 
 MethodScalarFrameTransform::MethodScalarFrameTransform
 (bool component_transform[3], std::string passive_scalar,
- int initial_cycle, int update_stride)
+ bool ignore_neg_scalar, int initial_cycle, int update_stride)
   : Method()
 {
+  ignore_neg_scalar_ = ignore_neg_scalar;
   initial_cycle_ = initial_cycle;
   ASSERT("MethodScalarFrameTransform", "update_stride must be >=0",
 	 update_stride > 0);
   update_stride_ = update_stride;
-  
+
   // Copy component_transform entries
   int num_components = 0;
   for (int i=0; i<3; i++){
@@ -104,6 +105,7 @@ void MethodScalarFrameTransform::pup(PUP::er &p)
   Method::pup(p);
   PUParray(p,component_transform_,3);
   p|passive_scalar_;
+  p|ignore_neg_scalar_;
   p|initial_cycle_;
   p|update_stride_;
 }
@@ -219,13 +221,15 @@ void MethodScalarFrameTransform::block_totals_(Block * block,
 	int i = ix + ndx*(iy + ndy*(iz));
 
 	T density = scalar_d[i];
+
+	if (ignore_neg_scalar_ && density < 0) { continue; }
 	// add current scalar density to running sum of scalar densities
 	scalar_mass += (double) density;
 
 	for (int j=0; j<3; j++){
 	  // skip velocity components that aren't being transformed (this
 	  // accounts for the rank of the simulation implicitly)
-	  if (!component_transform_[j]){ continue; }
+	  if (!component_transform_[j]) { continue; }
 	  scalar_momentum[j] += (double) (v3[j][i]*density);
 	}
       }

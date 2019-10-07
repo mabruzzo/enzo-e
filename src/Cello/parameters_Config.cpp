@@ -116,6 +116,7 @@ void Config::pup (PUP::er &p)
   p | method_frame_transform_use_frame_transform;
   PUParray(p,method_frame_transform_track_component,3);
   p | method_frame_transform_passive_scalar;
+  p | method_frame_transform_ignore_neg_scalar;
   p | method_frame_transform_initial_cycle;
   p | method_frame_transform_update_stride;
 
@@ -769,6 +770,8 @@ void Config::read_method_ (Parameters * p) throw()
   }
   method_frame_transform_passive_scalar = p->value_string
     ("Method:scalar_frame_transform:passive_scalar", "");
+  method_frame_transform_ignore_neg_scalar = p->value_logical
+    ("Method:scalar_frame_transform:ignore_neg_scalar", true);
   method_frame_transform_initial_cycle = p->value_integer
     ("Method:scalar_frame_transform:initial_cycle", initial_cycle);
   method_frame_transform_update_stride = p->value_integer
