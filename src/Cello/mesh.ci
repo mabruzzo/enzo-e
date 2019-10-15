@@ -43,7 +43,7 @@ module mesh {
   PUPable ItIndexRange;
   PUPable MaskPng;
   PUPable MaskExpr;
-  PUPable MethodScalarFrameTransform;
+  PUPable MethodFrameTransform;
   PUPable MethodTrace;
   PUPable OutputCheckpoint;
   PUPable OutputData;
@@ -176,8 +176,8 @@ module mesh {
     entry void p_refresh_child
       (int n, char a[n], int ic3[3]);
 
-    // MethodScalarFrameTransform synchronization entry methods
-    entry void p_method_scalar_frame_transform_end(CkReductionMsg * msg);
+    // MethodFrameTransform synchronization entry method
+    entry void p_method_frame_transform_end(CkReductionMsg * msg);
   };
 
 }

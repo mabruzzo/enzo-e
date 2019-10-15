@@ -811,13 +811,14 @@ Method * Problem::create_method_
     method = new MethodTrace(config->method_courant[index_method],
 			     config->method_timestep[index_method],
 			     config->method_trace_name[index_method]);
-  } else if (name == "scalar_frame_transform") {
-    method = new MethodScalarFrameTransform
+  } else if (name == "frame_transform") {
+    method = new MethodFrameTransform
       (config->method_frame_transform_track_component,
-       config->method_frame_transform_passive_scalar,
-       config->method_frame_transform_ignore_neg_scalar,
+       config->method_frame_transform_weight_field,
        config->method_frame_transform_initial_cycle,
-       config->method_frame_transform_update_stride);
+       config->method_frame_transform_update_stride,
+       config->method_frame_transfrom_weight_threshold,
+       config->method_frame_transfrom_threshold_type);
   }
   return method;
 }

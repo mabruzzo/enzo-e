@@ -769,7 +769,7 @@ protected:
 public:
   /// Synchronize after calculation of passive scalar mass and momentum
   /// (transform the current reference frame)
-  void p_method_scalar_frame_transform_end(CkReductionMsg * msg);
+  void p_method_frame_transform_end(CkReductionMsg * msg);
 
 public: // virtual functions
 
@@ -968,11 +968,11 @@ protected: // attributes
   //--------------------------------------------------
 
   /// Current reference frame velocity (measured w.r.t. initial frame). Always
-  /// starts at {0.,0,.0.}. Only modified by MethodScalarFrameTransform
+  /// starts at {0.,0,.0.}. Only modified by MethodFrameTransform
   double frame_velocity_[3];
 
   /// Current offset ({dx,dy,dz}) of the origin (w.r.t. initial frame). Always
-  /// starts at {0.,0,.0.}. Only modified by MethodScalarFrameTransform
+  /// starts at {0.,0,.0.}. Only modified by MethodFrameTransform
   double origin_offset_[3];
 
   //--------------------------------------------------

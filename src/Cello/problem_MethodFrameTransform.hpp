@@ -1,37 +1,49 @@
 // See LICENSE_CELLO file for license and copyright information
 
-/// @file     problem_MethodScalarFrameTransform.hpp
+/// @file     problem_MethodFrameTransform.hpp
 /// @author   Matthew W. Abruzzo (matthewabruzzo@gmail.com)
 /// @date     2019-09-23
-/// @brief    [\ref Enzo]  Declares the MethodScalarFrameTransform class
+/// @brief    [\ref Enzo]  Declares the MethodFrameTransform class
 
-#ifndef PROBLEM_METHOD_SCALAR_FRAME_TRANSFORM
-#define PROBLEM_METHOD_SCALAR_FRAME_TRANSFORM
+#ifndef PROBLEM_METHOD_FRAME_TRANSFORM
+#define PROBLEM_METHOD_FRAME_TRANSFORM
 
-class MethodScalarFrameTransform : public Method {
+/// @enum     threshold_enum
+/// @brief    Describes how to treat enum fields
+enum class threshold_enum {
+  ignore,
+  lower_limit,
+  upper_limit
+};
 
-  /// @class    MethodScalarFrameTransform
+class MethodFrameTransform : public Method {
+
+  /// @class    MethodFrameTransform
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Transforms the reference frame such that the
-  ///           designated components of the mass-weighted average velocity of
-  ///           a designated passive scalar are zero.
+  ///           designated components of the weighted average velocity of
+  ///           are zero. The average is weighted by some kind of density field
+  ///           (whether its density, a passive scalar, or some other field
+  ///           measuring a quantity per unit volume)
 
 public: // interface
-  /// Create a new MethodScalarFrameTransform object
-  MethodScalarFrameTransform(bool component_transform[3],
-			     std::string passive_scalar,
-			     bool ignore_neg_scalar,
-			     int initial_cycle, int update_stride);
+  /// Create a new MethodFrameTransform object
+  MethodFrameTransform(bool component_transform[3],
+		       std::string weight_field,
+		       int initial_cycle, int update_stride,
+		       double weight_threshold,
+		       std::string threshold_type);
 
   /// Charm++ PUP::able declarations
-  PUPable_decl(MethodScalarFrameTransform);
+  PUPable_decl(MethodFrameTransform);
 
   /// Charm++ PUP::able migration constructor
-  MethodScalarFrameTransform (CkMigrateMessage *m)
+  MethodFrameTransform (CkMigrateMessage *m)
     : Method (m),
       component_transform_(), // initialize to (false,false,false)
-      passive_scalar_(""),
-      ignore_neg_scalar_(false),
+      weight_field_(""),
+      weight_threshold_(0.0),
+      threshold_type_(threshold_enum::ignore),
       initial_cycle_(0),
       update_stride_(1)
   { }
@@ -43,7 +55,7 @@ public: // interface
   virtual void compute( Block * block) throw();
 
   virtual std::string name () throw () 
-  { return "scalar_frame_transform"; }
+  { return "frame_transform"; }
 
   /// Resume computation after a reduction
   virtual void compute_resume ( Block * block,
@@ -66,10 +78,11 @@ private: // methods
   /// the precision is the same for each of them.
   precision_type field_precision_(Field &field) const throw();
 
-  /// Sums the total momentum and mass of a passive scalar over the block
+  /// Computes the sum of the weight_field multiplied by cell volume ("mass")
+  /// and the "mass" multiplied by the velocity ("momementum") over the block.
   template <class T>
-  void block_totals_(Block *block, double &scalar_mass,
-		     double scalar_momentum[3]) const throw();
+  void block_totals_(Block *block, double &mass,
+		     double momentum[3]) const throw();
 
 protected: // attributes
 
@@ -77,11 +90,14 @@ protected: // attributes
   /// - the corresponding components are ordered (x,y,z)
   bool component_transform_[3];
 
-  /// Name of the passively advected scalar to transform
-  std::string passive_scalar_;
+  /// Name of the density field used for weighting the velocity.
+  std::string weight_field_;
 
-  /// Whether negative scalar values should be ignored
-  bool ignore_neg_scalar_;
+  /// A threshold for the weight_field
+  double weight_threshold_;
+
+  /// How the threshold should be applied
+  threshold_enum threshold_type_;
 
   /// Cycle to start tracking the velocity and perform the transform
   int initial_cycle_;
@@ -90,4 +106,4 @@ protected: // attributes
 
 };
 
-#endif /* PROBLEM_METHOD_SCALAR_FRAME_TRANSFORM */
+#endif /* PROBLEM_METHOD_FRAME_TRANSFORM */
