@@ -61,7 +61,7 @@ enum neighbor_enum {
 #include "problem_BoundaryValue.hpp"
 #include "problem_BoundaryPeriodic.hpp"
 #include "problem_Method.hpp"
-#include "problem_MethodScalarFrameTransform.hpp"
+#include "problem_MethodFrameTransform.hpp"
 #include "problem_MethodTrace.hpp"
 #include "problem_Physics.hpp"
 #include "problem_Prolong.hpp"

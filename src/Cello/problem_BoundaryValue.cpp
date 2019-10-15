@@ -351,11 +351,11 @@ void BoundaryValue::transform_velocity_energy_(Block * block, face_enum face,
       float vx = (float) frame_velocity[0];
       float vy = (float) frame_velocity[1];
       float vz = (float) frame_velocity[2];
-      MethodScalarFrameTransform::transform_field (block, vx, vy, vz,
-						   ndx, ndy, ndz,
-						   nx,  ny,  nz,
-						   ix0, iy0, iz0,
-						   0);
+      MethodFrameTransform::transform_field (block, vx, vy, vz,
+					     ndx, ndy, ndz,
+					     nx,  ny,  nz,
+					     ix0, iy0, iz0,
+					     0);
       break;
     }
   case precision_double:
@@ -363,11 +363,11 @@ void BoundaryValue::transform_velocity_energy_(Block * block, face_enum face,
       double vx = frame_velocity[0];
       double vy = frame_velocity[1];
       double vz = frame_velocity[2];
-      MethodScalarFrameTransform::transform_field (block, vx, vy, vz,
-						   ndx, ndy, ndz,
-						   nx,  ny,  nz,
-						   ix0, iy0, iz0,
-						   0);
+      MethodFrameTransform::transform_field (block, vx, vy, vz,
+					     ndx, ndy, ndz,
+					     nx,  ny,  nz,
+					     ix0, iy0, iz0,
+					     0);
       break;
     }
   case precision_extended80:
@@ -377,11 +377,11 @@ void BoundaryValue::transform_velocity_energy_(Block * block, face_enum face,
       long double vx = (long double) frame_velocity[0];
       long double vy = (long double) frame_velocity[1];
       long double vz = (long double) frame_velocity[2];
-      MethodScalarFrameTransform::transform_field (block, vx, vy, vz,
-						   ndx, ndy, ndz,
-						   nx,  ny,  nz,
-						   ix0, iy0, iz0,
-						   0);
+      MethodFrameTransform::transform_field (block, vx, vy, vz,
+					     ndx, ndy, ndz,
+					     nx,  ny,  nz,
+					     ix0, iy0, iz0,
+					     0);
       break;
     }
   }
