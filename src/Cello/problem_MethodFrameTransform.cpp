@@ -132,9 +132,18 @@ void MethodFrameTransform::pup(PUP::er &p)
   PUParray(p,component_transform_,3);
   p|weight_field_;
   p|weight_threshold_;
-  p|threshold_type_;
   p|initial_cycle_;
   p|update_stride_;
+  // p|threshold_type_; results in errors on some systems (ex: using MPI)
+  // therefore, the following is necessary
+  if (p.isUnpacking()){
+    int temp;
+    p|temp;
+    threshold_type_ =  static_cast<threshold_enum>(temp);
+  } else {
+    int temp = static_cast<int>(threshold_type_);
+    p|temp;
+  }
 }
 
 //----------------------------------------------------------------------

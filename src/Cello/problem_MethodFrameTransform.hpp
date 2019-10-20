@@ -10,8 +10,8 @@
 
 /// @enum     threshold_enum
 /// @brief    Describes how to treat enum fields
-enum class threshold_enum {
-  ignore,
+enum threshold_enum {
+  ignore = 0,
   lower_limit,
   upper_limit
 };
