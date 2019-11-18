@@ -382,6 +382,29 @@ void MethodFrameTransform::transform_field (Block * block,
   
 }
 
+template void MethodFrameTransform::transform_field
+(Block * block,
+ float vx, float vy, float vz,
+ int ndx, int ndy, int ndz,
+ int nx,  int ny,  int nz,
+ int ix0, int iy0, int iz0,
+ int i_hist) throw();
+
+template void MethodFrameTransform::transform_field
+(Block * block,
+ double vx, double vy, double vz,
+ int ndx, int ndy, int ndz,
+ int nx,  int ny,  int nz,
+ int ix0, int iy0, int iz0,
+ int i_hist) throw();
+
+template void MethodFrameTransform::transform_field
+(Block * block,
+ long double vx, long double vy, long double vz,
+ int ndx, int ndy, int ndz,
+ int nx,  int ny,  int nz,
+ int ix0, int iy0, int iz0,
+ int i_hist) throw();
 
 //----------------------------------------------------------------------
 
