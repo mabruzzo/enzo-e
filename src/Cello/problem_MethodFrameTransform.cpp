@@ -154,6 +154,9 @@ void MethodFrameTransform::compute( Block * block) throw()
 
   int cur_cycle = block->cycle();
 
+  ASSERT("MethodFrameTransform::compute", "Not compatible with AMR",
+	 block->level() == 0 && block->is_leaf());
+
   // Exit Early if the frame velocity has not yet been modified
   if (cur_cycle < initial_cycle_){
     block->compute_done();
@@ -207,19 +210,31 @@ void MethodFrameTransform::compute( Block * block) throw()
     }
   }
 
+  // Assign the block an index based on it's location in the grid. This will
+  // need to be modified once AMR and solvers are in use.
+  int ix, iy, iz, nx, ny, nz;
+  block->index_global(&ix, &iy, &iz, &nx, &ny, &nz);
+  int index = ix + nx*(iy + ny*iz);
+
   // now, call the reduction to sum the momentum and mass over all blocks
   // (In principle, we could save bandwidth and cpu time by only performing the
   //  reduction on the relevant momentum components)
 
-  double message_arr[4];
-  message_arr[0] = mass;
-  for (int i=1; i<4; i++) { message_arr[i] = momentum[i-1]; }
+  double message_arr[5];
+  message_arr[0] = (double)index;
+  message_arr[1] = mass;
+  for (int i=2; i<5; i++) { message_arr[i] = momentum[i-2]; }
+
+  // Originally, we used did not include index in message_arr and used the
+  // CkReduction::sum_double reduction type. Unfortunately, the order of
+  // addition is undefined (depends on order that messages are received). To
+  // make the results, we now collect all of the messages and sort them by
+  // location before summing them.
 
   CkCallback cb(CkIndex_Block::p_method_frame_transform_end(NULL),
 		block->proxy_array());
 
-  block->contribute(4*sizeof(double),message_arr,
-		    CkReduction::sum_double, cb);
+  block->contribute(5*sizeof(double), message_arr, CkReduction::concat, cb);
 }
 
 //----------------------------------------------------------------------
@@ -417,11 +432,41 @@ void MethodFrameTransform::compute_resume
   // Reminder: we refer to the product of weight_field values and cell volumes
   // as "masses" and the product of these "masses" with velocity components as
   // "momentum" components
-  
+
   // This method is called after the reduction is complete
-  double* result = (double *) msg->getData();
-  double mass = result[0];
-  double momentum[3] = {result[1], result[2], result[3]};
+
+  // To make our results deterministic, extract all the concatenated
+  // reduction messages and sort them by the block index. We sort in place to
+  // avoid memory allocation (the charm++ ampi implementation does this too)
+  int n = msg->getSize()/(5*sizeof(double));
+  double *values=(double *)msg->getData();
+
+  for (int i = 0; i < n; i++){
+    int index = (int) values[i*5]; // this was cast to double for convenience
+    if (index != i){
+      double temp_buf[5];
+      for (int j = 0; j < 5; j++){ temp_buf[j] = values[i*5+j]; }
+
+      while (index != i){
+	index = (int) temp_buf[0];
+	for (int j = 0; j < 5; j++){
+	  double temp = values[index*5+j];
+	  values[index*5+j] = temp_buf[j];
+	  temp_buf[j] = temp;
+	}
+      }
+    }
+  }
+
+  // Now sum up all mass and momentum
+  double mass = 0.;
+  double momentum[3] = {0., 0., 0.};
+  for (int i=0; i<n; i++) {
+    mass += values[i*5 + 1];
+    for (int j=0; j<3; j++){
+      momentum[j] += values[i*5 + j + 2];
+    }
+  }
 
   // compute the weighted velocity
   double frame_velocity[3];
@@ -431,7 +476,6 @@ void MethodFrameTransform::compute_resume
     } else {
       frame_velocity[i] = 0.;
     }
-    
   }
 
   // Update the velocity of the current frame measured with respect to the
