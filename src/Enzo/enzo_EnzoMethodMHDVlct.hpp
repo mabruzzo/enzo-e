@@ -104,7 +104,8 @@ public: // interface
 		    double density_floor,
 		    double pressure_floor,
 		    bool dual_energy_formalism,
-		    double dual_energy_formalism_eta);
+		    double dual_energy_formalism_eta,
+		    bool fallback);
 
   /// Charm++ PUP::able declarations
   PUPable_decl(EnzoMethodMHDVlct);
@@ -252,8 +253,10 @@ protected: // methods
   ///     compute the internal energy source term (and is required if the dual
   ///     energy formalism is in use). A value of "" indicates that no field
   ///     has been allocated.
-  /// @param reconstructor the instance of EnzoReconstructor to use to update
+  /// @param reconstructor the instance of EnzoReconstructor to use to
   ///     reconstruct the face centered values
+  /// @param cur_riemann_solver the instance of the Riemann Solver to compute
+  ///     the fluxes
   /// @param stale_depth indicates the current stale depth (before performing
   ///     reconstruction)
   ///
@@ -270,7 +273,8 @@ protected: // methods
 		     Grouping &flux_group, Grouping &weight_group,
 		     Grouping &dUcons_group,
 		     std::string interface_velocity_name,
-		     EnzoReconstructor &reconstructor, int stale_depth);
+		     EnzoReconstructor &reconstructor,
+		     EnzoRiemann &cur_riemann_solver, int stale_depth);
 
   /// Allocate temporary fields needed for scratch space and store their names
   /// in the corresponding groupings or return the names. Also allocates all

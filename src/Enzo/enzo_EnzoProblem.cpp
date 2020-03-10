@@ -613,7 +613,8 @@ Method * EnzoProblem::create_method_
        enzo_config->method_vlct_density_floor,
        enzo_config->method_vlct_pressure_floor,
        enzo_config->method_vlct_dual_energy,
-       enzo_config->method_vlct_dual_energy_eta);
+       enzo_config->method_vlct_dual_energy_eta,
+       enzo_config->method_vlct_riemann_fallback);
 
   } else {
 

@@ -19,7 +19,8 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
 				      double density_floor,
 				      double pressure_floor,
 				      bool dual_energy_formalism,
-				      double dual_energy_formalism_eta)
+				      double dual_energy_formalism_eta,
+				      bool fallback)
   : Method()
 {
   // Initialize equation of state (check the validity of quantity floors)
@@ -70,7 +71,7 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
     (reconstructable_group_names_, passive_group_names_, full_recon_name,
      (enzo_float)theta_limiter);
   riemann_solver_ = EnzoRiemann::construct_riemann
-    (integrable_group_names_,      passive_group_names_, rsolver);
+    (integrable_group_names_,      passive_group_names_, rsolver, fallback);
   integrable_updater_ = new EnzoIntegrableUpdate(integrable_group_names_,
 						 true, passive_group_names_);
 }
@@ -450,27 +451,51 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
 					    *cur_reconstructable_group,
 					    *conserved_passive_scalars,
 					    stale_depth);
+      bool incomplete_dU_calc = true;
+      EnzoRiemann *cur_riemann_solver = riemann_solver_;
 
-      // Compute flux along each dimension
-      compute_flux_(block, 0, cur_dt, *cur_reconstructable_group,
-		    *cur_bfieldi_group, priml_group, primr_group,
-		    pressure_name_l, pressure_name_r, xflux_group,
-		    weight_group, dUcons_group, interface_velocity_name,
-		    *reconstructor, stale_depth);
-      compute_flux_(block, 1, cur_dt, *cur_reconstructable_group,
-		    *cur_bfieldi_group, priml_group, primr_group,
-		    pressure_name_l, pressure_name_r, yflux_group,
-		    weight_group, dUcons_group, interface_velocity_name,
-		    *reconstructor, stale_depth);
-      compute_flux_(block, 2, cur_dt, *cur_reconstructable_group,
-		    *cur_bfieldi_group, priml_group, primr_group,
-		    pressure_name_l, pressure_name_r, zflux_group,
-		    weight_group, dUcons_group, interface_velocity_name,
-		    *reconstructor, stale_depth);
-      // increment the stale_depth
-      stale_depth+=reconstructor->immediate_staling_rate();
+      while (incomplete_dU_calc){
+	// Compute flux along each dimension
+	compute_flux_(block, 0, cur_dt, *cur_reconstructable_group,
+		      *cur_bfieldi_group, priml_group, primr_group,
+		      pressure_name_l, pressure_name_r, xflux_group,
+		      weight_group, dUcons_group, interface_velocity_name,
+		      *reconstructor, *cur_riemann_solver, stale_depth);
+	compute_flux_(block, 1, cur_dt, *cur_reconstructable_group,
+		      *cur_bfieldi_group, priml_group, primr_group,
+		      pressure_name_l, pressure_name_r, yflux_group,
+		      weight_group, dUcons_group, interface_velocity_name,
+		      *reconstructor, *cur_riemann_solver, stale_depth);
+	compute_flux_(block, 2, cur_dt, *cur_reconstructable_group,
+		      *cur_bfieldi_group, priml_group, primr_group,
+		      pressure_name_l, pressure_name_r, zflux_group,
+		      weight_group, dUcons_group, interface_velocity_name,
+		      *reconstructor, *cur_riemann_solver, stale_depth);
 
-      // This is where source terms should be computed (added to dUcons_group)
+	// compute the the current stale_depth
+	int cur_stale_depth =
+	  stale_depth + reconstructor->immediate_staling_rate();
+
+	// Source terms should be computed here (added to dUcons_group)
+
+	// check if it's necessary to fall back to a lower-order Riemann Solver
+	incomplete_dU_calc =
+	  ( (riemann_solver_->fallback_solver() != NULL) &&
+	    integrable_updater_->identify_fallback(block, *primitive_group_,
+						   dUcons_group,
+						   cur_stale_depth) );
+	if (incomplete_dU_calc){
+	  cur_riemann_solver = cur_riemann_solver->fallback_solver();
+	  if (cur_riemann_solver == NULL){
+	    ERROR("EnzoMethodMHDVlct::compute",
+		  "Unable to fallback to lower order solver.");
+	  }
+	  integrable_updater_->clear_dUcons_group(block, dUcons_group, 0.);
+	} else {
+	  stale_depth = cur_stale_depth;
+	}
+      }
+      
 
       // Update Bfields (this could probably all be consolidated)
       // First, compute the edge-centered Electric fields (each time, it uses
@@ -480,7 +505,7 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
 				  center_efield_name, efield_group,
 				  weight_group, stale_depth);
 
-      // Update longitudinal B-field (add source terms of constrained transport)
+      // Update longitudinal B-field (add CT source terms)
       for (int dim = 0; dim<3; dim++){
 	ct.update_bfield(block, dim, efield_group, *bfieldi_group_,
 			 *out_bfieldi_group, cur_dt, stale_depth);
@@ -498,7 +523,7 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
       // necessary the total energy can be synchronized with internal energy)
       //
       // Note: updated passive scalars are NOT saved in out_integrable_group in
-      //     specific form. Instead they are saved inconserved_passive_scalars
+      //     specific form. Instead they are saved in conserved_passive_scalars
       //     in conserved form.
       integrable_updater_->update_quantities(block, *primitive_group_,
 					     dUcons_group,
@@ -600,7 +625,7 @@ void EnzoMethodMHDVlct::compute_flux_
  std::string pressure_name_l, std::string pressure_name_r,
  Grouping &flux_group, Grouping &weight_group, Grouping &dUcons_group,
  std::string interface_velocity_name, EnzoReconstructor &reconstructor,
- int stale_depth)
+ EnzoRiemann &cur_riemann_solver, int stale_depth)
 {
   // purely for the purposes of making the caluclation more explicit, we define
   // the following aliases for priml_group/primr_group
@@ -660,9 +685,9 @@ void EnzoMethodMHDVlct::compute_flux_
 				      cur_stale_depth, dim);
 
   // Next, compute the fluxes
-  riemann_solver_->solve(block, *integrable_group_l, *integrable_group_r,
-			 pressure_name_l, pressure_name_r, flux_group,
-			 dim, eos_, cur_stale_depth, interface_velocity_name);
+  cur_riemann_solver.solve(block, *integrable_group_l, *integrable_group_r,
+			   pressure_name_l, pressure_name_r, flux_group, dim,
+			   eos_, cur_stale_depth, interface_velocity_name);
 
   // Accumulate the change in integrable quantities from these fluxes in
   // dUcons_group
