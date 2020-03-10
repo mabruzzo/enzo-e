@@ -258,6 +258,7 @@ public: // interface
       method_vlct_pressure_floor(0.0),
       method_vlct_dual_energy(false),
       method_vlct_dual_energy_eta(0.0),
+      method_vlct_riemann_fallback(false),
       // EnzoSolverMg0
       solver_pre_smooth(),
       solver_post_smooth(),
@@ -496,6 +497,7 @@ public: // attributes
   // unlike ppm, only use a single eta value. It should have a default value
   // closer to method_ppm_dual_energy_eta1
   double                     method_vlct_dual_energy_eta;
+  bool                       method_vlct_riemann_fallback;
 
 
   ///==============
