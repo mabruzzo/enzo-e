@@ -778,12 +778,12 @@ void Config::read_method_ (Parameters * p) throw()
 
     if (method_frame_transform_cycle_update){
       method_frame_transform_update_start = p->value_integer
-	("Method:frame_transform:initial_start", initial_cycle);
+	("Method:frame_transform:update_start",  0);
       method_frame_transform_update_step  = p->value_integer
 	("Method:frame_transform:update_stride", 1);
     } else {
       method_frame_transform_update_start = p->value_float
-	("Method:frame_transform:initial_start", initial_time);
+	("Method:frame_transform:update_start",  0.0);
       method_frame_transform_update_step  = p->value_float
 	("Method:frame_transform:update_stride", 1.0);
     }
