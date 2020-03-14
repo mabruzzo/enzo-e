@@ -83,10 +83,11 @@ public: // interface
     method_frame_transform_use_frame_transform(),
     method_frame_transform_track_component(),
     method_frame_transform_weight_field(),
-    method_frame_transform_initial_cycle(),
-    method_frame_transform_update_stride(),
-    method_frame_transfrom_weight_threshold(),
-    method_frame_transfrom_threshold_type(),
+    method_frame_transform_cycle_update(true),
+    method_frame_transform_update_start(0.),
+    method_frame_transform_update_step(0.),
+    method_frame_transform_weight_threshold(),
+    method_frame_transform_threshold_type(),
     monitor_debug(false),
     monitor_verbose(false),
     num_output(0),
@@ -238,10 +239,11 @@ public: // interface
       method_frame_transform_use_frame_transform(),
       method_frame_transform_track_component(),
       method_frame_transform_weight_field(),
-      method_frame_transform_initial_cycle(),
-      method_frame_transform_update_stride(),
-      method_frame_transfrom_weight_threshold(),
-      method_frame_transfrom_threshold_type(),
+      method_frame_transform_cycle_update(true),
+      method_frame_transform_update_start(0.),
+      method_frame_transform_update_step(0.),
+      method_frame_transform_weight_threshold(),
+      method_frame_transform_threshold_type(),
       monitor_debug(false),
       monitor_verbose(false),
       num_output(0),
@@ -441,10 +443,11 @@ public: // attributes
   bool                       method_frame_transform_use_frame_transform;
   bool                       method_frame_transform_track_component[3];
   std::string                method_frame_transform_weight_field;
-  int                        method_frame_transform_initial_cycle;
-  int                        method_frame_transform_update_stride;
-  double                     method_frame_transfrom_weight_threshold;
-  std::string                method_frame_transfrom_threshold_type;
+  bool                       method_frame_transform_cycle_update;
+  double                     method_frame_transform_update_start;
+  double                     method_frame_transform_update_step;
+  double                     method_frame_transform_weight_threshold;
+  std::string                method_frame_transform_threshold_type;
 
   // Monitor
 
