@@ -37,14 +37,19 @@
 //----------------------------------------------------------------------
 
 MethodFrameTransform::MethodFrameTransform
-(bool component_transform[3], std::string weight_field, int initial_cycle,
- int update_stride, double weight_threshold, std::string threshold_type)
+(bool component_transform[3], std::string weight_field,
+ bool cycle_based_update, double update_start, double update_step,
+ double weight_threshold, std::string threshold_type)
   : Method()
 {
-  initial_cycle_ = initial_cycle;
-  ASSERT("MethodFrameTransform", "update_stride must be >=0",
-	 update_stride > 0);
-  update_stride_ = update_stride;
+  cycle_based_update_ = cycle_based_update;
+  prev_time_update_ = update_start - 0.5*update_step;
+
+  ASSERT("MethodFrameTransform", "update_step must be >=0", update_step > 0.);
+  cycle_start_ = (cycle_based_update_) ? (int) update_start :            0;
+  cycle_step_  = (cycle_based_update_) ? (int)  update_step :            0;
+  time_start_  = (cycle_based_update_) ?                 0. : update_start;
+  time_step_   = (cycle_based_update_) ?                 0. :  update_step;
 
   // Copy component_transform entries
   int num_components = 0;
@@ -132,8 +137,12 @@ void MethodFrameTransform::pup(PUP::er &p)
   PUParray(p,component_transform_,3);
   p|weight_field_;
   p|weight_threshold_;
-  p|initial_cycle_;
-  p|update_stride_;
+  p|cycle_based_update_;
+  p|cycle_start_;
+  p|cycle_step_;
+  p|time_start_;
+  p|time_step_;
+  p|prev_time_update_;
   // p|threshold_type_; results in errors on some systems (ex: using MPI)
   // therefore, the following is necessary
   if (p.isUnpacking()){
@@ -152,18 +161,16 @@ void MethodFrameTransform::compute( Block * block) throw()
 {
   TRACE_FRAME_TRANSFORM;
 
-  int cur_cycle = block->cycle();
-
   ASSERT("MethodFrameTransform::compute", "Not compatible with AMR",
 	 block->level() == 0 && block->is_leaf());
 
-  // Exit Early if the frame velocity has not yet been modified
-  if (cur_cycle < initial_cycle_){
+  // Exit early if current time/cycle preceds first frame velocity update
+  if (precede_first_transform_(block)){
     block->compute_done();
     return;
   }
 
-  // update the current position of the block
+  // update the current position of the block (from last cycle)
   double x_origin, y_origin, z_origin;
   block->origin_offset(&x_origin, &y_origin, &z_origin);
   double vx, vy, vz;
@@ -173,12 +180,14 @@ void MethodFrameTransform::compute( Block * block) throw()
 			   y_origin + vy * dt,
 			   z_origin + vz * dt);
 
-  // Exit Early if not scheduled to modify frame velocity
-  if ( ((cur_cycle - initial_cycle_) % update_stride_) != 0 ) {
+  // check if frame velocity update is scheduled for current time/cycle. If an
+  // update is scheduled, and scheduling is time-based, the following line also
+  // records that the update will be made (needed for future schedule checks)
+  bool scheduled_update = scheduled_velocity_update_(block);
+  if (!scheduled_update) { // Exit early if a velocity update is not scheduled
     block->compute_done();
     return;
   }
-
 
   Field field = block->data()->field();
 
@@ -592,4 +601,38 @@ precision_type MethodFrameTransform::field_precision_(Field &field)
     }
   }
   return out;
+}
+
+//----------------------------------------------------------------------
+
+bool MethodFrameTransform::precede_first_transform_(Block * block)
+  const throw()
+{
+  if (cycle_based_update_){
+    return block->cycle() < cycle_start_;
+  } else {
+    return block->time()  > time_start_ ;
+  }
+}
+
+//----------------------------------------------------------------------
+
+bool MethodFrameTransform::scheduled_velocity_update_(Block * block)
+  throw()
+{
+  if (cycle_based_update_){
+    return ( ( (block->cycle() - cycle_start_) % cycle_step_ ) == 0 );
+  } else {
+    double cur_time = block->time();
+    if (cur_time == prev_time_update_){ return true; }
+    int cur_time_interval =
+      (int) floor((cur_time - time_start_) / time_step_);
+    int prev_time_interval =
+      (int) floor((prev_time_update_ - time_start_) / time_step_);
+    // a velocity update is only scheduled if current time interval is greater
+    // than the time interval from the prior update during last update
+    bool out = cur_time_interval > prev_time_interval;
+    if (out){ prev_time_update_ = cur_time; }
+    return out;
+  }
 }
