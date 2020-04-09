@@ -58,8 +58,13 @@ public: // interface
   ///     are nominally used to accumulate the changes to all integrable and
   ///     passively advected quantites.
   /// @param value the value to assign to all elements of the fields
+  /// @param fallback_mask_ptr Optional pointer to a mask indicating which
+  ///     cells trigger Riemann Solver Fallback. When this is not `NULL` the
+  ///     only locations in the dUcons_group fields that are modified are those
+  ///     where the mask is true.
   void clear_dUcons_group(Block *block, Grouping &dUcons_group,
-			  enzo_float value) const;
+			  enzo_float value,
+			  CelloArray<bool,3> *fallback_mask_ptr = NULL) const;
 
   /// Computes the change in (the conserved form of) the integrable and
   /// passively advected quantites due to the flux divergence along dimension
@@ -77,12 +82,20 @@ public: // interface
   /// @param stale_depth The stale depth at the time of the function call.
   ///     This should match the stale depth at the time the fluxes were
   ///     computed.
+  /// @param fallback_mask_ptr Optional pointer to a mask indicating which
+  ///     cells trigger Riemann Solver Fallback. When this is not `NULL` the
+  ///     flux divergence is only accumulated are only computed at locations
+  ///     that the mask has a `true` value or that a is 1 index away (along the
+  ///     `dim`-axis) from a location where the mask is `true`.
   void accumulate_flux_component(Block *block, int dim, double dt,
 				 Grouping &flux_group, Grouping &dUcons_group,
-				 int stale_depth) const;
+				 int stale_depth,
+				 CelloArray<bool,3> *fallback_mask_ptr = NULL)
+    const;
 
   /// determines whether Riemann Solver Fallback is necessary (cases where the
-  /// flux divergence and source terms would lead to negative density)
+  /// flux divergence and source terms would lead to negative density). Denotes
+  /// locations where fallback is needed in fallback_mask.
   ///
   /// @param block holds data to be processed
   /// @param initial_integrable_group contains the fields holding the
@@ -91,6 +104,10 @@ public: // interface
   ///     integrable quantities and passively advected quantites are stored.
   ///     If CT is being used, this will not include changes to the magnetic
   ///     fields.
+  /// @param fallback_mask This array must be the same shape as all fields in
+  ///     flux divergence. This method sets all locations in the mask where
+  ///     values must be recomputed to true. All other locations are set to
+  ///     false
   /// @param stale_depth The stale depth at the time of the function call
   ///     (the stale_depth needs to be incremented after this function is
   ///     called)
@@ -102,7 +119,9 @@ public: // interface
   /// the references have little to do with the computed energy change (they
   /// effectively just amount to sanity checks)
   bool identify_fallback(Block *block, Grouping &initial_integrable_group,
-			 Grouping &dUcons_group, int stale_depth) const;
+			 Grouping &dUcons_group,
+			 CelloArray<bool,3> &fallback_mask,
+			 int stale_depth) const;
 
   /// adds flux divergence (and source terms) to the initial integrable
   /// quantities and stores the results in out_integrable_group

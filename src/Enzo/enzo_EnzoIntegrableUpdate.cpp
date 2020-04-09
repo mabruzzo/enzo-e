@@ -71,13 +71,55 @@ const std::vector<std::string> EnzoIntegrableUpdate::combined_integrable_groups
 
 //----------------------------------------------------------------------
 
-void EnzoIntegrableUpdate::clear_dUcons_group(Block *block,
-					      Grouping &dUcons_group,
-					      enzo_float value) const
+void get_limits_(EnzoFieldArrayFactory &af,
+		 std::vector<std::string> group_names, Grouping &dUcons_group,
+		 int *nx, int *ny, int *nz){
+  for (const std::string& name : group_names){
+    int num_fields = dUcons_group.size(name);
+    if (num_fields > 0){
+      EFlt3DArray arr = af.from_grouping(dUcons_group, name, 0);
+      *nz = arr.shape(0);
+      *ny = arr.shape(1);
+      *nx = arr.shape(2);
+      break;
+    }
+  }
+}
+
+//----------------------------------------------------------------------
+
+void check_fallback_mask_shape_(EnzoFieldArrayFactory &af,
+				std::string function_name,
+				std::vector<std::string> group_names,
+				Grouping &dUcons_group,
+				CelloArray<bool,3> &mask)
+{
+  int nx, ny, nz;
+  get_limits_(af, group_names,dUcons_group, &nx, &ny, &nz);
+  ASSERT(function_name.c_str(),
+	 "Field in dUcons_group and fallback_mask don't have same shape\n",
+	 (nz == mask.shape(0) && ny == mask.shape(1) && nx == mask.shape(2)));
+}
+
+//----------------------------------------------------------------------
+
+void EnzoIntegrableUpdate::clear_dUcons_group
+(Block *block, Grouping &dUcons_group, enzo_float value,
+ CelloArray<bool,3> *fallback_mask_ptr) const
 {
   const std::vector<std::string> group_names =combined_integrable_groups(true);
   EnzoFieldArrayFactory array_factory(block, 0);
 
+  const bool masked = fallback_mask_ptr != NULL;
+
+  CelloArray<bool,3> mask;
+  if (masked){
+    mask = *fallback_mask_ptr;
+    check_fallback_mask_shape_(array_factory,
+			       "EnzoIntegrableUpdate::clear_dUcons_group",
+			       group_names, dUcons_group, mask);
+  }
+  
   for (const std::string& name : group_names){
     int num_fields = dUcons_group.size(name);
 
@@ -87,7 +129,7 @@ void EnzoIntegrableUpdate::clear_dUcons_group(Block *block,
       for (int iz=0; iz<array.shape(0); iz++) {
 	for (int iy=0; iy<array.shape(1); iy++) {
 	  for (int ix=0; ix<array.shape(2); ix++) {
-	    array(iz,iy,ix) = value;
+	    if (!masked || mask(iz,iy,ix)) { array(iz,iy,ix) = value; }
 	  }
 	}
       }
@@ -98,20 +140,32 @@ void EnzoIntegrableUpdate::clear_dUcons_group(Block *block,
 
 //----------------------------------------------------------------------
 
-void EnzoIntegrableUpdate::accumulate_flux_component(Block *block,
-						     int dim, double dt,
-						     Grouping &flux_group,
-						     Grouping &dUcons_group,
-						     int stale_depth) const
+void EnzoIntegrableUpdate::accumulate_flux_component
+(Block *block, int dim, double dt, Grouping &flux_group,
+ Grouping &dUcons_group, int stale_depth,
+ CelloArray<bool,3> *fallback_mask_ptr) const
 {
   const std::vector<std::string> group_names =combined_integrable_groups(true);
   EnzoFieldArrayFactory array_factory(block, stale_depth);
   EnzoPermutedCoordinates coord(dim);
 
+  CSlice full_ax(nullptr, nullptr);
+
+  const bool masked = fallback_mask_ptr != NULL;
+  CelloArray<bool,3> mask;
+  if (masked){
+    CSlice slc(stale_depth, -1*stale_depth);
+    CelloArray<bool,3> temp_mask = fallback_mask_ptr->subarray(slc, slc, slc);
+    check_fallback_mask_shape_
+      (array_factory, "EnzoIntegrableUpdate::accumulate_flux_component",
+       group_names, dUcons_group, temp_mask);
+    mask = coord.get_subarray(temp_mask, full_ax, full_ax, CSlice(1, -1));
+  }
+
   EnzoBlock * enzo_block = enzo::block(block);
   enzo_float dtdx_i = dt/enzo_block->CellWidth[coord.i_axis()];
 
-  CSlice full_ax(nullptr, nullptr);
+  
 
   for (std::string name : group_names){
 
@@ -139,14 +193,23 @@ void EnzoIntegrableUpdate::accumulate_flux_component(Block *block,
       fl = coord.get_subarray(flux, full_ax, full_ax, CSlice(0, -1));
       fr = coord.get_subarray(flux, full_ax, full_ax, CSlice(1, nullptr));
 
-      for (int iz=0; iz<dU_center.shape(0); iz++) {
-	for (int iy=0; iy<dU_center.shape(1); iy++) {
-	  for (int ix=0; ix<dU_center.shape(2); ix++) {
-	    dU_center(iz,iy,ix) -= dtdx_i * (fr(iz,iy,ix) - fl(iz,iy,ix));
+      auto inner_loop = [dtdx_i, &dU_center, &fl, &fr]
+	(int kl, int ku, int jl, int ju, int il, int iu) {
+	for (int iz=kl; iz<ku; iz++) {
+	  for (int iy=jl; iy<ju; iy++) {
+	    for (int ix=il; ix<iu; ix++) {
+	      dU_center(iz,iy,ix) -= dtdx_i * (fr(iz,iy,ix) - fl(iz,iy,ix));
+	    }
 	  }
 	}
-      }
+      };
 
+      if (masked){
+	mask_iter(mask, inner_loop, dim, 3);
+      } else {
+	inner_loop(0, dU_center.shape(0), 0, dU_center.shape(1),
+		   0, dU_center.shape(2));
+      }
     }
   }
 }
@@ -155,7 +218,7 @@ void EnzoIntegrableUpdate::accumulate_flux_component(Block *block,
 
 bool EnzoIntegrableUpdate::identify_fallback
 (Block *block, Grouping &initial_integrable_group, Grouping &dUcons_group,
- int stale_depth) const
+ CelloArray<bool,3> &fallback_mask, int stale_depth) const
 {
   // In the future, this should prepare a mask indicating exactly which
   // locations require recomputed values of dU relying on the fallback solver
@@ -163,11 +226,19 @@ bool EnzoIntegrableUpdate::identify_fallback
   EFlt3DArray rho, drho;
   rho = array_factory.from_grouping(initial_integrable_group, "density", 0);
   drho = array_factory.from_grouping(dUcons_group, "density", 0);
+
+  CSlice slc(stale_depth, -1*stale_depth);
+  CelloArray<bool,3> mask = fallback_mask.subarray(slc, slc, slc);
+  ASSERT("EnzoIntegrableUpdate::identify_fallback",
+	 "The density field and fallback_mask must have the same shape",
+	 (rho.shape(0) == mask.shape(0) && rho.shape(1) == mask.shape(1) &&
+	  rho.shape(2) == mask.shape(2)));
   bool out = false;
   for (int iz=0; iz<rho.shape(0); iz++) {
     for (int iy=0; iy<rho.shape(1); iy++) {
       for (int ix=0; ix<rho.shape(2); ix++) {
-	if ( rho(iz,iy,ix) < (-1*drho(iz,iy,ix)) ) {
+	mask(iz,iy,ix) = rho(iz,iy,ix) < (-1*drho(iz,iy,ix));
+	if ( mask(iz,iy,ix) ) {
 	  WARNING5("EnzoIntegrableUpdate::identify_fallback",
 		   ("At (iz,iy,ix) = (%d,%d,%d), the total change in "
 		    "density, %.15e, causes density, %.15e, to go negative\n"),

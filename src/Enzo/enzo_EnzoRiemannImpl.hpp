@@ -205,15 +205,16 @@ public: // interface
   void solve (Block *block, Grouping &priml_group, Grouping &primr_group,
 	      std::string pressure_name_l, std::string pressure_name_r,
 	      Grouping &flux_group, int dim, EnzoEquationOfState *eos,
-	      int stale_depth, std::string interface_velocity_name) const;
+	      int stale_depth, std::string interface_velocity_name,
+	      CelloArray<bool,3> *fallback_mask_ptr) const;
 
 protected : //methods
-  
+
   /// Computes the fluxes for the passively advected quantites.
-  void solve_passive_advection_(Block* block, Grouping &priml_group,
-				Grouping &primr_group, Grouping &flux_group,
-				EFlt3DArray &density_flux, int dim,
-				int stale_depth) const throw();
+  void solve_passive_advection_
+  (Block* block, Grouping &priml_group, Grouping &primr_group,
+   Grouping &flux_group, EFlt3DArray &density_flux, int dim, int stale_depth,
+   CelloArray<bool,3> *mask_ptr) const throw();
 
   /// Computes the conserved counterpart for every integrable primitive.
   /// Integrable primitives are categorized as conserved, specific, and other
@@ -322,8 +323,11 @@ void EnzoRiemannImpl<ImplStruct>::solve
 (Block *block, Grouping &priml_group, Grouping &primr_group,
  std::string pressure_name_l, std::string pressure_name_r,
  Grouping &flux_group, int dim, EnzoEquationOfState *eos, int stale_depth,
- std::string interface_velocity_name) const
+ std::string interface_velocity_name, CelloArray<bool,3> *fallback_mask_ptr)
+  const
 {
+  const int n_keys = n_keys_;
+  const EnzoAdvectionFieldLUT lut = lut_;
 
   const bool barotropic = eos->is_barotropic();
   // if not barotropic then the following doesn't have to be reasonable
@@ -341,10 +345,10 @@ void EnzoRiemannImpl<ImplStruct>::solve
 
   // sanity check:
   ASSERT("EnzoRiemannImpl::solve",
-	 ("lut_.internal_energy must have a valid (non-negative) index when "
+	 ("lut.internal_energy must have a valid (non-negative) index when "
 	  "using the dual energy formalism. Otherwise it must be -1."),
-	 ( ( (lut_.internal_energy >= 0) &&  dual_energy_formalism ) ||
-	   ( (lut_.internal_energy ==-1) && !dual_energy_formalism ) ));
+	 ( ( (lut.internal_energy >= 0) &&  dual_energy_formalism ) ||
+	   ( (lut.internal_energy ==-1) && !dual_energy_formalism ) ));
 
   // Load arrays:
   EnzoFieldArrayFactory array_factory(block, stale_depth);
@@ -372,18 +376,18 @@ void EnzoRiemannImpl<ImplStruct>::solve
 
   EnzoCenteredFieldRegistry registry;
   EFlt3DArray *wl_arrays, *wr_arrays, *flux_arrays;
-  wl_arrays = registry.load_array_of_fields(block, lut_, n_keys_,
+  wl_arrays = registry.load_array_of_fields(block, lut, n_keys,
 					    priml_group, dim, stale_depth);
-  wr_arrays = registry.load_array_of_fields(block, lut_, n_keys_,
+  wr_arrays = registry.load_array_of_fields(block, lut, n_keys,
 					    primr_group, dim, stale_depth);
-  flux_arrays = registry.load_array_of_fields(block, lut_, n_keys_,
+  flux_arrays = registry.load_array_of_fields(block, lut, n_keys,
 					      flux_group, dim, stale_depth);
 
   // allocate arrays to temporarily hold values at each cell interface
   enzo_float *wl, *wr, *Ul, *Ur, *Fl, *Fr;
-  wl = new enzo_float[n_keys_];    wr = new enzo_float[n_keys_];
-  Ul = new enzo_float[n_keys_];    Ur = new enzo_float[n_keys_];
-  Fl = new enzo_float[n_keys_];    Fr = new enzo_float[n_keys_];
+  wl = new enzo_float[n_keys];    wr = new enzo_float[n_keys];
+  Ul = new enzo_float[n_keys];    Ur = new enzo_float[n_keys];
+  Fl = new enzo_float[n_keys];    Fr = new enzo_float[n_keys];
 
   // prepare optional scratch space to be used by ImplStruct
   enzo_float *scratch_space = NULL;
@@ -391,75 +395,101 @@ void EnzoRiemannImpl<ImplStruct>::solve
   // possible number of keys as the argument here. Then the size of scratch
   // space could be determined at compile time (allowing scratch_space to be
   // allocated off the stack)
-  int scratch_space_length = ImplStruct::scratch_space_length(n_keys_);
+  int scratch_space_length = ImplStruct::scratch_space_length(n_keys);
   if (scratch_space_length>0){
     scratch_space = new enzo_float[scratch_space_length];
   }
 
+  auto inner_loop = [this, n_keys, lut, store_interface_vel, barotropic,
+		     gamma, isothermal_cs, dual_energy_formalism,
+		     wl, wr, Ul, Ur, Fl, Fr, scratch_space, wl_arrays,
+		     wr_arrays, flux_arrays, pressure_array_l,
+		     pressure_array_r, &velocity_i_bar_array]
+    (int kl, int ku, int jl, int ju,int il, int iu){
 
-  // For Nearest-Neighbor, we care about interfaces starting at i+1/2. Thanks
-  // to use of stale_depth, we can treat every case like this
-  for (int iz=0; iz<flux_arrays[0].shape(0); iz++) {
-    for (int iy=0; iy<flux_arrays[0].shape(1); iy++) {
-      for (int ix=0; ix<flux_arrays[0].shape(2); ix++) {
+    // For Nearest-Neighbor, we care about interfaces starting at i+1/2. Thanks
+    // to use of stale_depth, we can treat every case like this
+    for (int iz=kl; iz<ku; iz++) {
+      for (int iy=jl; iy<ju; iy++) {
+	for (int ix=il; ix<iu; ix++) {
 
-	// get the fluid fields
-	for (int field_ind=0; field_ind<n_keys_; field_ind++){
-	  wl[field_ind] = wl_arrays[field_ind](iz,iy,ix);
-	  wr[field_ind] = wr_arrays[field_ind](iz,iy,ix);
+	  // get the fluid fields
+	  for (int field_ind=0; field_ind<n_keys; field_ind++){
+	    wl[field_ind] = wl_arrays[field_ind](iz,iy,ix);
+	    wr[field_ind] = wr_arrays[field_ind](iz,iy,ix);
+	  }
+
+	  // get the left/right pressure
+	  enzo_float pressure_l = pressure_array_l(iz,iy,ix);
+	  enzo_float pressure_r = pressure_array_r(iz,iy,ix);
+
+	  // get the conserved quantities
+	  this->compute_cons_(wl, Ul);
+	  this->compute_cons_(wr, Ur);
+
+	  // compute the interface fluxes
+	  this->basic_mhd_fluxes_(wl, Ul, pressure_l, Fl);
+	  this->basic_mhd_fluxes_(wr, Ur, pressure_r, Fr);
+
+	  // compute the other (optional) fluxes
+	  this->extra_fluxes_(wl, Ul, Fl, dual_energy_formalism);
+	  this->extra_fluxes_(wr, Ur, Fr, dual_energy_formalism);
+
+	  enzo_float interface_velocity_i;
+	  // Now compute the Riemann Fluxes
+	  ImplStruct::calc_riemann_fluxes(Fl, Fr, wl, wr, Ul, Ur,
+					  pressure_l, pressure_r, lut,
+					  n_keys, barotropic, gamma,
+					  isothermal_cs, dual_energy_formalism,
+					  iz, iy, ix, flux_arrays,
+					  scratch_space, interface_velocity_i);
+
+	  if (store_interface_vel){
+	    velocity_i_bar_array(iz,iy,ix) = interface_velocity_i;
+	  }
+
+	  /*
+	  // If Dedner Fluxes are required, they get handled here
+	  //   - It would probably be better to handle this separately from the
+	  //     Riemann Solver since we already precompute L & R conserved
+	  //     AND it doesn't require wavespeed information.
+	  */
 	}
-
-	// get the left/right pressure
-	enzo_float pressure_l = pressure_array_l(iz,iy,ix);
-	enzo_float pressure_r = pressure_array_r(iz,iy,ix);
-
-	// get the conserved quantities
-	compute_cons_(wl, Ul);
-	compute_cons_(wr, Ur);
-
-	// compute the interface fluxes
-	basic_mhd_fluxes_(wl, Ul, pressure_l, Fl);
-	basic_mhd_fluxes_(wr, Ur, pressure_r, Fr);
-
-	// compute the other (optional) fluxes
-	extra_fluxes_(wl, Ul, Fl, dual_energy_formalism);
-	extra_fluxes_(wr, Ur, Fr, dual_energy_formalism);
-
-	enzo_float interface_velocity_i;
-	// Now compute the Riemann Fluxes
-	ImplStruct::calc_riemann_fluxes(Fl, Fr, wl, wr, Ul, Ur,
-				        pressure_l, pressure_r, lut_, n_keys_,
-					barotropic, gamma, isothermal_cs,
-					dual_energy_formalism, iz, iy, ix,
-					flux_arrays, scratch_space,
-					interface_velocity_i);
-
-	if (store_interface_vel){
-	  velocity_i_bar_array(iz,iy,ix) = interface_velocity_i;
-	}
-
-	/*
-	// If Dedner Fluxes are required, they get handled here
-	//   - It would probably be better to handle this separately from the
-	//     Riemann Solver since we already precompute L & R conserved
-	//     AND it doesn't require wavespeed information.
-	if (Dedner_Ch_ != 0){
-	  // Not sure this is perfectly transposed
-	  flux_arrays["bfield_i"](iz,iy,ix) =
-	    (Ul["phi"] + 0.5*(Ur["phi"] - Ul["phi"])
-	     - 0.5 * Dedner_Ch_ * (Ur["bfield_i"] - Ul["bfield_i"]));
-	  flux_arrays["phi"](iz,iy,ix) =
-	    (Ul["bfield_i"] + 0.5*(Ur["bfield_i"] - Ul["bfield_i"])
-	     - 0.5 / Dedner_Ch_ * (Ur["phi"] - Ul["phi"]));
-	  flux_arrays["phi"](iz,iy,ix) *= (Dedner_Ch_*Dedner_Ch_);
-	}
-	*/
       }
     }
+  };
+
+  int nz = flux_arrays[0].shape(0);
+  int ny = flux_arrays[0].shape(1);
+  int nx = flux_arrays[0].shape(2);
+
+  CelloArray<bool,3> *mask_ptr = NULL;
+  CelloArray<bool,3> mask;
+
+  if (fallback_mask_ptr != NULL){
+    // fallback_mask is cell-centered.
+    EnzoPermutedCoordinates coord(dim);
+    CSlice stale_slc(stale_depth, -1*stale_depth);
+    CSlice dim_slc(1+stale_depth, -1-stale_depth);
+    mask = coord.get_subarray(*fallback_mask_ptr, stale_slc,stale_slc,dim_slc);
+    // Along dimension dim, mask should be 1 element shorter than the flux
+    // arrays. Along other dimensions it should be the same size.
+    int delta_ix, delta_iy, delta_iz;
+    coord.i_unit_vector(delta_ix, delta_iy, delta_iz);
+    ASSERT("EnzoRiemannImpl::solve",
+	   ("Shape mismatch between flux array and fallback_mask subarray"),
+	   (nz-delta_iz == mask.shape(0) && ny-delta_iy == mask.shape(1) &&
+	    nx-delta_ix == mask.shape(2)) );
+    mask_neighbor_face_iter(mask, inner_loop, dim);
+    mask_ptr = &mask;
+  } else {
+    inner_loop(0,nz,0,ny,0,nx);
+    mask = CelloArray<bool,3>(1,1,1); // this is to prevent compiler warnings
   }
 
   solve_passive_advection_(block, priml_group, primr_group, flux_group,
-			   flux_arrays[lut_.density], dim, stale_depth);
+			   flux_arrays[lut.density], dim, stale_depth,
+			   mask_ptr);
 
   delete[] wl; delete[] wr;
   delete[] Ul; delete[] Ur;
@@ -492,8 +522,8 @@ inline void compute_unity_sum_passive_fluxes_(const enzo_float dens_flux,
 template <class ImplStruct>
 void EnzoRiemannImpl<ImplStruct>::solve_passive_advection_
 (Block* block, Grouping &priml_group, Grouping &primr_group,
- Grouping &flux_group, EFlt3DArray &density_flux, int dim, int stale_depth)
-  const throw()
+ Grouping &flux_group, EFlt3DArray &density_flux, int dim, int stale_depth,
+ CelloArray<bool,3> *mask_ptr) const throw()
 {
   // This was basically transcribed from Enzo
   std::vector<std::string> group_names = this->passive_groups_;
@@ -534,26 +564,37 @@ void EnzoRiemannImpl<ImplStruct>::solve_passive_advection_
 							   field_ind);
     }
 
-    for (int iz=0; iz<density_flux.shape(0); iz++) {
-      for (int iy=0; iy<density_flux.shape(1); iy++) {
-	for (int ix=0; ix<density_flux.shape(2); ix++) {
+    auto inner_loop = [=](int kl, int ku, int jl, int ju, int il, int iu){
+      for (int iz=kl; iz<ku; iz++) {
+	for (int iy=jl; iy<ju; iy++) {
+	  for (int ix=il; ix<iu; ix++) {
 
-	  enzo_float dens_flux = density_flux(iz,iy,ix);
-	  EFlt3DArray *reconstr = (dens_flux>0) ? wl_arrays : wr_arrays;
+	    enzo_float dens_flux = density_flux(iz,iy,ix);
+	    EFlt3DArray *reconstr = (dens_flux>0) ? wl_arrays : wr_arrays;
 
-	  if (unity_sum) {
-	    compute_unity_sum_passive_fluxes_(dens_flux, flux_arrays, reconstr,
-					      num_fields, iz, iy, ix);
-	  } else {
-	    for (int field_ind=0; field_ind<num_fields; field_ind++){
-	      flux_arrays[field_ind](iz,iy,ix) = (reconstr[field_ind](iz,iy,ix)
+	    if (unity_sum) {
+	      compute_unity_sum_passive_fluxes_(dens_flux, flux_arrays,
+						reconstr, num_fields, iz, iy,
+						ix);
+	    } else {
+	      for (int field_ind=0; field_ind<num_fields; field_ind++){
+		flux_arrays[field_ind](iz,iy,ix)=(reconstr[field_ind](iz,iy,ix)
 						  * dens_flux);
+	      }
 	    }
-	  }
 
+	  }
 	}
       }
+    };
+
+    if (mask_ptr != NULL){
+      mask_neighbor_face_iter(*mask_ptr, inner_loop, dim);
+    } else {
+      inner_loop(0, density_flux.shape(0), 0, density_flux.shape(1),
+		 0, density_flux.shape(2)); 
     }
+
     delete[] wl_arrays; delete[] wr_arrays; delete[] flux_arrays;
   }
 }

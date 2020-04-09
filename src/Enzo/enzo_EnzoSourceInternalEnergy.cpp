@@ -13,7 +13,7 @@
 void EnzoSourceInternalEnergy::calculate_source
 (Block *block, double dt, Grouping &prim_group, Grouping &dUcons_group,
  std::string interface_velocity_name, int dim, EnzoEquationOfState *eos,
- int stale_depth) const throw()
+ int stale_depth, CelloArray<bool,3> *fallback_mask_ptr) const throw()
 {
   // SANITY CHECKS:
   ASSERT("EnzoSourceInternalEnergy::calculate_source",
@@ -71,15 +71,37 @@ void EnzoSourceInternalEnergy::calculate_source
 
   enzo_float gm1 = eos->get_gamma() - 1.;
 
-  for (int iz=0; iz<eint_center.shape(0); iz++) {
-    for (int iy=0; iy<eint_center.shape(1); iy++) {
-      for (int ix=0; ix<eint_center.shape(2); ix++) {
-	enzo_float p = gm1 * eint_center(iz,iy,ix) * rho_center(iz,iy,ix);
-	// the following just applies std::max (in a macro-enabled debug mode
-	// it will raise errors when the floor is actually needed)
-	p = EnzoEquationOfState::apply_floor(p, p_floor);
-	deint_dens_center(iz,iy,ix) -= dtdx*p*(vr(iz,iy,ix) - vl(iz,iy,ix));
+  int nz = eint_center.shape(0);
+  int ny = eint_center.shape(1);
+  int nx = eint_center.shape(2);
+
+  auto inner_loop = [&, p_floor, gm1, dtdx](int kl, int ku, int jl, int ju,
+					    int il, int iu){
+    for (int iz=kl; iz<ku; iz++) {
+      for (int iy=jl; iy<ju; iy++) {
+	for (int ix=il; ix<iu; ix++) {
+	  enzo_float p = gm1 * eint_center(iz,iy,ix) * rho_center(iz,iy,ix);
+	  // the following just applies std::max (in a macro-enabled debug mode
+	  // it will raise errors when the floor is actually needed)
+	  p = EnzoEquationOfState::apply_floor(p, p_floor);
+	  deint_dens_center(iz,iy,ix) -= dtdx*p*(vr(iz,iy,ix) - vl(iz,iy,ix));
+	}
       }
     }
+  };
+
+
+  if (fallback_mask_ptr != NULL){
+    CSlice stale_slc(stale_depth, -1*stale_depth);
+    CSlice dim_slc(1+stale_depth, -1-stale_depth);
+    CelloArray<bool,3> mask = coord.get_subarray(*fallback_mask_ptr, stale_slc,
+						 stale_slc, dim_slc);
+    ASSERT("EnzoSourceInternalEnergy::calculate_source",
+	   ("Shape mismatch between internal_energy subarray and "
+	    "fallback_mask subarray"),
+	   nz == mask.shape(0) && ny == mask.shape(1) && nx == mask.shape(2));
+    mask_iter(mask, inner_loop, dim, 3);
+  } else {
+    inner_loop(0,nz,0,ny,0,nx);
   }
 }

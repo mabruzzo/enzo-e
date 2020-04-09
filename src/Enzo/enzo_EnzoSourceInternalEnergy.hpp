@@ -81,10 +81,16 @@ public:
   ///     to be refreshed) extends over (0 means there are no "stale" values).
   ///     The update using the delayed staling rate should be applied at some
   ///     time after this function call
+  /// @param fallback_mask_ptr Optional pointer to a mask indicating which
+  ///     cells trigger Riemann Solver Fallback. When this is not `NULL` the
+  ///     source terms are only computed at locations that the mask has a
+  ///     `true` value or that a is 1 index away (along the `dim`-axis) from a
+  ///     location where the mask is `true`.
   void calculate_source(Block *block, double dt,
 			Grouping &prim_group, Grouping &dUcons_group,
 			std::string interface_velocity_name, int dim,
-			EnzoEquationOfState *eos, int stale_depth)
+			EnzoEquationOfState *eos, int stale_depth,
+			CelloArray<bool,3> *fallback_mask_ptr = NULL)
     const throw();
 };
 

@@ -382,6 +382,16 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
     // refreshed) extends over.
     int stale_depth = 0;
 
+    CelloArray<bool,3> fallback_mask;
+    if (riemann_solver_->fallback_solver() != NULL){
+      Field field = block->data()->field();
+      int nx,ny,nz;
+      field.field_size(field.field_id("density"), &nx, &ny, &nz);
+      fallback_mask = CelloArray<bool,3>(nz,ny,nz);
+    } else {
+      fallback_mask = CelloArray<bool,3>(1,1,1);
+    }
+
     // convert the passive scalars from conserved form to specific form
     // (outside the integrator, they are treated like conserved densities)
     compute_specific_passive_scalars_(block, passive_group_names_,
@@ -482,7 +492,7 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
 	incomplete_dU_calc =
 	  ( (riemann_solver_->fallback_solver() != NULL) &&
 	    integrable_updater_->identify_fallback(block, *primitive_group_,
-						   dUcons_group,
+						   dUcons_group, fallback_mask,
 						   cur_stale_depth) );
 	if (incomplete_dU_calc){
 	  cur_riemann_solver = cur_riemann_solver->fallback_solver();
@@ -693,7 +703,7 @@ void EnzoMethodMHDVlct::compute_flux_
   // dUcons_group
   integrable_updater_->accumulate_flux_component(block, dim, cur_dt,
 						 flux_group, dUcons_group,
-						 cur_stale_depth);
+						 cur_stale_depth, NULL);
 
   // if using dual energy formalism, compute the dual energy formalism
   if (eos_->uses_dual_energy_formalism()){

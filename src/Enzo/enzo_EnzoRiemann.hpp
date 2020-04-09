@@ -92,12 +92,16 @@ public: // interface
   ///     stored. This quantity is used to compute the internal energy source
   ///     term (needed under the dual energy formalism). If the value is `""`
   ///     (the default) then the interface velocity is not stored.
+  /// @param fallback_mask_ptr Optional pointer to a mask of indicating where
+  ///     Riemann Solver Fallback has been triggered (at cell-centers). When
+  ///     this is not `NULL` the fluxes are only computed at faces immediately
+  ///     adjacent to the cell-centers where the mask is `true`.
   virtual void solve (Block *block,
 		      Grouping &priml_group, Grouping &primr_group, 
 		      std::string pressure_name_l, std::string pressure_name_r,
 		      Grouping &flux_group, int dim, EnzoEquationOfState *eos,
-		      int stale_depth,
-		      std::string interface_velocity_name = "") const = 0;
+		      int stale_depth, std::string interface_velocity_name ="",
+		      CelloArray<bool,3> *fallback_mask_ptr = NULL) const = 0;
 
   /// computes the (adiabatic) fast magnetosonic speed along dimension i at a
   /// single location (vector names in lut are denoted as being along the i, j
