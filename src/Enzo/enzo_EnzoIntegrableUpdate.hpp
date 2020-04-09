@@ -81,6 +81,29 @@ public: // interface
 				 Grouping &flux_group, Grouping &dUcons_group,
 				 int stale_depth) const;
 
+  /// determines whether Riemann Solver Fallback is necessary (cases where the
+  /// flux divergence and source terms would lead to negative density)
+  ///
+  /// @param block holds data to be processed
+  /// @param initial_integrable_group contains the fields holding the
+  ///     the integrable quantities from the start of the timestep.
+  /// @param dUcons_group contains the fields where the net changes to the
+  ///     integrable quantities and passively advected quantites are stored.
+  ///     If CT is being used, this will not include changes to the magnetic
+  ///     fields.
+  /// @param stale_depth The stale depth at the time of the function call
+  ///     (the stale_depth needs to be incremented after this function is
+  ///     called)
+  ///
+  /// @par Note
+  /// This is the same fallback criterion used in enzo-dev's ppm & Runge-Kutta
+  /// solvers. Some of the fallback criteria reference the value of the total
+  /// or internal energy. However, upon careful examination, it turns out that
+  /// the references have little to do with the computed energy change (they
+  /// effectively just amount to sanity checks)
+  bool identify_fallback(Block *block, Grouping &initial_integrable_group,
+			 Grouping &dUcons_group, int stale_depth) const;
+
   /// adds flux divergence (and source terms) to the initial integrable
   /// quantities and stores the results in out_integrable_group
   ///

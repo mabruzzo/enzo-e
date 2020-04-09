@@ -153,6 +153,35 @@ void EnzoIntegrableUpdate::accumulate_flux_component(Block *block,
 
 //----------------------------------------------------------------------
 
+bool EnzoIntegrableUpdate::identify_fallback
+(Block *block, Grouping &initial_integrable_group, Grouping &dUcons_group,
+ int stale_depth) const
+{
+  // In the future, this should prepare a mask indicating exactly which
+  // locations require recomputed values of dU relying on the fallback solver
+  EnzoFieldArrayFactory array_factory(block, stale_depth);
+  EFlt3DArray rho, drho;
+  rho = array_factory.from_grouping(initial_integrable_group, "density", 0);
+  drho = array_factory.from_grouping(dUcons_group, "density", 0);
+  bool out = false;
+  for (int iz=0; iz<rho.shape(0); iz++) {
+    for (int iy=0; iy<rho.shape(1); iy++) {
+      for (int ix=0; ix<rho.shape(2); ix++) {
+	if ( rho(iz,iy,ix) < (-1*drho(iz,iy,ix)) ) {
+	  WARNING5("EnzoIntegrableUpdate::identify_fallback",
+		   ("At (iz,iy,ix) = (%d,%d,%d), the total change in "
+		    "density, %.15e, causes density, %.15e, to go negative\n"),
+		   iz,iy,ix,drho(iz,iy,ix),rho(iz,iy,ix));
+	  out = true;
+	}
+      }
+    }
+  }
+  return out;
+}
+
+//----------------------------------------------------------------------
+
 void EnzoIntegrableUpdate::update_quantities
 (Block *block, Grouping &initial_integrable_group, Grouping &dUcons_group,
  Grouping &out_integrable_group, Grouping &out_conserved_passive_scalar,

@@ -32,30 +32,37 @@ public: // interface
   ///     no problems are caused)
   /// @param solver The name of the Riemann solver to use. Valid names include
   ///     "hll", "hlle", and "hlld"
+  /// @param fallback Indicates whether to initialize a fallback Riemann Solver
   static EnzoRiemann* construct_riemann
     (std::vector<std::string> integrable_groups,
-     std::vector<std::string> passive_groups, std::string solver);
+     std::vector<std::string> passive_groups, std::string solver,
+     bool fallback);
 
   EnzoRiemann() throw()
-  {}
+    : fallback_solver_(NULL)
+  { }
 
   /// Virtual destructor
   virtual ~EnzoRiemann()
-  {}
+  { if (fallback_solver_ != NULL) { delete fallback_solver_; } }
 
   /// CHARM++ PUP::able declaration
   PUPable_abstract(EnzoRiemann);
 
   /// CHARM++ migration constructor for PUP::able
   EnzoRiemann (CkMigrateMessage *m)
-    : PUP::able(m)
-  {  }
+    : PUP::able(m), fallback_solver_(NULL)
+  { }
 
   /// CHARM++ Pack / Unpack function
   void pup (PUP::er &p)
   {
     PUP::able::pup(p);
+    p|fallback_solver_;
   }
+
+  /// Returns the pointer to the Fallback Solver
+  EnzoRiemann * fallback_solver() const throw() { return fallback_solver_; }
 
   /// Computes the Riemann Fluxes for each conserved field along a given
   /// dimension, dim
@@ -181,6 +188,11 @@ public: // interface
 				 const enzo_float pressure,
 				 const enzo_float gamma) throw()
   { return std::sqrt(gamma * pressure / prim_vals[lut.density]); }
+
+protected: // attributes
+
+  /// Potential instance of a fallback Riemann Solver
+  EnzoRiemann *fallback_solver_;
 
 };
 

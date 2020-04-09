@@ -174,6 +174,7 @@ EnzoConfig::EnzoConfig() throw ()
   method_vlct_pressure_floor(0.0),
   method_vlct_dual_energy(false),
   method_vlct_dual_energy_eta(0.0),
+  method_vlct_riemann_fallback(false),
   /// EnzoSolverMg0
   solver_pre_smooth(),
   solver_post_smooth(),
@@ -383,6 +384,7 @@ void EnzoConfig::pup (PUP::er &p)
   p | method_vlct_pressure_floor;
   p | method_vlct_dual_energy;
   p | method_vlct_dual_energy_eta;
+  p | method_vlct_riemann_fallback;
 
   p | solver_pre_smooth;
   p | solver_post_smooth;
@@ -809,6 +811,8 @@ void EnzoConfig::read(Parameters * p) throw()
     ("Method:mhd_vlct:dual_energy", false);
   method_vlct_dual_energy_eta = p->value_float
     ("Method:mhd_vlct:dual_energy_eta", 0.001);
+  method_vlct_riemann_fallback = p->value_logical
+    ("Method:mhd_vlct:riemann_fallback", false);
 
   //--------------------------------------------------
   // Physics
