@@ -72,6 +72,8 @@ inline void operator|(PUP::er &p, chemistry_data &c){
  p | c.radiative_transfer_hydrogen_only;
  p | c.self_shielding_method;
  p | c.H2_self_shielding;
+ p | c.forced_primordial_mmw;
+ p | c.with_compton_cooling;
 }
 #endif
 
@@ -211,6 +213,7 @@ public: // interface
       method_grackle_chemistry(),
       method_grackle_use_cooling_timestep(false),
       method_grackle_radiation_redshift(-1.0),
+      method_grackle_HydrogenFractionByMass(ENZO_FLOAT_UNDEFINED),
 #endif
       // EnzoMethodGravity
       method_gravity_grav_const(0.0),
@@ -400,6 +403,7 @@ public: // attributes
   chemistry_data *           method_grackle_chemistry;
   bool                       method_grackle_use_cooling_timestep;
   double                     method_grackle_radiation_redshift;
+  double                     method_grackle_HydrogenFractionByMass;
 #endif /* CONFIG_USE_GRACKLE */
 
   /// EnzoMethodGravity
