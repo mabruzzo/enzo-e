@@ -233,6 +233,14 @@ void EnzoMethodGrackle::initialize_grackle_chemistry_data(
     "Error in initialize_chemistry_data");
   }
 
+  // if primordial_chemistry == 0, HydrgoenFractionByMass is overwritten during
+  // the call to initialize_chemistry_data. If the user specified a value,
+  // overwrite the default value:
+  double fh = enzo::config()->method_grackle_HydrogenFractionByMass;
+  if (fh != ENZO_FLOAT_UNDEFINED){
+    enzo::config()->method_grackle_chemistry->HydrogenFractionByMass = fh;
+  }
+
   // This value should not be PUPed to ensure Grackle's data is always
   // defined locally on each processor (see enzo_EnzoMethodGrackle.hpp)
   this->grackle_chemistry_data_defined_ = true;

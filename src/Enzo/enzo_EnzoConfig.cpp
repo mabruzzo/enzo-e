@@ -155,6 +155,7 @@ EnzoConfig::EnzoConfig() throw ()
   method_grackle_chemistry(),
   method_grackle_use_cooling_timestep(false),
   method_grackle_radiation_redshift(-1.0),
+  method_grackle_HydrogenFractionByMass(ENZO_FLOAT_UNDEFINED),
 #endif
   // EnzoMethodGravity
   method_gravity_grav_const(0.0),
@@ -407,6 +408,7 @@ void EnzoConfig::pup (PUP::er &p)
 #ifdef CONFIG_USE_GRACKLE
   p  | method_grackle_use_cooling_timestep;
   p  | method_grackle_radiation_redshift;
+  p  | method_grackle_HydrogenFractionByMass;
 
   int is_null = (method_grackle_chemistry==NULL);
   p | is_null;
@@ -1062,9 +1064,13 @@ void EnzoConfig::read(Parameters * p) throw()
       ("Method:grackle:H2_self_shielding",
        grackle_data->H2_self_shielding);
 
-    grackle_data->HydrogenFractionByMass = p->value_float
-      ("Method:grackle:HydrogenFractionByMass",
-        grackle_data->HydrogenFractionByMass);
+    grackle_data->forced_primordial_mmw = p->value_float
+      ("Method:grackle:forced_primordial_mmw",
+       grackle_data->forced_primordial_mmw);
+
+    grackle_data->with_compton_cooling = p->value_integer
+      ("Method:grackle:with_compton_cooling",
+       grackle_data->with_compton_cooling);
 
     grackle_data->DeuteriumToHydrogenRatio = p->value_float
       ("Method:grackle:DeuteriumToHydrogenRatio",
@@ -1107,6 +1113,14 @@ void EnzoConfig::read(Parameters * p) throw()
     // parameter for turning RT on / off:
     //   grackle_data->use_radiative_transfer = ENZO_P_PARAMETER_NAME;
 
+    // HydrogenFractionByMass must be set AFTER initialize_chemistry_data.
+    // When that function is called and grackle_data->primordial_chemistry==0
+    // then the value gets overwritten
+    method_grackle_HydrogenFractionByMass = p->value_float
+      ("Method:grackle:HydrogenFractionByMass",
+       ENZO_FLOAT_UNDEFINED);
+    grackle_data->HydrogenFractionByMass =
+      method_grackle_HydrogenFractionByMass;
   }
 #endif /* CONFIG_USE_GRACKLE */
 
