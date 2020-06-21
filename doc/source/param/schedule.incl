@@ -6,7 +6,7 @@
 :Default: :d:`"none"`
 :Scope:     :c:`Cello`
 
-:e:`The` :p:`var` :e:`parameter specifies what value is checked at each cycle, which may be` :t:`"cycle"`, :t:`"time"`, :e:`or` :t:`"seconds"` :e:`Here "time" refers to simulation time, and "seconds" to wall-clock time.  Note that when simulation "time" is specified, the simulation's time step may be reduced such that the corresponding output occurs exactly at the specified time.`
+:e:`The` :p:`var` :e:`parameter specifies what value is checked at each cycle, which may be` :t:`"cycle"`, :t:`"time"`, :t:`"minimum_time"`, :e:`or` :t:`"seconds"` :e:`Here "time" and "minimum_time" refers to simulation time, and "seconds" to wall-clock time.  Note that when simulation "time" is specified, the simulation's time step may be reduced such that the corresponding output occurs exactly at the specified time. In contrast, when the simulation "minimum_time" is specified, the time step is not affected; the corresponding output occurs as soon as the minimum time has been reached or passed.`
 
 ---- 
 
