@@ -59,6 +59,19 @@ void ScheduleInterval::set_time_interval
 
 //----------------------------------------------------------------------
 
+void ScheduleInterval::set_minimum_time_interval
+  (double time_start, double time_step, double time_stop) throw()
+{
+  active_ = true;
+  type_ = schedule_type_minimum_time;
+
+  time_start_ = time_start;
+  time_step_  = time_step;
+  time_stop_  = time_stop;
+}
+
+//----------------------------------------------------------------------
+
 void ScheduleInterval::set_seconds_interval
   (double seconds_start, double seconds_step, double seconds_stop) throw()
 {
@@ -95,6 +108,17 @@ bool ScheduleInterval::write_this_cycle ( int cycle, double time) throw()
       const bool below_tol = (cello::err_abs(time_next(), time) < tol);
 
       result = in_range && below_tol;
+
+    }
+
+    break;
+
+  case schedule_type_minimum_time:
+    {
+      const bool in_range  = (time_start_ <= time && time <= time_stop_);
+      const bool past_next = (time >= time_next());
+
+      result = in_range && past_next;
 
     }
 

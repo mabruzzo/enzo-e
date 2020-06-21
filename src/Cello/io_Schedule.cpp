@@ -34,6 +34,7 @@ Schedule * Schedule::create
 
   const bool var_cycle = (var == "cycle");
   const bool var_time  = (var == "time");
+  const bool var_minimum_time = (var == "minimum_time");
   const bool var_seconds  = (var == "seconds");
 
   const bool type_interval = (type == "interval");
@@ -48,10 +49,15 @@ Schedule * Schedule::create
     if (var_cycle) {
 
       ((ScheduleInterval * )schedule)->set_cycle_interval(start,step,stop);
-      
+
     } else if (var_time) {
 
       ((ScheduleInterval * )schedule)->set_time_interval(start,step,stop);
+
+    } else if (var_minimum_time) {
+
+      ((ScheduleInterval * )schedule)->set_minimum_time_interval(start,step,
+                                                                 stop);
 
     } else if (var_seconds) {
 
@@ -78,6 +84,11 @@ Schedule * Schedule::create
 
       ((ScheduleList * )schedule)->set_time_list(list);
 
+    } else if (var_minimum_time) {
+
+      ERROR("Schedule::create",
+            "Unable to make a schedule from a list of minimum times");
+
     } else if (var_seconds) {
 
       ((ScheduleList * )schedule)->set_seconds_list(list);
@@ -92,6 +103,7 @@ Schedule * Schedule::create
 
   if (var_cycle) schedule->set_type(schedule_type_cycle);
   if (var_time)  schedule->set_type(schedule_type_time);
+  if (var_minimum_time) schedule->set_type(schedule_type_minimum_time);
   if (var_seconds)  schedule->set_type(schedule_type_seconds);
 
   return schedule;
