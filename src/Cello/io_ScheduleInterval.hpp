@@ -58,6 +58,10 @@ public: // functions
   void set_time_interval
   (double time_start, double time_step, double time_stop) throw();
 
+  /// Set minimum time interval (start, step, stop)
+  void set_minimum_time_interval
+  (double time_start, double time_step, double time_stop) throw();
+
   /// Set seconds interval (start, step, stop)
   void set_seconds_interval
   (double seconds_start, double seconds_step, double seconds_stop) throw();
@@ -69,6 +73,9 @@ public:  // virtual functions
 
   /// Whether to perform IO this cycle
   virtual bool write_this_cycle ( int cycle, double time) throw();
+
+  virtual int cycle_next() const throw()
+  { return cycle_start_ + (last_ + 1)*cycle_step_; };
 
   virtual double time_next() const throw()
   { return time_start_ + (last_ + 1)*time_step_; };
@@ -84,7 +91,8 @@ public:  // virtual functions
       CkPrintf ("ScheduleInterval:cycle_start_ = %d\n",cycle_start_);
       CkPrintf ("ScheduleInterval:cycle_step_  = %d\n",cycle_step_);
       CkPrintf ("ScheduleInterval:cycle_stop_ = %d\n",cycle_stop_);
-    } else if (type_ == schedule_type_time) {
+    } else if ((type_ == schedule_type_time) ||
+               (type_ == schedule_type_minimum_time)) {
       CkPrintf ("ScheduleInterval:time_start_ = %g\n",time_start_);
       CkPrintf ("ScheduleInterval:time_step_  = %g\n",time_step_);
       CkPrintf ("ScheduleInterval:time_stop_ = %g\n",time_stop_);
