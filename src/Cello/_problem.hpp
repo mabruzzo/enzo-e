@@ -51,6 +51,7 @@ enum neighbor_enum {
 #include "problem_Value.hpp"
 //#include "problem_MaskPng.hpp"
 //#include "problem_ExprValue.hpp"
+#include "problem_PassiveSchedule.hpp"
 #include "problem_Problem.hpp"
 #include "problem_Stopping.hpp"
 #include "problem_Initial.hpp"

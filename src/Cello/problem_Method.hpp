@@ -10,6 +10,7 @@
 
 class Refresh;
 class Schedule;
+class PassiveSchedule;
 
 class Method : public PUP::able 
 {
@@ -22,7 +23,7 @@ public: // interface
   /// Create a new Method
   Method (double courant = 1.0) throw()
     : refresh_list_(),
-      schedule_(NULL),
+      passive_schedule_(NULL),
       courant_(courant)
   { }
 
@@ -35,7 +36,7 @@ public: // interface
   Method (CkMigrateMessage *m)
     : PUP::able(m),
       refresh_list_(),
-      schedule_(NULL),
+      passive_schedule_(NULL),
       courant_(1.0)
   { }
       
@@ -80,12 +81,11 @@ public: // virtual functions
     return (index < refresh_list_.size()) ? refresh_list_[index] : NULL;
   }
 
-  /// Return the Schedule object pointer
-  Schedule * schedule() throw() 
-  { return schedule_; };
+  /// advance schedule (if necessary) and return whether method is scheduled
+  bool advance_schedule(int cycle, double time) throw();
 
   /// Set schedule
-  void set_schedule (Schedule * schedule) throw();
+  void set_schedule (Schedule * schedule, double initial_time) throw();
 
   double courant() const throw ()
   { return courant_; }
@@ -116,8 +116,8 @@ protected: // attributes
   std::vector<Refresh *> refresh_list_;
 
 
-  /// Schedule object, if any (default is every cycle)
-  Schedule * schedule_;
+  /// PassiveSchedule object, if any (default is every cycle)
+  PassiveSchedule * passive_schedule_;
 
   /// Courant condition for the Method
   double courant_;
