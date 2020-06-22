@@ -12,7 +12,7 @@ double Method::courant_global = 1.0;
 //----------------------------------------------------------------------
 
 Method::Method (double courant) throw()
-  : schedule_(NULL),
+  : passive_schedule_(NULL),
     courant_(courant),
     neighbor_type_(neighbor_leaf)
 {
@@ -24,7 +24,7 @@ Method::Method (double courant) throw()
 
 Method::~Method() throw()
 {
-  delete schedule_;
+  delete passive_schedule_;
 }
 
 //----------------------------------------------------------------------
@@ -32,8 +32,7 @@ Method::~Method() throw()
 void Method::pup (PUP::er &p)
 { TRACEPUP;
   PUP::able::pup(p);
-
-  p | schedule_; // pupable
+  p | passive_schedule_; // pupable
   p | courant_;
   p | ir_post_;
   p | neighbor_type_;
@@ -65,10 +64,21 @@ int Method::refresh_id_post() const
 
 //----------------------------------------------------------------------
 
-void Method::set_schedule (Schedule * schedule) throw()
+bool Method::advance_schedule(int cycle, double time) throw(){
+  if (passive_schedule_){
+    // Implicitly handles advancement
+    return passive_schedule_->is_scheduled(cycle,time);
+  } else { // default case: scheduled every cycle
+    return true;
+  }
+}
+
+//----------------------------------------------------------------------
+
+void Method::set_schedule (Schedule * schedule, double initial_time) throw()
 { 
-  if (schedule_) delete schedule_;
-  schedule_ = schedule;
+  if (passive_schedule_) delete passive_schedule_;
+  passive_schedule_ = new PassiveSchedule(schedule, initial_time);
 }
 
 //======================================================================

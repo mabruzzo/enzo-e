@@ -55,6 +55,7 @@ module mesh {
   PUPable OutputCheckpoint;
   PUPable OutputData;
   PUPable OutputImage;
+  PUPable PassiveSchedule;
   PUPable Physics;
   PUPable Problem;
   PUPable ProlongInject;
