@@ -1470,9 +1470,10 @@ int Config::read_schedule_(Parameters * p, const std::string group)
   bool var_is_int = true;
 
   // Get variable associated with the schedule 
-  if      (schedule_var[index] == "cycle")    var_is_int = true;
-  else if (schedule_var[index] == "time")     var_is_int = false;
-  else if (schedule_var[index] == "seconds")  var_is_int = false;
+  if      (schedule_var[index] == "cycle")         var_is_int = true;
+  else if (schedule_var[index] == "time")          var_is_int = false;
+  else if (schedule_var[index] == "minimum_time")  var_is_int = false;
+  else if (schedule_var[index] == "seconds")       var_is_int = false;
   else {
     ERROR2 ("Config::read",
 	    "Schedule variable %s is not recognized for parameter group %s",
