@@ -87,10 +87,8 @@ void Block::compute_continue_ ()
 #endif
 
   Method * method = this->method();
-  Schedule * schedule = method->schedule();
-  bool is_scheduled = 
-    (schedule==NULL) ||
-    (schedule->write_this_cycle(cycle_,time_));
+  // advance schedule (if necessary) and return whether method is scheduled
+  bool is_scheduled = method->advance_schedule(cycle_,time_);
 
   if (is_scheduled) {
 

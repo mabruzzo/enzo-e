@@ -468,7 +468,8 @@ void Problem::initialize_method ( Config * config ) throw()
 			     config->schedule_start[index_schedule],
 			     config->schedule_stop[index_schedule],
 			     config->schedule_step[index_schedule],
-			     config->schedule_list[index_schedule]));
+			     config->schedule_list[index_schedule]),
+           config->initial_time);
       }
 
     } else {
