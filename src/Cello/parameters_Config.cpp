@@ -116,9 +116,6 @@ void Config::pup (PUP::er &p)
   p | method_frame_transform_use_frame_transform;
   PUParray(p,method_frame_transform_track_component,3);
   p | method_frame_transform_weight_field;
-  p | method_frame_transform_cycle_update;
-  p | method_frame_transform_update_start;
-  p | method_frame_transform_update_step;
   p | method_frame_transform_weight_threshold;
   p | method_frame_transform_threshold_type;
 
@@ -768,24 +765,6 @@ void Config::read_method_ (Parameters * p) throw()
     for (int i=0; i<3; i++) {
       method_frame_transform_track_component[i] = p->list_value_logical
 	(i, "Method:frame_transform:track_component", false);
-    }
-
-    // Make sure the following was specifed
-    std::string method_name_ = "Method:frame_transform:cycle_based_update";
-    ASSERT1 ("Config::read_method_", "A logical value is requred for %s",
-	     method_name_.c_str(), parameter_logical == p->type(method_name_));
-    method_frame_transform_cycle_update = p->value_logical(method_name_, true);
-
-    if (method_frame_transform_cycle_update){
-      method_frame_transform_update_start = p->value_integer
-	("Method:frame_transform:update_start",  0);
-      method_frame_transform_update_step  = p->value_integer
-	("Method:frame_transform:update_stride", 1);
-    } else {
-      method_frame_transform_update_start = p->value_float
-	("Method:frame_transform:update_start",  0.0);
-      method_frame_transform_update_step  = p->value_float
-	("Method:frame_transform:update_stride", 1.0);
     }
   }
   method_frame_transform_weight_field = p->value_string

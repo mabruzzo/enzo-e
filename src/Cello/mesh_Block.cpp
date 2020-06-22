@@ -59,7 +59,8 @@ Block::Block ( MsgRefine * msg )
   dt_(0.0),
   stop_(false),
   frame_velocity_(),
-  origin_offset_(),
+  last_updated_origin_offset_(),
+  last_frame_update_time_(std::numeric_limits<double>::lowest()),
   index_initial_(0),
   children_(),
   sync_coarsen_(),
@@ -128,7 +129,8 @@ Block::Block ( process_type ip_source )
   dt_(0.0),
   stop_(false),
   frame_velocity_(),
-  origin_offset_(),
+  last_updated_origin_offset_(),
+  last_frame_update_time_(std::numeric_limits<double>::lowest()),
   index_initial_(0),
   children_(),
   sync_coarsen_(),
@@ -401,7 +403,8 @@ void Block::pup(PUP::er &p)
   p | dt_;
   p | stop_;
   PUParray(p,frame_velocity_,3);
-  PUParray(p,origin_offset_,3);
+  PUParray(p,last_updated_origin_offset_,3);
+  p | last_frame_update_time_;
   p | index_initial_;
   p | children_;
   p | sync_coarsen_;

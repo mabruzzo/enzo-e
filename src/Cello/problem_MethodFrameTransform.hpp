@@ -30,8 +30,6 @@ public: // interface
   /// Create a new MethodFrameTransform object
   MethodFrameTransform(bool component_transform[3],
 		       std::string weight_field,
-		       bool cycle_based_update,
-		       double update_start, double update_step,
 		       double weight_threshold,
 		       std::string threshold_type);
 
@@ -44,13 +42,7 @@ public: // interface
       component_transform_(), // initialize to (false,false,false)
       weight_field_(""),
       weight_threshold_(0.0),
-      threshold_type_(threshold_enum::ignore),
-      cycle_based_update_(true),
-      cycle_start_(0),
-      cycle_step_(1),
-      time_start_(0.0),
-      time_step_(0.0),
-      prev_time_update_(0.)
+      threshold_type_(threshold_enum::ignore)
   { }
 
   /// CHARM++ Pack / Unpack function
@@ -125,18 +117,6 @@ protected: // attributes
   /// How the threshold should be applied
   threshold_enum threshold_type_;
 
-  /// Whether updates are based on cycle OR simulation time
-  bool cycle_based_update_;
-
-  /// Cycle to start tracking the velocity and perform the transform
-  int cycle_start_;
-  /// the number of cycles to wait between updating the reference frame
-  int cycle_step_;
-
-  /// simulation time to start tracking the velocity and perform the transform
-  double time_start_;
-  /// the amount of simulation time between updating the reference frame
-  double time_step_;
   /// Records the time at which the previous velocity update was made
   double prev_time_update_;
 
