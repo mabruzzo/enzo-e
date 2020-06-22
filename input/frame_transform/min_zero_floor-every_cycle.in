@@ -1,0 +1,23 @@
+include "input/frame_transform/input_common.incl"
+
+Method{
+
+   frame_transform{
+      reduction_type = "min_zero_floor";
+      # this is tuned so that there is a period of time with negative and
+      # positive values
+      weight_threshold = 15.999999;
+      schedule {
+          var   = "cycle";
+          start = 0;
+          step  = 1;
+      };
+   };
+
+}
+
+Output {
+    cycled {
+        dir = [ "frame_transform-min_zero_floor-every_cycle_%03d", "cycle" ];
+    };
+}
