@@ -152,14 +152,18 @@ public: // interface
     if (vz) { *vz = frame_velocity_[2]; }
   }
 
-  /// Return current origin offset
-  void origin_offset
+  /// Return the origin offset computed during the last frame_velocity update 
+  void last_updated_origin_offset
   (double * dx, double * dy = 0, double * dz = 0) const throw()
   {
-    if (dx) { *dx = origin_offset_[0]; }
-    if (dy) { *dy = origin_offset_[1]; }
-    if (dz) { *dz = origin_offset_[2]; }
+    if (dx) { *dx = last_updated_origin_offset_[0]; }
+    if (dy) { *dy = last_updated_origin_offset_[1]; }
+    if (dz) { *dz = last_updated_origin_offset_[2]; }
   }
+
+  /// return the last time when frame_velocity was updated
+  double last_frame_update_time() const throw()
+  { return last_frame_update_time_; }
 
   /// Return whether this Block is a leaf in the octree array
   bool is_leaf() const 
@@ -814,13 +818,21 @@ public: // virtual functions
   void set_stop (double stop) throw()
   { stop_  = stop; }
 
-  /// Set Block's current velocity frame
-  void set_frame_velocity(double vx, double vy = 0, double vz = 0) throw()
-  { frame_velocity_[0] = vx; frame_velocity_[1] = vy; frame_velocity_[2] = vz;}
-
-  /// Set Block's origin offset
-  void set_origin_offset(double dx, double dy = 0, double dz = 0) throw()
-  { origin_offset_[0] = dx;  origin_offset_[1] = dy;  origin_offset_[2] = dz;}
+  /// update reference frame properties
+  void update_frame_properties(double update_time, double vx,
+                               double vy = 0, double vz = 0) throw()
+  {
+    // since last_frame_update_time_ is initialized to the smallest float and
+    // velocity is initialized to 0 this implicitly handles the first update
+    double dt = update_time - last_frame_update_time_;
+    ASSERT("Block::update_frame_properties",
+           "update_time must exceed last_frame_update_time_", dt >= 0);
+    for (int i = 0; i < 3; i++){
+      last_updated_origin_offset_[i] += dt * frame_velocity_[i];
+    }
+    last_frame_update_time_ = update_time;
+    frame_velocity_[0] = vx; frame_velocity_[1] = vy; frame_velocity_[2] = vz;
+  }
 
   /// Initialize Block
   virtual void initialize ();
@@ -1005,9 +1017,13 @@ protected: // attributes
   /// starts at {0.,0,.0.}. Only modified by MethodFrameTransform
   double frame_velocity_[3];
 
-  /// Current offset ({dx,dy,dz}) of the origin (w.r.t. initial frame). Always
-  /// starts at {0.,0,.0.}. Only modified by MethodFrameTransform
-  double origin_offset_[3];
+  /// Offset ({dx,dy,dz}) of the origin (w.r.t. initial frame) at
+  /// last_frame_update_time_. Always starts at {0.,0,.0.}. Only modified by
+  /// MethodFrameTransform
+  double last_updated_origin_offset_[3];
+
+  /// The most recent time when frame_velocity_ was updated
+  double last_frame_update_time_;
 
   //--------------------------------------------------
 

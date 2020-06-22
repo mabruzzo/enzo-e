@@ -1,0 +1,145 @@
+# basically initializing a crude cloud-crushing problem (cloud is actually a
+# block)
+
+Domain {
+   lower = [ -3., -3., -3. ];
+   upper = [  3.,  3.,  3. ];
+}
+
+Boundary {
+   list = [ "downwind", "density_upwind", "velocity_x_upwind",
+            "transverse_velocity_upwind", "total_energy_upwind",
+            "yedge", "zedge"];
+
+   density_upwind {
+         axis = "x";
+         face = "lower";
+         field_list = "density";
+         type = "inflow";
+         value = 0.16;
+   };
+
+   velocity_x_upwind {
+         axis = "x";
+         face = "lower";
+         field_list = "velocity_x";
+         type = "inflow";
+         value = 10.;
+   };
+
+   transverse_velocity_upwind {
+         axis = "x";
+         face = "lower";
+         field_list = [ "velocity_y", "velocity_z" ];
+         type = "inflow";
+         value = 0.000000000000000;
+   };
+
+   total_energy_upwind {
+         axis = "x";
+         face = "lower";
+         field_list = "total_energy";
+         type = "inflow";
+         value = 90.0;
+   };
+
+   yedge {
+         type = "outflow";
+   };
+
+   zedge {
+         type = "outflow";
+   };
+
+   downwind {
+         axis = "x";
+         face = "upper";
+         type = "outflow";
+   };
+
+}
+
+Initial {
+   list = ["value"];
+   value {
+      density         = [ 16.0,
+      ( x * x <= 1.0 ) && ( y * y <= 1.0 ) && ( z * z <= 1.0 ),
+                          0.16 ];
+      velocity_x      = [ 0.0,
+      ( x * x <= 1.0 ) && ( y * y <= 1.0 ) && ( z * z <= 1.0 ),
+                          10. ];
+      total_energy    = [ 0.4,
+      ( x * x <= 1.0 ) && ( y * y <= 1.0 ) && ( z * z <= 1.0 ),
+                          90. ];
+      velocity_y      = 0.0;
+      velocity_z      = 0.0;
+      internal_energy = 0.0;
+      pressure        = 0.0;
+   }
+}
+
+
+Field {
+     ghost_depth = 4;
+   
+     list = ["density",
+   	     "velocity_x",
+	     "velocity_y",
+	     "velocity_z",
+	     "internal_energy",
+	     "total_energy",
+	     "pressure"];
+
+     gamma = 1.666666666666667;
+ }
+
+Mesh {
+   root_rank = 3;
+   root_size   = [ 24, 24, 24];
+   root_blocks = [  2,  2,  2];
+}
+
+
+# this needs to be factored out into another part
+  Method {
+
+     list = ["null","ppm", "frame_transform"];
+
+     null {
+         # 1/512. This was chosen so that the timesteps would all be
+         # predictable.
+         dt = 0.001953125;
+     }
+
+     ppm {
+         courant = 0.4;
+         dual_energy = false;
+     }
+
+     frame_transform {
+         threshold_type = "lower_limit";
+         track_component = [ true, false, false ];
+         weight_field = "density";
+         weight_threshold = 16.;
+     };
+   }
+
+
+Stopping {
+   cycle = 16;
+}
+
+ Output {
+     cycled {
+         type = "data";
+         field_list = [ "density", "velocity_x", "velocity_y", "velocity_z",
+                        "total_energy" ];
+         name = [ "cloud-data-%03d.h5", "proc" ];
+         # dir and schedule needs to filled in
+         schedule {
+             step = 1;
+             var = "cycle";
+         };
+     };
+     list = [ "cycled" ];
+ }

@@ -853,11 +853,9 @@ Method * Problem::create_method_
     method = new MethodFrameTransform
       (config->method_frame_transform_track_component,
        config->method_frame_transform_weight_field,
-       config->method_frame_transform_cycle_update,
-       config->method_frame_transform_update_start,
-       config->method_frame_transform_update_step,
        config->method_frame_transform_weight_threshold,
-       config->method_frame_transform_threshold_type);
+       config->method_frame_transform_threshold_type,
+       config->method_frame_transform_reduction_type);
   }
   return method;
 }
