@@ -16,6 +16,82 @@ enum threshold_enum {
   upper_limit
 };
 
+/// @enum     frame_trans_reduce_enum
+/// @brief    Describes the type of reduction
+enum frame_trans_reduce_enum {
+  unknown = 0,
+  weighted_average,
+  min,
+  min_zero_floor,
+};
+
+class FrameTransformReductionMgr{
+  // This is a helper class that manages operations associated with the block
+  // reduction for calculating incremental changes in the frame velocity. In
+  // all cases, weight_field is used with the threshold information to identify
+  // which cells to involve in the calculation 
+  //
+  // The currently supported reduction types are:
+  //     - "weighted_average": each component of the new frame velocity is the
+  //       average of the velocity component of all selected cells, weighted
+  //       by weight_field. Note: weight_field is assumed to be a density-like
+  //       quantity (it will be multplied by cell-volume)
+  //     - "min": each component of the new frame velocity is the minimum value
+  //       of the velocity component of all selected cells
+  //     - "min_zero_floor": same as "min", except the velocity is not allowed
+  //       a floor of zero is placed on the final value
+
+public:
+  /// Main Constructor
+  FrameTransformReductionMgr(std::string weight_field, double weight_threshold,
+                             std::string threshold_type,
+                             std::string reduction_type) throw();
+
+  /// Default Constructor - mainly used for charm++ unpacking
+  FrameTransformReductionMgr() throw()
+    : weight_field_(""), weight_threshold_(0.0),
+      threshold_type_(threshold_enum::ignore),
+      reduction_type_(frame_trans_reduce_enum::unknown)
+  { }
+
+  /// CHARM++ Pack / Unpack function
+  ///
+  /// Since the class is not meant to be referred to by pointer, it doesn't
+  /// need to be declared PUPable
+  void pup(PUP::er &p);
+
+  /// Launch the charm++ reduction to compute the new frame velocity
+  ///
+  /// @tparam T the precision of the block fields
+  template<typename T>
+  void launch_reduction(Block * block, const bool component_transform[3],
+                        CkCallback &cb) const throw();
+
+  /// Function called after completion of the reduction to determine the new
+  /// frame velocity (in the current reference frame) from the reduction result
+  void extract_final_velocity(CkReductionMsg * msg, double v[3]) const throw();
+
+private: // helper functions
+
+  /// helper function used to compute the reduction values for the local block
+  template <class T, class Function>
+  void local_block_reduction_(Block * block, Function func) const throw();
+
+private: // attributes
+  /// Name of the density field used for weighting the velocity.
+  std::string weight_field_;
+
+  /// A threshold for the weight_field
+  double weight_threshold_;
+
+  /// How the threshold should be applied
+  threshold_enum threshold_type_;
+
+  /// The type of reduction to be applied
+  frame_trans_reduce_enum reduction_type_;
+};
+  
+
 class MethodFrameTransform : public Method {
 
   /// @class    MethodFrameTransform
@@ -31,7 +107,8 @@ public: // interface
   MethodFrameTransform(bool component_transform[3],
 		       std::string weight_field,
 		       double weight_threshold,
-		       std::string threshold_type);
+		       std::string threshold_type,
+                       std::string reduction_type);
 
   /// Charm++ PUP::able declarations
   PUPable_decl(MethodFrameTransform);
@@ -40,9 +117,7 @@ public: // interface
   MethodFrameTransform (CkMigrateMessage *m)
     : Method (m),
       component_transform_(), // initialize to (false,false,false)
-      weight_field_(""),
-      weight_threshold_(0.0),
-      threshold_type_(threshold_enum::ignore)
+      reduction_mgr_()
   { }
 
   /// CHARM++ Pack / Unpack function
@@ -71,36 +146,9 @@ public: // interface
 
 private: // methods
 
-  /// Checks whether current simulation time/cycle preceedes the first
-  /// scheduled frame velocity update
-  bool precede_first_transform_(Block * block) const throw();
-
-  /// Checks if a frame velocity update is scheduled for the current simulation
-  /// time/cycle preceedes. If an update is scheduled and scheduling is
-  /// time-based, this records that the current simulation time as the time at
-  /// which the most recent velocity update was performed.
-  ///
-  /// @details
-  /// Because MethodFrameTransform can't rely on the method being executed at
-  /// specific simulation times, time scheduled frame velocity updates are
-  /// performed at the simulation times immediately following the scheduled
-  /// times. Consequently, the simulation time at which the most recent frame
-  /// velocity update was performed must be recorded (to avoid multiple updates
-  /// for a single scheduled time). This function effectively assumes that
-  /// the frame velocity will be updated for any cycle that it returns true,
-  /// which is why it records that the current simulation time as the time at
-  /// which the most recent velocity update was performed.
-  bool scheduled_velocity_update_(Block * block) throw();
-
   /// Returns the precision of the velocity and energy fields. Makes sure that
   /// the precision is the same for each of them.
   precision_type field_precision_(Field &field) const throw();
-
-  /// Computes the sum of the weight_field multiplied by cell volume ("mass")
-  /// and the "mass" multiplied by the velocity ("momementum") over the block.
-  template <class T>
-  void block_totals_(Block *block, double &mass,
-		     double momentum[3]) const throw();
 
 protected: // attributes
 
@@ -108,18 +156,8 @@ protected: // attributes
   /// - the corresponding components are ordered (x,y,z)
   bool component_transform_[3];
 
-  /// Name of the density field used for weighting the velocity.
-  std::string weight_field_;
-
-  /// A threshold for the weight_field
-  double weight_threshold_;
-
-  /// How the threshold should be applied
-  threshold_enum threshold_type_;
-
-  /// Records the time at which the previous velocity update was made
-  double prev_time_update_;
-
+  /// Manages the reduction to compute incremental changed in frame velocity
+  FrameTransformReductionMgr reduction_mgr_;
 };
 
 #endif /* PROBLEM_METHOD_FRAME_TRANSFORM */

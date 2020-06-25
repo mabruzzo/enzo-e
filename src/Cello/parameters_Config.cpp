@@ -118,6 +118,7 @@ void Config::pup (PUP::er &p)
   p | method_frame_transform_weight_field;
   p | method_frame_transform_weight_threshold;
   p | method_frame_transform_threshold_type;
+  p | method_frame_transform_reduction_type;
 
   // Monitor
 
@@ -773,6 +774,8 @@ void Config::read_method_ (Parameters * p) throw()
     ("Method:frame_transform:weight_threshold", 0.);
   method_frame_transform_threshold_type = p->value_string
     ("Method:frame_transform:threshold_type", "ignore");
+  method_frame_transform_reduction_type = p->value_string
+    ("Method:frame_transform:reduction_type", "weighted_average");
   
 }
 

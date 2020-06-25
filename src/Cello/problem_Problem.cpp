@@ -818,7 +818,8 @@ Method * Problem::create_method_
       (config->method_frame_transform_track_component,
        config->method_frame_transform_weight_field,
        config->method_frame_transform_weight_threshold,
-       config->method_frame_transform_threshold_type);
+       config->method_frame_transform_threshold_type,
+       config->method_frame_transform_reduction_type);
   }
   return method;
 }

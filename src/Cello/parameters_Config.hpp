@@ -85,6 +85,7 @@ public: // interface
     method_frame_transform_weight_field(),
     method_frame_transform_weight_threshold(),
     method_frame_transform_threshold_type(),
+    method_frame_transform_reduction_type(),
     monitor_debug(false),
     monitor_verbose(false),
     num_output(0),
@@ -238,6 +239,7 @@ public: // interface
       method_frame_transform_weight_field(),
       method_frame_transform_weight_threshold(),
       method_frame_transform_threshold_type(),
+      method_frame_transform_reduction_type(),
       monitor_debug(false),
       monitor_verbose(false),
       num_output(0),
@@ -439,6 +441,7 @@ public: // attributes
   std::string                method_frame_transform_weight_field;
   double                     method_frame_transform_weight_threshold;
   std::string                method_frame_transform_threshold_type;
+  std::string                method_frame_transform_reduction_type;
 
   // Monitor
 
