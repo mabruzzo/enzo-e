@@ -1,0 +1,3 @@
+include "input/frame_transform/input_common.incl"
+
+Output { cycled { dir = [ "frame_transform-every_cycle_%03d", "cycle" ]; }; }
