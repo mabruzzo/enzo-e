@@ -156,6 +156,7 @@ EnzoConfig::EnzoConfig() throw ()
   method_grackle_chemistry(),
   method_grackle_use_cooling_timestep(false),
   method_grackle_radiation_redshift(-1.0),
+  method_grackle_HydrogenFractionByMass(ENZO_FLOAT_UNDEFINED),
 #endif
   // EnzoMethodGravity
   method_gravity_grav_const(0.0),
@@ -414,6 +415,7 @@ void EnzoConfig::pup (PUP::er &p)
 #ifdef CONFIG_USE_GRACKLE
   p  | method_grackle_use_cooling_timestep;
   p  | method_grackle_radiation_redshift;
+  p  | method_grackle_HydrogenFractionByMass;
 
   if (method_grackle_use_grackle){
     if (p.isUnpacking()) { method_grackle_chemistry = new chemistry_data; }
@@ -1070,9 +1072,13 @@ void EnzoConfig::read(Parameters * p) throw()
       ("Method:grackle:H2_self_shielding",
        method_grackle_chemistry->H2_self_shielding);
 
-    method_grackle_chemistry->HydrogenFractionByMass = p->value_float
-      ("Method:grackle:HydrogenFractionByMass",
-        method_grackle_chemistry->HydrogenFractionByMass);
+    method_grackle_chemistry->forced_primordial_mmw = p->value_float
+      ("Method:grackle:forced_primordial_mmw",
+       method_grackle_chemistry->forced_primordial_mmw);
+
+    method_grackle_chemistry->with_compton_cooling = p->value_integer
+      ("Method:grackle:with_compton_cooling",
+       method_grackle_chemistry->with_compton_cooling);
 
     method_grackle_chemistry->DeuteriumToHydrogenRatio = p->value_float
       ("Method:grackle:DeuteriumToHydrogenRatio",
@@ -1115,6 +1121,14 @@ void EnzoConfig::read(Parameters * p) throw()
     // parameter for turning RT on / off:
     //   method_grackle_chemistry->use_radiative_transfer = ENZO_P_PARAMETER_NAME;
 
+    // HydrogenFractionByMass must be set AFTER initialize_chemistry_data.
+    // When that function is called and grackle_data->primordial_chemistry==0
+    // then the value gets overwritten
+    method_grackle_HydrogenFractionByMass = p->value_float
+      ("Method:grackle:HydrogenFractionByMass",
+       ENZO_FLOAT_UNDEFINED);
+    method_grackle_chemistry->HydrogenFractionByMass =
+      method_grackle_HydrogenFractionByMass;
   }
 #endif /* CONFIG_USE_GRACKLE */
 
