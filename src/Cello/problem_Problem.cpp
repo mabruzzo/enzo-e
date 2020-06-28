@@ -576,9 +576,8 @@ Boundary * Problem::create_boundary_
   } else if (type == "periodic") {
 
     axis_enum axis = (axis_enum) config->boundary_axis[index];
-    face_enum face = (face_enum) config->boundary_face[index];
 
-    return new BoundaryPeriodic(axis,face);
+    return new BoundaryPeriodic(axis);
 
   }
   return NULL;
@@ -778,6 +777,16 @@ Physics * Problem::physics (std::string type) const throw()
 {
   for (size_t i=0; i<physics_list_.size(); i++) {
     if (physics_list_[i]->type() == type) return physics_list_[i];
+  }
+  return NULL;
+}
+
+//----------------------------------------------------------------------
+
+Method * Problem::method (std::string name) const throw()
+{
+  for (size_t i=0; i<method_list_.size(); i++) {
+    if (method_list_[i]->name() == name) return method_list_[i];
   }
   return NULL;
 }
