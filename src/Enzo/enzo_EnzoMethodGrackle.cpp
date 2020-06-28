@@ -12,6 +12,69 @@
 
 //----------------------------------------------------------------------------
 
+void required_grackle_fields_(std::vector<std::string> &required_fields,
+			      std::vector<std::string> &colour_fields)
+{
+  // Gather list of fields that MUST be defined for this method and
+
+  if (!enzo::config()->method_grackle_use_grackle) {return;}
+#ifdef CONFIG_USE_GRACKLE
+
+  chemistry_data * grackle_chemistry =
+    enzo::config()->method_grackle_chemistry;
+
+  if (grackle_chemistry->metal_cooling > 0){
+    std::string metal_name = "metal_density";
+    colour_fields.push_back(metal_name);
+  }
+
+  // Define primordial chemistry fields
+  if (grackle_chemistry->primordial_chemistry > 0){
+    std::string pc1_fields[6] = {"HI_density","HII_density",
+                                  "HeI_density","HeII_density","HeIII_density",
+                                  "e_density"};
+    int numfields = 6;
+    for(int ifield = 0; ifield < numfields; ifield++){
+      colour_fields.push_back( pc1_fields[ifield] );
+    }
+
+    if(grackle_chemistry->primordial_chemistry > 1){
+      std::string pc2_fields[3] = {"HM_density", "H2I_density", "H2II_density"};
+      numfields = 3;
+      for (int ifield = 0; ifield < numfields; ifield++){
+        colour_fields.push_back( pc2_fields[ifield] );
+      }
+
+      if(grackle_chemistry->primordial_chemistry > 2){
+        std::string pc3_fields[3] = {"DI_density", "DII_density",
+				     "HDI_density"};
+        numfields = 3;
+        for(int ifield = 0; ifield < numfields; ifield++){
+          colour_fields.push_back( pc3_fields[ifield] );
+        }
+
+      } // endif primordial_chemistry > 2
+
+    } // endif primordial_chemistry > 1
+
+  } // endif primordial chemistry is on
+
+  for (std::string field : colour_fields){
+    required_fields.push_back(field);
+  }
+
+  if (grackle_chemistry->use_specific_heating_rate){
+    required_fields.push_back("specific_heating_rate");
+  }
+
+  if (grackle_chemistry->use_volumetric_heating_rate){
+    required_fields.push_back("volumetric_heating_rate");
+  }
+#endif /* CONFIG_USE_GRACKLE */
+}
+
+//----------------------------------------------------------------------------
+
 EnzoMethodGrackle::EnzoMethodGrackle
 (
   const double physics_cosmology_initial_redshift,
@@ -32,7 +95,23 @@ EnzoMethodGrackle::EnzoMethodGrackle
   /// Initialize default Refresh
   int ir = add_refresh(4,0,neighbor_leaf,sync_barrier,
                        enzo_sync_id_method_grackle);
-  refresh(ir)->add_all_fields();
+  std::vector<std::string> required_fields, colour_fields;
+  required_grackle_fields_(required_fields, colour_fields);
+  for (int ifield = 0; ifield < required_fields.size(); ifield++){
+    refresh(ir)->add_field(required_fields[ifield]);
+  }
+
+  FieldDescr * field_descr = cello::field_descr();
+  std::string other_fields[9] = {"density", "total_energy", "internal_energy",
+				 "velocity_x", "velocity_y", "velocity_z",
+				 "bfield_x", "bfield_y", "bfield_z"};
+  int num_fields = 9;
+  for (int i=0; i<num_fields; i++){
+    std::string field_name = other_fields[i];
+    if ( field_descr->is_field(field_name)){
+      refresh(ir)->add_field(field_name);
+    }
+  }
 
   /// Define Grackle's internal data structures
   time_grackle_data_initialized_ = ENZO_FLOAT_UNDEFINED;
@@ -91,95 +170,21 @@ void EnzoMethodGrackle::define_required_grackle_fields()
 
   FieldDescr * field_descr = cello::field_descr();
 
-  std::vector<std::string> fields_to_define;
-  std::vector<std::string> color_fields;
+  std::vector<std::string> required_fields, colour_fields;
+  required_grackle_fields_(required_fields, colour_fields);
 
-  chemistry_data * grackle_chemistry =
-    enzo::config()->method_grackle_chemistry;
-
-  if (grackle_chemistry->metal_cooling > 0){
-    std::string metal_name = "metal_density";
-
-    if (! (field_descr->is_field(metal_name))){
-      fields_to_define.push_back(metal_name);
-    }
-    color_fields.push_back(metal_name);
-  }
-
-  // Define primordial chemistry fields
-  if (grackle_chemistry->primordial_chemistry > 0){
-    std::string pc1_fields[6] = {"HI_density","HII_density",
-                                  "HeI_density","HeII_density","HeIII_density",
-                                  "e_density"};
-    int numfields = 6;
-
-    for(int ifield = 0; ifield < numfields; ifield++){
-      if (! (field_descr->is_field( pc1_fields[ifield] ))){
-        fields_to_define.push_back( pc1_fields[ifield] );
-      }
-      color_fields.push_back( pc1_fields[ifield] );
-    }
-
-    if(grackle_chemistry->primordial_chemistry > 1){
-
-      std::string pc2_fields[3] = {"HM_density", "H2I_density", "H2II_density"};
-      numfields = 3;
-
-      for (int ifield = 0; ifield < numfields; ifield++){
-        if (! (field_descr->is_field( pc2_fields[ifield] ))){
-          fields_to_define.push_back( pc2_fields[ifield] );
-        }
-        color_fields.push_back( pc2_fields[ifield] );
-      }
-
-      if(grackle_chemistry->primordial_chemistry > 2){
-        std::string pc3_fields[3] = {"DI_density", "DII_density", "HDI_density"};
-        numfields = 3;
-
-        for(int ifield = 0; ifield < numfields; ifield++){
-          if (! (field_descr->is_field( pc3_fields[ifield] ))){
-            fields_to_define.push_back( pc3_fields[ifield] );
-          }
-
-          color_fields.push_back( pc3_fields[ifield] );
-        }
-
-      } // endif primordial_chemistry > 2
-
-    } // endif primordial_chemistry > 1
-
-  } // endif primordial chemistry is on
-
-  if (grackle_chemistry->use_specific_heating_rate){
-    if ( !(field_descr->is_field("specific_heating_rate"))){
-      fields_to_define.push_back("specific_heating_rate");
+  for (int ifield = 0; ifield < required_fields.size(); ifield++){
+    std::string field_name = required_fields[ifield];
+    if ( !(field_descr->is_field(field_name))){
+      field_descr->insert_permanent(field_name);
     }
   }
 
-  if (grackle_chemistry->use_volumetric_heating_rate){
-    if ( !(field_descr->is_field("volumetric_heating_rate"))){
-      fields_to_define.push_back("volumetric_heating_rate");
-    }
-  }
-
-  // Define fields
-
-//  WARNING("EnzoMethodGrackle: ",
-//          "Not all fields needed for current Grackle settings are defined. Attempting to define:");
-
-  for (int ifield = 0; ifield < fields_to_define.size(); ifield++){
-//    WARNING(fields_to_define[ifield].c_str() );
-    field_descr->insert_permanent( fields_to_define[ifield] );
-  }
-
-  // Set these fields to color if they exist
-  //    list of fields belonging to this method that are color
-  for (int ifield=0; ifield < color_fields.size(); ifield++){
-    if (   field_descr->is_permanent(  color_fields[ifield] ) &&
-         !(field_descr->groups()->is_in( color_fields[ifield], "color")) ){
-
-
-      field_descr->groups()->add( color_fields[ifield] ,"color");
+  // Add these fields to the colour group if necessary
+  for (int ifield=0; ifield < colour_fields.size(); ifield++){
+    if (   field_descr->is_permanent(  colour_fields[ifield] ) &&
+         !(field_descr->groups()->is_in( colour_fields[ifield], "colour")) ){
+      field_descr->groups()->add( colour_fields[ifield] ,"colour");
     }
   }
 }
