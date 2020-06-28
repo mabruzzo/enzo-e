@@ -21,6 +21,9 @@ IoBlock::IoBlock() throw ()
   meta_name_.push_back("time");
   meta_name_.push_back("dt");
   meta_name_.push_back("array");
+  meta_name_.push_back("frame_velocity");
+  meta_name_.push_back("last_updated_origin_offset");
+  meta_name_.push_back("last_frame_update_time");
 
 }
 
@@ -64,6 +67,17 @@ void IoBlock::meta_value
     *buffer = (void *) & block_->array_;
     *type   = type_int;
     *nxd    = 3;
+  } else if (index == count++) {
+    *buffer = (void *) & block_->frame_velocity_;
+    *type   = type_double;
+    *nxd    = 3;
+  } else if (index == count++) {
+    *buffer = (void *) & block_->last_updated_origin_offset_;
+    *type   = type_double;
+    *nxd    = 3;
+  } else if (index == count++) {
+    *buffer = (void *) & block_->last_frame_update_time_;
+    *type   = type_double;
   }
 }
 

@@ -464,7 +464,8 @@ void Problem::initialize_method ( Config * config ) throw()
 			     config->schedule_start[index_schedule],
 			     config->schedule_stop[index_schedule],
 			     config->schedule_step[index_schedule],
-			     config->schedule_list[index_schedule]));
+			     config->schedule_list[index_schedule]),
+           config->initial_time);
       }
 
     } else {
@@ -570,8 +571,9 @@ Boundary * Problem::create_boundary_
     axis_enum axis = (axis_enum) config->boundary_axis[index];
     face_enum face = (face_enum) config->boundary_face[index];
 
-    return new BoundaryValue (axis,face,value,
-			      config->boundary_field_list[index]);
+    return new BoundaryValue
+      (axis, face, value, config->boundary_field_list[index],
+       config->method_frame_transform_use_frame_transform, &boundary_list_);
 
   } else if (type == "periodic") {
 
@@ -820,6 +822,13 @@ Method * Problem::create_method_
     method = new MethodTrace(config->method_courant[index_method],
 			     config->method_timestep[index_method],
 			     config->method_trace_name[index_method]);
+  } else if (name == "frame_transform") {
+    method = new MethodFrameTransform
+      (config->method_frame_transform_track_component,
+       config->method_frame_transform_weight_field,
+       config->method_frame_transform_weight_threshold,
+       config->method_frame_transform_threshold_type,
+       config->method_frame_transform_reduction_type);
   }
   return method;
 }

@@ -113,6 +113,13 @@ void Config::pup (PUP::er &p)
   p | method_timestep;
   p | method_trace_name;
 
+  p | method_frame_transform_use_frame_transform;
+  PUParray(p,method_frame_transform_track_component,3);
+  p | method_frame_transform_weight_field;
+  p | method_frame_transform_weight_threshold;
+  p | method_frame_transform_threshold_type;
+  p | method_frame_transform_reduction_type;
+
   // Monitor
 
   p | monitor_debug;
@@ -740,6 +747,36 @@ void Config::read_method_ (Parameters * p) throw()
     method_trace_name[index_method] = p->value_string
       (full_name + ":name", "trace");
   }
+
+
+  method_frame_transform_use_frame_transform = false;
+  for (size_t i=0; i<method_list.size(); i++) {
+    if (method_list[i] == "frame_transform"){
+      method_frame_transform_use_frame_transform=true;
+    }
+  }
+
+  if (method_frame_transform_use_frame_transform){
+    int list_length = p->list_length
+      ("Method:frame_transform:track_component");
+    ASSERT("Config::read_method_",
+	   ("Method:frame_transform:track_component must have 3 "
+	    "entries or have a length matching Mesh:root_rank"),
+	   (list_length == 3) || (list_length == mesh_root_rank));
+    for (int i=0; i<3; i++) {
+      method_frame_transform_track_component[i] = p->list_value_logical
+	(i, "Method:frame_transform:track_component", false);
+    }
+  }
+  method_frame_transform_weight_field = p->value_string
+    ("Method:frame_transform:weight_field", "");
+  method_frame_transform_weight_threshold = p->value_float
+    ("Method:frame_transform:weight_threshold", 0.);
+  method_frame_transform_threshold_type = p->value_string
+    ("Method:frame_transform:threshold_type", "ignore");
+  method_frame_transform_reduction_type = p->value_string
+    ("Method:frame_transform:reduction_type", "weighted_average");
+  
 }
 
 //----------------------------------------------------------------------
@@ -1376,9 +1413,10 @@ int Config::read_schedule_(Parameters * p, const std::string group)
   bool var_is_int = true;
 
   // Get variable associated with the schedule 
-  if      (schedule_var[index] == "cycle")    var_is_int = true;
-  else if (schedule_var[index] == "time")     var_is_int = false;
-  else if (schedule_var[index] == "seconds")  var_is_int = false;
+  if      (schedule_var[index] == "cycle")         var_is_int = true;
+  else if (schedule_var[index] == "time")          var_is_int = false;
+  else if (schedule_var[index] == "minimum_time")  var_is_int = false;
+  else if (schedule_var[index] == "seconds")       var_is_int = false;
   else {
     ERROR2 ("Config::read",
 	    "Schedule variable %s is not recognized for parameter group %s",

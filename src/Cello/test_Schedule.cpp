@@ -102,6 +102,85 @@ PARALLEL_MAIN_BEGIN
     delete schedule;
   }
 
+  {
+    ScheduleInterval * schedule = new ScheduleInterval;
+
+    unit_assert (schedule != NULL);
+
+    //--------------------------------------------------
+
+    unit_func("write_this_cycle");
+    schedule->set_minimum_time_interval(10.0,2.0,20.0);
+
+    unit_assert(schedule->write_this_cycle (0,  8.0) == false);
+    unit_assert(schedule->write_this_cycle (0, 10.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 12.0) == true);
+
+    unit_assert(schedule->write_this_cycle (0, 20.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 21.0) == false);
+    schedule->next();
+
+    unit_assert(schedule->write_this_cycle (0, 10.0) == false);
+    unit_assert(schedule->write_this_cycle (0, 12.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 14.0) == true);
+
+    unit_assert(schedule->write_this_cycle (0, 20.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 21.0) == false);
+    schedule->next();
+
+    unit_assert(schedule->write_this_cycle (0, 12.0) == false);
+    unit_assert(schedule->write_this_cycle (0, 14.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 16.0) == true);
+
+    unit_assert(schedule->write_this_cycle (0, 20.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 21.0) == false);
+    schedule->next();
+
+    unit_assert(schedule->write_this_cycle (0, 14.0) == false);
+    unit_assert(schedule->write_this_cycle (0, 16.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 18.0) == true);
+
+    unit_assert(schedule->write_this_cycle (0, 20.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 21.0) == false);
+    schedule->next();
+
+    unit_assert(schedule->write_this_cycle (0, 16.0) == false);
+    unit_assert(schedule->write_this_cycle (0, 18.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 20.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 21.0) == false);
+    schedule->next();
+
+    unit_assert(schedule->write_this_cycle (0, 18.0) == false);
+    unit_assert(schedule->write_this_cycle (0, 20.0) == true);
+    unit_assert(schedule->write_this_cycle (0, 21.0) == false);
+    schedule->next();
+
+    unit_assert(schedule->write_this_cycle (0, 20.0) == false);
+    unit_assert(schedule->write_this_cycle (0, 21.0) == false);
+
+
+    delete schedule;
+
+    //--------------------------------------------------
+
+    schedule = new ScheduleInterval;
+    unit_assert (schedule != NULL);
+    unit_func("update_timestep");
+
+    // for schedule_type_minimum_time, update_timestep should always just
+    // return the input dt
+    schedule->set_minimum_time_interval(10.0,2.0,13.0);
+
+    unit_assert(schedule->update_timestep(9.25, 0.5) == 0.5);
+    unit_assert(schedule->update_timestep(9.75, 0.5) == 0.5);
+    schedule->next();
+    unit_assert(schedule->update_timestep(9.25, 0.5) == 0.5);
+    unit_assert(schedule->update_timestep(9.75, 0.5) == 0.5);
+
+    delete schedule;
+
+  }
+
 
   {
     ScheduleInterval * schedule = new ScheduleInterval;

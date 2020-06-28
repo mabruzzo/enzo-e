@@ -50,7 +50,11 @@ public: // virtual functions
   /// Enforce boundary conditions on block for a subet of faces
   virtual void enforce ( Block * block,
 			 face_enum face = face_all,
-			 axis_enum axis = axis_all) const throw(); 
+			 axis_enum axis = axis_all) const throw();
+
+  /// Return the name of this boundary (could be more explicit)
+  virtual std::string name () throw()
+  { return "enzo_boundary"; }
 
 protected: // functions
 

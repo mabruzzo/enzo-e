@@ -1,0 +1,17 @@
+include "input/frame_transform/input_common.incl"
+
+Method{
+
+   frame_transform{
+      schedule {
+          var   = "minimum_time";
+          # start at cycle 0
+          step  = 0.0029296875; # = 3./1024 (1.5 cycles)
+      };
+   };
+
+}
+
+Output {
+    cycled { dir = [ "frame_transform-every_1.5_cycles_%03d", "cycle" ]; };
+ }

@@ -95,6 +95,9 @@ public: // interface
     time_(0.0),
     dt_(0.0),
     stop_(false),
+    frame_velocity_(),
+    last_updated_origin_offset_(),
+    last_frame_update_time_(std::numeric_limits<double>::lowest()),
     index_initial_(0),
     children_(),
     sync_coarsen_(),
@@ -174,6 +177,28 @@ public: // interface
   /// Return the current stopping criteria
   bool stop() const throw() 
   { return stop_; };
+
+  /// Return current frame velocity
+  void frame_velocity
+  (double * vx, double * vy = 0, double * vz = 0) const throw()
+  {
+    if (vx) { *vx = frame_velocity_[0]; }
+    if (vy) { *vy = frame_velocity_[1]; }
+    if (vz) { *vz = frame_velocity_[2]; }
+  }
+
+  /// Return the origin offset computed during the last frame_velocity update 
+  void last_updated_origin_offset
+  (double * dx, double * dy = 0, double * dz = 0) const throw()
+  {
+    if (dx) { *dx = last_updated_origin_offset_[0]; }
+    if (dy) { *dy = last_updated_origin_offset_[1]; }
+    if (dz) { *dz = last_updated_origin_offset_[2]; }
+  }
+
+  /// return the last time when frame_velocity was updated
+  double last_frame_update_time() const throw()
+  { return last_frame_update_time_; }
 
   /// Return whether this Block is a leaf in the octree array
   bool is_leaf() const 
@@ -746,6 +771,11 @@ protected:
   /// Check if Block should have been deleted
   void check_delete_();
 
+public:
+  /// Synchronize after calculation of passive scalar mass and momentum
+  /// (transform the current reference frame)
+  void p_method_frame_transform_end(CkReductionMsg * msg);
+
 public: // virtual functions
 
   /// Set state
@@ -772,6 +802,22 @@ public: // virtual functions
   /// Set Block's stopping criteria
   void set_stop (double stop) throw()
   { stop_  = stop; }
+
+  /// update reference frame properties
+  void update_frame_properties(double update_time, double vx,
+                               double vy = 0, double vz = 0) throw()
+  {
+    // since last_frame_update_time_ is initialized to the smallest float and
+    // velocity is initialized to 0 this implicitly handles the first update
+    double dt = update_time - last_frame_update_time_;
+    ASSERT("Block::update_frame_properties",
+           "update_time must exceed last_frame_update_time_", dt >= 0);
+    for (int i = 0; i < 3; i++){
+      last_updated_origin_offset_[i] += dt * frame_velocity_[i];
+    }
+    last_frame_update_time_ = update_time;
+    frame_velocity_[0] = vx; frame_velocity_[1] = vy; frame_velocity_[2] = vz;
+  }
 
   /// Initialize Block
   virtual void initialize ();
@@ -931,6 +977,20 @@ protected: // attributes
 
   /// Current stopping criteria
   bool stop_;
+
+  //--------------------------------------------------
+
+  /// Current reference frame velocity (measured w.r.t. initial frame). Always
+  /// starts at {0.,0,.0.}. Only modified by MethodFrameTransform
+  double frame_velocity_[3];
+
+  /// Offset ({dx,dy,dz}) of the origin (w.r.t. initial frame) at
+  /// last_frame_update_time_. Always starts at {0.,0,.0.}. Only modified by
+  /// MethodFrameTransform
+  double last_updated_origin_offset_[3];
+
+  /// The most recent time when frame_velocity_ was updated
+  double last_frame_update_time_;
 
   //--------------------------------------------------
 

@@ -13,7 +13,7 @@ double Method::courant_global = 1.0;
 
 Method::~Method() throw()
 {
-  delete schedule_;
+  delete passive_schedule_;
   for (size_t i=0; i<refresh_list_.size(); i++) {
     delete refresh_list_[i];
     refresh_list_[i] = 0;
@@ -38,16 +38,27 @@ void Method::pup (PUP::er &p)
   }
 
   p | refresh_list_;
-  p | schedule_; // pupable
+  p | passive_schedule_; // pupable
   p | courant_;
 }
 
 //----------------------------------------------------------------------
 
-void Method::set_schedule (Schedule * schedule) throw()
+bool Method::advance_schedule(int cycle, double time) throw(){
+  if (passive_schedule_){
+    // Implicitly handles advancement
+    return passive_schedule_->is_scheduled(cycle,time);
+  } else { // default case: scheduled every cycle
+    return true;
+  }
+}
+
+//----------------------------------------------------------------------
+
+void Method::set_schedule (Schedule * schedule, double initial_time) throw()
 { 
-  if (schedule_) delete schedule_;
-  schedule_ = schedule;
+  if (passive_schedule_) delete passive_schedule_;
+  passive_schedule_ = new PassiveSchedule(schedule, initial_time);
 }
 
 //======================================================================
