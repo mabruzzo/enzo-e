@@ -31,14 +31,19 @@ module mesh {
 
   PUPable BoundaryPeriodic;
   PUPable BoundaryValue;
-  PUPable Config;
   PUPable ColormapRGB;
+  PUPable Config;
   PUPable Factory;
   PUPable Initial;
   PUPable InitialFile;
   PUPable InitialTrace;
   PUPable InitialValue;
   PUPable InputData;
+  PUPable Io;
+  PUPable IoBlock;
+  PUPable IoFieldData;
+  PUPable IoHierarchy;
+  PUPable IoParticleData;
   PUPable ItIndexList;
   PUPable ItIndexRange;
   PUPable MaskPng;
