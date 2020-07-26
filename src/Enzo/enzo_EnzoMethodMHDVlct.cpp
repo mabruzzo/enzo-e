@@ -290,21 +290,9 @@ void EnzoMethodMHDVlct::pup (PUP::er &p)
     primitive_group_ = nullptr;
   }
 
-  int has_bfieldi_group = (bfieldi_group_ != nullptr);
-  p|has_bfieldi_group;
-  if (has_bfieldi_group){
-    if (up){
-      bfieldi_group_ = new Grouping;
-    }
-    p|*bfieldi_group_;
-  } else {
-    bfieldi_group_ = nullptr;
-  }
-
   // sanity check:
-  ASSERT("EnzoMethodMHDVlct::pup",
-         "primitive_group_ and bfieldi_group_ should not be NULL",
-         ((primitive_group_ != nullptr) && (bfieldi_group_ != nullptr)));
+  ASSERT("EnzoMethodMHDVlct::pup", "primitive_group_ should not be NULL",
+         primitive_group_ != nullptr);
 
   p|half_dt_recon_;
   p|full_dt_recon_;
