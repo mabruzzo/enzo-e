@@ -94,6 +94,16 @@ class EnzoMethodMHDVlct : public Method {
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulate VL + CT MHD method
 
+  /// This is defined within the scope of EnzoMethodMHDVlct to avoid polluting
+  /// the global namespace
+  enum bfield_choice {
+    no_bfield = 0,         // pure hydrodynamics
+    unsafe_const_uniform,  // an unsafe mode where bfields are assumed to be
+                           // const (no interface bfields or CT). This is
+                           // provided primarily for debugging)
+    constrained_transport  // constrained transport (include interface bfields)
+  };
+
 public: // interface
 
   /// Create a new EnzoMethodMHDVlct object
@@ -103,7 +113,7 @@ public: // interface
 		    double gamma, double theta_limiter,
 		    double density_floor,
 		    double pressure_floor,
-		    bool constrained_transport,
+		    std::string mhd_choice,
 		    bool dual_energy_formalism,
 		    double dual_energy_formalism_eta);
 
@@ -119,6 +129,7 @@ public: // interface
       full_dt_recon_(NULL),
       riemann_solver_(NULL),
       integrable_updater_(NULL),
+      mhd_choice_(bfield_choice::no_bfield),
       reconstructable_group_names_(),
       integrable_group_names_(),
       passive_group_names_()
@@ -140,6 +151,9 @@ public: // interface
   virtual double timestep ( Block * block) const throw();
 
 protected: // methods
+
+  /// returns the bfield_choice enum that matches the input string
+  bfield_choice parse_bfield_choice_(std::string choice) const noexcept;
 
   /// Determines the quantities from (FIELD_TABLE) to be reconstructed and
   /// integrated and a list of group names that may or may not include passive
@@ -360,9 +374,8 @@ protected: // attributes
   /// Pointer to the integrable quantity updater
   EnzoIntegrableUpdate *integrable_updater_;
 
-  /// Indicates whether to use constrained transport. This may need to be
-  /// changed in the future.
-  bool use_ct_;
+  /// Indicates how magnetic fields are handled
+  bfield_choice mhd_choice_;
 
   /// Names of the reconstructable primitive quantities
   std::vector<std::string> reconstructable_group_names_;
