@@ -180,7 +180,7 @@ EnzoConfig::EnzoConfig() throw ()
   method_vlct_theta_limiter(0.0),
   method_vlct_density_floor(0.0),
   method_vlct_pressure_floor(0.0),
-  method_vlct_constrained_transport(false),
+  method_vlct_mhd_choice(""),
   method_vlct_dual_energy(false),
   method_vlct_dual_energy_eta(0.0),
   /// EnzoProlong
@@ -405,7 +405,7 @@ void EnzoConfig::pup (PUP::er &p)
   p | method_vlct_theta_limiter;
   p | method_vlct_density_floor;
   p | method_vlct_pressure_floor;
-  p | method_vlct_constrained_transport;
+  p | method_vlct_mhd_choice;
   p | method_vlct_dual_energy;
   p | method_vlct_dual_energy_eta;
 
@@ -848,12 +848,16 @@ void EnzoConfig::read(Parameters * p) throw()
     ("Method:mhd_vlct:density_floor", 0.0);
   method_vlct_pressure_floor = p->value_float
     ("Method:mhd_vlct:pressure_floor", 0.0);
-  method_vlct_constrained_transport = p->value_logical
-    ("Method:mhd_vlct:constrained_transport", true);
   method_vlct_dual_energy = p->value_logical
     ("Method:mhd_vlct:dual_energy", false);
   method_vlct_dual_energy_eta = p->value_float
     ("Method:mhd_vlct:dual_energy_eta", 0.001);
+
+  // we should raise an error if mhd_choice is not specified
+  WARNING("EnzoConfig::read",
+          "Need to finish updating how mhd_vlct's mhd_choice is specified");
+  method_vlct_mhd_choice = p->value_string
+    ("Method:mhd_vlct:mhd_choice", "");
 
   //--------------------------------------------------
   // Physics

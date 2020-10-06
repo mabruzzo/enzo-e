@@ -18,7 +18,7 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
 				      double gamma, double theta_limiter,
 				      double density_floor,
 				      double pressure_floor,
-				      bool constrained_transport,
+				      std::string mhd_choice,
 				      bool dual_energy_formalism,
 				      double dual_energy_formalism_eta)
   : Method()
@@ -29,6 +29,8 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
   eos_ = new EnzoEOSIdeal(gamma, density_floor, pressure_floor,
 			  dual_energy_formalism, dual_energy_formalism_eta);
 
+  // Determine whether magnetic fields are to be used
+  mhd_choice_ = parse_bfield_choice_(mhd_choice);
 
   // determine integrable and reconstructable quantities (and passive scalars)
   determine_quantities_(eos_, integrable_group_names_,
@@ -60,9 +62,10 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
   add_group_fields_to_refresh_(refresh, *(field_descr->groups()),
 			       passive_group_names_);
 
-  use_ct_ = constrained_transport;
   /// Add interface fields (if necessary) to the refresh list
-  if (use_ct_) { EnzoConstrainedTransport::update_refresh(refresh); }
+  if (mhd_choice_ == bfield_choice::constrained_transport) {
+    EnzoConstrainedTransport::update_refresh(refresh);
+  }
 
   // Initialize the remaining component objects
   half_dt_recon_ = EnzoReconstructor::construct_reconstructor
@@ -75,6 +78,31 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
     (integrable_group_names_,      passive_group_names_, rsolver);
   integrable_updater_ = new EnzoIntegrableUpdate(integrable_group_names_,
 						 true, passive_group_names_);
+}
+
+//----------------------------------------------------------------------
+
+EnzoMethodMHDVlct::bfield_choice EnzoMethodMHDVlct::parse_bfield_choice_
+(std::string choice) const noexcept
+{
+  std::string formatted(choice.size(), ' ');
+  std::transform(choice.begin(), choice.end(), formatted.begin(),
+		 ::tolower);
+  if (formatted == std::string("no_bfield")){
+    return bfield_choice::no_bfield;
+  } else if (formatted == std::string("unsafe_constant_uniform")){
+    ERROR("EnzoMethodMHDVlct::parse_bfield_choice_",
+          "constant_uniform is primarilly for debugging purposes. DON'T use "
+          "for science runs (things can break).");
+    return bfield_choice::unsafe_const_uniform;
+  } else if (formatted == std::string("constrained_transport")){
+    return bfield_choice::constrained_transport;
+  } else {
+    ERROR("EnzoMethodMHDVlct::parse_bfield_choice_",
+          "Unrecognized choice. Known options include \"no_bfield\" and "
+          "\"constrained_transport\"");
+    return bfield_choice::no_bfield;
+  }
 }
 
 //----------------------------------------------------------------------
@@ -298,7 +326,7 @@ void EnzoMethodMHDVlct::pup (PUP::er &p)
   p|full_dt_recon_;
   p|riemann_solver_;
   p|integrable_updater_;
-  p|use_ct_;
+  p|mhd_choice_;
 }
 
 //----------------------------------------------------------------------
@@ -358,7 +386,9 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
     
     // allocate constrained transport object
     EnzoConstrainedTransport *ct = NULL;
-    if (use_ct_) {ct = new EnzoConstrainedTransport(block, 2);}
+    if (mhd_choice_ == bfield_choice::constrained_transport) {
+      ct = new EnzoConstrainedTransport(block, 2);
+    }
 
     double dt = block->dt();
 
@@ -854,23 +884,27 @@ double EnzoMethodMHDVlct::timestep ( Block * block ) const throw()
     // there is an inflow boundary condition
     eos_->apply_floor_to_energy_and_sync(block, *primitive_group_, 0);
   }
-  
+
   eos_->pressure_from_integrable(block, *primitive_group_, "pressure",
 				 *(field_descr->groups()), 0);
   enzo_float gamma = eos_->get_gamma();
 
   EnzoFieldArrayFactory array_factory(block);
-  EFlt3DArray density, velocity_x, velocity_y, velocity_z, pressure;
-  EFlt3DArray bfieldc_x, bfieldc_y, bfieldc_z;
+  EFlt3DArray density, velocity_x, velocity_y, velocity_z;
   density = array_factory.from_grouping(*primitive_group_, "density", 0);
   velocity_x = array_factory.from_grouping(*primitive_group_, "velocity", 0);
   velocity_y = array_factory.from_grouping(*primitive_group_, "velocity", 1);
   velocity_z = array_factory.from_grouping(*primitive_group_, "velocity", 2);
-  bfieldc_x = array_factory.from_grouping(*primitive_group_, "bfield", 0);
-  bfieldc_y = array_factory.from_grouping(*primitive_group_, "bfield", 1);
-  bfieldc_z = array_factory.from_grouping(*primitive_group_, "bfield", 2);
 
-  pressure = array_factory.from_name("pressure");
+  EFlt3DArray pressure = array_factory.from_name("pressure");
+
+  const bool mhd = (mhd_choice_ != bfield_choice::no_bfield);
+  EFlt3DArray bfieldc_x, bfieldc_y, bfieldc_z;
+  if (mhd) {
+    bfieldc_x = array_factory.from_grouping(*primitive_group_, "bfield", 0);
+    bfieldc_y = array_factory.from_grouping(*primitive_group_, "bfield", 1);
+    bfieldc_z = array_factory.from_grouping(*primitive_group_, "bfield", 2);
+  }
 
   // Get iteration limits
   // Like ppm and ppml, access active region info from enzo_block attributes
@@ -892,10 +926,12 @@ double EnzoMethodMHDVlct::timestep ( Block * block ) const throw()
   for (int iz=0; iz<density.shape(0); iz++) {
     for (int iy=0; iy<density.shape(1); iy++) {
       for (int ix=0; ix<density.shape(2); ix++) {
-	enzo_float bmag_sq = (bfieldc_x(iz,iy,ix) * bfieldc_x(iz,iy,ix) +
-			      bfieldc_y(iz,iy,ix) * bfieldc_y(iz,iy,ix) +
-			      bfieldc_z(iz,iy,ix) * bfieldc_z(iz,iy,ix));
-
+	enzo_float bmag_sq = 0.0;
+        if (mhd){
+          bmag_sq = (bfieldc_x(iz,iy,ix) * bfieldc_x(iz,iy,ix) +
+		     bfieldc_y(iz,iy,ix) * bfieldc_y(iz,iy,ix) +
+		     bfieldc_z(iz,iy,ix) * bfieldc_z(iz,iy,ix));
+        }
 	// Using "Rationalized" Gaussian units (where the magnetic permeability
 	// is mu=1 and pressure = B^2/2)
 	// To convert B to normal Gaussian units, multiply by sqrt(4*pi)
