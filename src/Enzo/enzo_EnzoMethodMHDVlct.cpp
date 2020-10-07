@@ -122,10 +122,15 @@ void EnzoMethodMHDVlct::determine_quantities_
 #endif
 
 
-  std::string common[3] {"density", "velocity", "bfield"};
-  for (int i = 0; i<3; i++){
-    integrable_quantities.push_back(common[i]);
-    reconstructable_quantities.push_back(common[i]);
+  std::string common[] {"density", "velocity"};
+  for (std::string quantity : common){
+    integrable_quantities.push_back(quantity);
+    reconstructable_quantities.push_back(quantity);
+  }
+
+  if (mhd_choice_ != bfield_choice::no_bfield){
+    integrable_quantities.push_back("bfield");
+    reconstructable_quantities.push_back("bfield");
   }
 
   if (eos->is_barotropic()){
