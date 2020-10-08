@@ -189,6 +189,10 @@ public: // interface
   /// CHARM++ Pack / Unpack function
   void pup (PUP::er &p);
 
+  ///TEMPORARY
+  /// This is to assist with helping the transition from Groupings to maps
+  const std::vector<std::string> combined_integrable_groups() const throw();
+
   void solve (Block *block, Grouping &priml_group, Grouping &primr_group,
 	      std::string pressure_name_l, std::string pressure_name_r,
 	      Grouping &flux_group, int dim, EnzoEquationOfState *eos,
@@ -310,6 +314,36 @@ void EnzoRiemannImpl<ImplFunctor>::pup (PUP::er &p)
   p|passive_integrable_groups_;
   p|passive_integrable_categories_;
   p|force_bfield_fluxes_to_zero_;
+}
+
+//----------------------------------------------------------------------
+
+template <class ImplFunctor>
+const std::vector<std::string> EnzoRiemannImpl<ImplFunctor>::combined_integrable_groups() const throw()
+{
+  std::vector<std::string> combined_integrable_groups;
+
+  auto contains = [](const std::vector<std::string> &vec,
+		     const std::string &value)
+  { return std::find(vec.cbegin(),vec.cend(), value) != vec.cend(); };
+
+  for (const std::string& elem : integrable_groups_){
+    if (!contains(combined_integrable_groups, elem)) {
+      combined_integrable_groups.push_back(elem);
+    }
+  }
+  for (const std::string& elem : passive_scalar_groups_){
+    if (!contains(combined_integrable_groups, elem)) {
+      combined_integrable_groups.push_back(elem);
+    }
+  }
+  for (const std::string& elem : passive_integrable_groups_){
+    if (!contains(combined_integrable_groups, elem)) {
+      combined_integrable_groups.push_back(elem);
+    }
+  }
+
+  return combined_integrable_groups;
 }
 
 //----------------------------------------------------------------------

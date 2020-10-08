@@ -24,14 +24,22 @@ public: // interface
 
   const EFlt3DArray& at(const std::string& key) const noexcept;
 
+  bool contains(const std::string& key) const noexcept{
+    return (map_.find(key) != map_.cend());
+  }
+
   // This is a crutch for transitioning from groupings. Should get rid of this
   // eventually.
   const EFlt3DArray get(const std::string& key,
                         int stale_depth = 0) const noexcept;
 
-  bool contains(const std::string& key) const noexcept{
-    return (map_.find(key) != map_.cend());
-  }
+  // This is also crutch for transitioning from groupings. Should get rid of
+  // this eventually.
+  static EnzoEFltArrayMap from_grouping(Block * block,
+                                        Grouping& grouping,
+                                        const std::vector<std::string>& groups,
+                                        int dim = -1)
+    noexcept;
 
 private: // attributes
   std::map<std::string, EFlt3DArray> map_;

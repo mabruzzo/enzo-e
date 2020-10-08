@@ -9,9 +9,8 @@ const EFlt3DArray& EnzoEFltArrayMap::at(const std::string& key) const noexcept
   if (result == map_.cend()){
     ERROR1("EnzoEFltArrayMap::at", "map doesn't contain the key: \"%s\"",
            key.c_str());
-  } else {
-    return result->second;
   }
+  return result->second;
 }
 
 //----------------------------------------------------------------------
@@ -41,3 +40,34 @@ const EFlt3DArray EnzoEFltArrayMap::get(const std::string& key,
   }
 }
 
+//----------------------------------------------------------------------
+
+EnzoEFltArrayMap EnzoEFltArrayMap::from_grouping
+(Block * block, Grouping& grouping, const std::vector<std::string>& groups,
+ int dim) noexcept
+{
+  EnzoEFltArrayMap out;
+
+  EnzoFieldArrayFactory array_factory(block,0);
+
+  for (const std::string& group_name : groups){
+    int num_fields = grouping.size(group_name);
+    for (int field_ind=0; field_ind<num_fields; field_ind++){
+      std::string field_name = grouping.item(group_name,field_ind);
+
+      if (out.contains(field_name)){
+        ERROR1("EnzoEFltArrayMap::from_grouping",
+               "EnzoEFltArrayMap can't hold more than one field called \"%s\"",
+               field_name.c_str());
+      }
+
+      if (dim == -1){
+        out[field_name] = array_factory.from_name(field_name);
+      } else {
+        out[field_name] = array_factory.assigned_center_from_name(field_name,
+                                                                  dim);
+      }
+    }
+  }
+  return out;
+}
