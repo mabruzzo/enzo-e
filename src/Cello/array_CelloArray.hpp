@@ -432,7 +432,7 @@ public: // interface
   /// the result of this method is first assigned to another variable and the
   /// variable is placed on the LHS, then different behavior will occur.
   template<typename... Args, REQUIRE_TYPE(Args,CSlice)>
-  TempArray_<T,D> subarray(Args... args) noexcept;
+  TempArray_<T,D> subarray(Args... args) const noexcept;
 
   /// Returns the length of a given dimension
   ///
@@ -656,7 +656,7 @@ inline void prep_slices_(const CSlice* slices, const intp shape[],
 // Returnd TempArray_ representing a view of a subarray of the current instance
 template<typename T, std::size_t D>
 template<typename... Args, class>
-TempArray_<T,D> FixedDimArray_<T,D>::subarray(Args... args) noexcept{
+TempArray_<T,D> FixedDimArray_<T,D>::subarray(Args... args) const noexcept{
   // TODO: put some thought into creating a const-qualified version of this
   // function
   static_assert(D == sizeof...(args) || 0 == sizeof...(args),
@@ -860,7 +860,7 @@ public: // interface
   /// @note Note that allowing this constructor to accept a const reference
   ///     would enable the creation of mutatable shallow copies of
   ///     const-qualified CelloArrays.
-  CelloArray(CelloArray<T,D>& other) : CelloArray() {
+  CelloArray(const CelloArray<T,D>& other) : CelloArray() {
     this->shallow_copy_init_helper_(other);
   }
 
