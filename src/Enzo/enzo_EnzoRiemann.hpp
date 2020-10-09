@@ -57,11 +57,6 @@ public: // interface
     PUP::able::pup(p);
   }
 
-  ///TEMPORARY
-  /// This is to assist with helping the transition from Groupings to maps
-  virtual const std::vector<std::string> combined_integrable_groups()
-    const throw() = 0;
-
   /// Computes the Riemann Fluxes for each conserved field along a given
   /// dimension, dim
   /// @param block holds data to be processed
@@ -90,12 +85,12 @@ public: // interface
   ///     stored. This quantity is used to compute the internal energy source
   ///     term (needed under the dual energy formalism). If the value is `""`
   ///     (the default) then the interface velocity is not stored.
-  virtual void solve (Block *block,
-		      Grouping &priml_group, Grouping &primr_group, 
-		      std::string pressure_name_l, std::string pressure_name_r,
-		      Grouping &flux_group, int dim, EnzoEquationOfState *eos,
-		      int stale_depth,
-		      std::string interface_velocity_name = "") const = 0;
+  virtual void solve
+  (EnzoEFltArrayMap &prim_map_l, EnzoEFltArrayMap &prim_map_r,
+   const EFlt3DArray &pressure_array_l, const EFlt3DArray &pressure_array_r,
+   EnzoEFltArrayMap &flux_map, int dim, EnzoEquationOfState *eos,
+   int stale_depth, const std::vector<std::vector<std::string>> &passive_lists,
+   EFlt3DArray *interface_velocity) const = 0;
 
 };
 
