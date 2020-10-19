@@ -811,6 +811,24 @@ TempArray_<T,D>& TempArray_<T,D>::operator=(const T& val)
 
 //----------------------------------------------------------------------
 
+// helper function
+inline bool is_alias_(void* ptr1, intp offset1, const intp* shape1,
+                      const intp* stride1, void* ptr2, intp offset2,
+                      const intp* shape2, const intp* stride2,
+                      std::size_t nDim)
+{
+  if ((ptr1 == NULL) || (ptr2 == NULL) || (ptr1 != ptr2)) { return false; }
+  if (offset1 != offset2) { return false; }
+  for (std::size_t i = 0; i < nDim; i++){
+    if ((shape1[i] != shape2[i]) || (stride1[i] != stride2[i])){
+      return false;
+    }
+  }
+  return true;
+}
+
+//----------------------------------------------------------------------
+
 template<typename T, std::size_t D>
 class CelloArray : public FixedDimArray_<T,D>
 {
@@ -890,6 +908,24 @@ public: // interface
     swap(*this,other);
     return *this;
   }
+
+  /// Returns whether CelloArray is a perfect alias of other.
+  ///
+  /// Returns False if there is just partial overlap or either array is
+  /// uninitialized.
+  bool is_alias(const CelloArray<T,D>& other) const{
+    return is_alias_((void*)this->shared_data_.get(), this->offset_,
+                     this->shape_, this->stride_,
+                     (void*)other.shared_data_.get(), other.offset_,
+                     other.shape_, other.stride_, D);
+  }
+  bool is_alias(const TempArray_<T,D>& other) const{
+    return is_alias_((void*)this->shared_data_.get(), this->offset_,
+                     this->shape_, this->stride_,
+                     (void*)other.shared_data_.get(), other.offset_,
+                     other.shape_, other.stride_, D);
+  }
+  
 };
 
 #endif /* ARRAY_CELLO_ARRAY_HPP */
