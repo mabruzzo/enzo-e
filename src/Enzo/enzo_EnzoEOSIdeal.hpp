@@ -50,21 +50,19 @@ public: // interface
   /// CHARM++ Pack / Unpack function
   void pup (PUP::er &p);
 
-  void reconstructable_from_integrable(Block *block,
-				       Grouping &integrable_group,
-				       Grouping &reconstrable_group,
-				       Grouping &conserved_passive_group,
-				       int stale_depth) const;
+  void reconstructable_from_integrable
+  (EnzoEFltArrayMap &integrable, EnzoEFltArrayMap &reconstructable,
+   EnzoEFltArrayMap &conserved_passive_map, int stale_depth,
+   const std::vector<std::vector<std::string>> &passive_lists) const;
 
   void integrable_from_reconstructable
   (EnzoEFltArrayMap &reconstructable, EnzoEFltArrayMap &integrable,
    int stale_depth,
    const std::vector<std::vector<std::string>> &passive_lists) const;
 
-  void pressure_from_integrable(Block *block, Grouping &integrable_group,
-				std::string pressure_name,
-				Grouping &conserved_passive_group,
-				int stale_depth) const;
+  void pressure_from_integrable
+  (EnzoEFltArrayMap &integrable_map, const EFlt3DArray &pressure,
+   EnzoEFltArrayMap &conserved_passive_map, int stale_depth) const;
 
   void pressure_from_reconstructable(EnzoEFltArrayMap &reconstructable,
                                      EFlt3DArray &pressure,
@@ -74,8 +72,8 @@ public: // interface
 
   enzo_float get_pressure_floor() const { return pressure_floor_; }
 
-  void apply_floor_to_energy_and_sync(Block *block, Grouping &integrable_group,
-				      int stale_depth) const;
+  void apply_floor_to_energy_and_sync(EnzoEFltArrayMap &integrable_map,
+                                      int stale_depth) const;
 
   bool is_barotropic() const { return false; }
 
@@ -85,24 +83,6 @@ public: // interface
 
   // In the future, this won't be hardcoded to false
   bool uses_dual_energy_formalism() const { return dual_energy_formalism_; };
-
-
-private:
-  /// Helper function to retrieve a field array when it is possible that a
-  /// field stores reconstructed data
-  EFlt3DArray retrieve_field_(EnzoFieldArrayFactory &array_factory,
-			      Grouping &group, std::string group_name,
-			      int index, int reconstructed_axis) const;
-  
-  /// Copies entries of the passively advected fields included by origin_group
-  /// to the corresponding entries of the fields included in destination_group
-  /// reconstructed_axis = -1 means that internal field shape data can be
-  /// truested. Values of 0, 1, or 2 mean that the field stores reconstructed
-  /// values along the x, y, or z axis and that it is actually face-centered
-  void copy_passively_advected_fields_(EnzoFieldArrayFactory &array_factory,
-				       Grouping &origin_group,
-				       Grouping &destination_group,
-				       int reconstructed_axis = -1) const;
 
 protected: // attributes
   enzo_float gamma_; // adiabatic index
