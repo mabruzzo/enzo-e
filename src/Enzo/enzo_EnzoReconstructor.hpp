@@ -61,10 +61,10 @@ public: // interface
   /// Reconstructs the interface values
   ///
   /// @param[in]  prim_map Map holding the data for the cell-centered
-  ///     reconstructable primitives. This object is expected to keys for all
+  ///     reconstructable primitives. This is expected to have keys for all
   ///     of the active reconstructed quantities registered with the factory
   ///     method (plus all of the keys listed in `passive lists`)
-  /// @param[out] priml_map,primr_group Holds existing arrays where the
+  /// @param[out] priml_map,primr_map Holds existing arrays where the
   ///     left/right reconstructed, face-centered primitives are written.
   ///     These must supply the same keys that are expected for prim_map.
   ///     The arrays are expected to have identical shapes to those in
@@ -77,6 +77,13 @@ public: // interface
   ///     supplied cell-centered quantities
   /// @param[in]  passive_lists A list of lists of keys for passive scalars. In
   ///     this method, this is effectively concatenated into one list of keys.
+  ///
+  /// @note It's alright for arrays in `priml_map` and `primr_map` to have the
+  /// shapes of cell-centered arrays (i.e. the same shape as arrays in
+  /// `prim_map`). In this case, the function effectively treats such arrays as
+  /// if their `subarray` method were invoked, where `CSlice(0,-1)` is
+  /// specified for the `dim` axis and `CSlice(nullptr,nullptr)` is specified
+  /// for other axes.
   virtual void reconstruct_interface
   (EnzoEFltArrayMap &prim_map, EnzoEFltArrayMap &priml_map,
    EnzoEFltArrayMap &primr_map, int dim, EnzoEquationOfState *eos,
