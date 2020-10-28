@@ -16,10 +16,13 @@ void append_grouping_pairs_(std::vector<std::string> integrable_groups,
   for (std::string name : integrable_groups){
     bool vector_quantity, actively_advected;
     FieldCat category;
-    EnzoCenteredFieldRegistry::quantity_properties(name, &vector_quantity,
-                                                   &category,
-                                                   &actively_advected);
-    // Sanity Check
+    bool success = EnzoCenteredFieldRegistry::quantity_properties
+      (name, &vector_quantity, &category, &actively_advected);
+
+    // Sanity Checks:
+    ASSERT1("append_grouping_pairs_",
+	    ("\"%s\" is not registered in EnzoCenteredFieldRegistry"),
+	    name.c_str(), success);
     ASSERT1("append_grouping_pairs_",
 	    ("\"%s\" should not be listed as an integrable quantity because "
 	     "it is not actively advected."),
