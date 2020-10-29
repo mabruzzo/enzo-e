@@ -416,10 +416,101 @@ EnzoEFltArrayMap EnzoMethodMHDVlct::conserved_passive_scalar_map_
   return conserved_passive_scalar_map;
 }
 
+void update_flux_data_(Block * block, const EnzoEFltArrayMap &flux_map,
+                       int dim)
+{
+  Field field = block->data()->field();
+  const EnzoPermutedCoordinates coord(dim);
+
+  // first get dimensions of cell-centered fields along i,j,k
+  int ghost[3], cc_shape[3]; // the values are ordered as x,y,z
+  field.ghost_depth(0, &(ghost[0]), &(ghost[1]), &(ghost[2]));
+  field.dimensions(0, &(cc_shape[0]), &(cc_shape[1]), &(cc_shape[2]));
+
+  int gi = ghost[coord.i_axis()];     int mi = cc_shape[coord.i_axis()];
+  int gj = ghost[coord.j_axis()];     int mj = cc_shape[coord.j_axis()];
+  int gk = ghost[coord.k_axis()];     int mk = cc_shape[coord.k_axis()];
+
+  // now, compute slices along j and k axes dimension. We build these with
+  // exact indices (i.e. we don't use negative indices) just in case the arrays
+  // holding the fluxes are bigger than they need to be
+  const CSlice j_slc(gj, mj - gj); // slices along j and k just include the
+  const CSlice k_slc(gk, mk - gk); // active zone
+
+  // the fluxes on the lower face of the block are found between the cells at
+  // (gi-1) and gi. Because the flux arrays have space for values located on
+  // all interior faces between cells, these values are located at the index
+  // (gi-1).
+  const CSlice i_lower_slc(gi - 1, gi);
+  // the fluxes on the upper face of the block are found between the cells at
+  // (mi-gi-1) and (mi-gi). Because the flux arrays have space for values
+  // located on all interior faces between cells, these values are located at
+  // the index (mi-gi-1).
+  const CSlice i_upper_slc(mi - gi - 1, mi -gi);
+
+  // Finally we actually store the fluxes
+  FluxData * flux_data = block->data()->flux_data();
+
+  const int nf = flux_data->num_fields();
+  for (int i_f=0; i_f <nf; i_f++) {
+    int * flux_index = 0;
+    const int index_field = flux_data->index_field(i_f);
+    const std::string field_name = field.field_name(index_field);
+
+    // note the field_name is the same as the key
+
+    for (int face = 0; face < 2; face++){
+
+      FaceFluxes * ff_b = flux_data->block_fluxes(dim,face,i_f);
+      int mx, my, mz;
+      ff_b->get_size(&mx,&my,&mz);
+      int dx, dy, dz;
+      enzo_float* dest = ff_b->flux_array(&dx,&dy,&dz).data();
+
+      const CSlice& i_slc = (face == 0) ? i_lower_slc : i_upper_slc;
+      EFlt3DArray tmp = flux_map.at(field_name);
+      EFlt3DArray src = coord.get_subarray(tmp, k_slc, j_slc, i_slc);
+
+      // as a sanity check: may want to check
+      ASSERT7("update_flux_data_",
+              ("For the flux along %d, the subarray is expected to have shape "
+               "(%d,%d,%d). Instead, its shape is (%d,%d,%d)."),
+              dim, mz,my,mx, src.shape(0), src.shape(1), src.shape(2),
+              ((src.shape(0) == mz) && (src.shape(1) == my) &&
+               (src.shape(2) == mx))
+              );
+
+      for (int iz = 0; iz < mz; iz++){
+        for (int iy = 0; iy < my; iy++){
+          for (int ix = 0; ix < mx; ix++){
+            dest[iz*dz + iy*dy + ix*dx] = src(iz,iy,ix);
+          }
+        }
+      }
+
+    }
+  }
+}
+
 //----------------------------------------------------------------------
 
 void EnzoMethodMHDVlct::compute ( Block * block) throw()
 {
+  // the following is getting copied from EnzoMethodPpm::compute
+  Field field = block->data()->field();
+  auto field_names = field.groups()->group_list("conserved");
+  const int nf = field_names.size();
+  std::vector<int> field_list;
+  field_list.resize(nf);
+  for (int i=0; i<nf; i++) {
+    field_list[i] = field.field_id(field_names[i]);
+  }
+
+  int nx,ny,nz;
+  field.size(&nx,&ny,&nz);
+  // do we need to allocate every cycle?
+  block->data()->flux_data()->allocate (nx,ny,nz,field_list);
+
   if (block->is_leaf()) {
     // Check that the mesh size and ghost depths are appropriate
     check_mesh_and_ghost_size_(block);
@@ -581,6 +672,20 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
                     priml_map, primr_map, pressure_l, pressure_r,
                     zflux_map, dUcons_map, interface_velocity_arr_ptr,
                     *reconstructor, ct, stale_depth, passive_lists);
+
+      if (i == 1 && ct == NULL) {
+        if (eos_->uses_dual_energy_formalism()){
+          // the interface velocity on the edge of the block will be different!
+          // I think the answer here is to add this effect to the internal
+          // energy flux
+          ERROR("EnzoMethodMHDVlct::compute",
+                "Handling of the dual energy source term is won't be properly "
+                "corrected!");
+        }
+        update_flux_data_(block, xflux_map, 0);
+        update_flux_data_(block, yflux_map, 1);
+        update_flux_data_(block, zflux_map, 2);
+      }
 
       // increment the stale_depth
       stale_depth+=reconstructor->immediate_staling_rate();
