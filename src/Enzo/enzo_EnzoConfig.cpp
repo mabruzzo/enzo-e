@@ -854,9 +854,13 @@ void EnzoConfig::read(Parameters * p) throw()
     ("Method:mhd_vlct:dual_energy_eta", 0.001);
 
   // we should raise an error if mhd_choice is not specified
+  bool uses_vlct = false;
+  for (size_t i=0; i<method_list.size(); i++) {
+    if (method_list[i] == "mhd_vlct") uses_vlct=true;
+  }
   method_vlct_mhd_choice = p->value_string
     ("Method:mhd_vlct:mhd_choice", "");
-  if (method_vlct_mhd_choice == ""){
+  if (uses_vlct && (method_vlct_mhd_choice == "")){
     ERROR("EnzoConfig::read", "Method:mhd_vlct:mhd_choice was not specified");
   }
 
