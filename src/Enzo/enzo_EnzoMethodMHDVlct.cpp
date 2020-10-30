@@ -417,7 +417,7 @@ EnzoEFltArrayMap EnzoMethodMHDVlct::conserved_passive_scalar_map_
 }
 
 void update_flux_data_(Block * block, const EnzoEFltArrayMap &flux_map,
-                       int dim)
+                       int dim, double cell_width, double dt)
 {
   Field field = block->data()->field();
   const EnzoPermutedCoordinates coord(dim);
@@ -451,6 +451,9 @@ void update_flux_data_(Block * block, const EnzoEFltArrayMap &flux_map,
   // Finally we actually store the fluxes
   FluxData * flux_data = block->data()->flux_data();
 
+
+  double dt_dxi = dt/cell_width;
+
   const int nf = flux_data->num_fields();
   for (int i_f=0; i_f <nf; i_f++) {
     int * flux_index = 0;
@@ -483,7 +486,7 @@ void update_flux_data_(Block * block, const EnzoEFltArrayMap &flux_map,
       for (int iz = 0; iz < mz; iz++){
         for (int iy = 0; iy < my; iy++){
           for (int ix = 0; ix < mx; ix++){
-            dest[iz*dz + iy*dy + ix*dx] = src(iz,iy,ix);
+            dest[iz*dz + iy*dy + ix*dx] = dt_dxi * src(iz,iy,ix);
           }
         }
       }
@@ -682,9 +685,9 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
                 "Handling of the dual energy source term is won't be properly "
                 "corrected!");
         }
-        update_flux_data_(block, xflux_map, 0);
-        update_flux_data_(block, yflux_map, 1);
-        update_flux_data_(block, zflux_map, 2);
+        update_flux_data_(block, xflux_map, 0, cell_widths[0], cur_dt);
+        update_flux_data_(block, yflux_map, 1, cell_widths[1], cur_dt);
+        update_flux_data_(block, zflux_map, 2, cell_widths[2], cur_dt);
       }
 
       // increment the stale_depth
