@@ -126,6 +126,7 @@ void Config::pup (PUP::er &p)
   p | method_frame_transform_weight_threshold;
   p | method_frame_transform_threshold_type;
   p | method_frame_transform_reduction_type;
+  PUParray(p,method_frame_transform_target_downstream_dist,3);
 
   // Monitor
 
@@ -797,6 +798,8 @@ void Config::read_method_ (Parameters * p) throw()
     for (int i=0; i<3; i++) {
       method_frame_transform_track_component[i] = p->list_value_logical
 	(i, "Method:frame_transform:track_component", false);
+      method_frame_transform_target_downstream_dist[i] = p->list_value_float
+        (i, "Method:frame_transform:target_downstream_dist", 0.);
     }
   }
   method_frame_transform_weight_field = p->value_string

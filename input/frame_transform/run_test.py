@@ -430,7 +430,6 @@ def cleanup():
                      'frame_transform-min_zero_floor-every_cycle_*']
     for template in dir_templates:
         for dir_name in glob.glob(template):
-            print(dir_name)
             if os.path.isdir(dir_name):
                 shutil.rmtree(dir_name)
 if __name__ == '__main__':
