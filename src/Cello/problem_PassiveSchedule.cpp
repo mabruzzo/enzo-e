@@ -20,11 +20,12 @@ PassiveSchedule::PassiveSchedule(Schedule* schedule,
           initial_time != PassiveSchedule::unset_time);
 
   schedule_ = schedule;
-  if (schedule->type() == schedule_type_minimum_time){
+  if ((schedule->type() == schedule_type_minimum_time)
+      || (schedule->type() == schedule_type_time) ){
     int i;
     // value of limit was selected because it takes ~ 1 second, if the start
     // time is too small
-    int limit = 100000000; 
+    int limit = 100000000;
     for (i=0; i < limit; i++){
       if (initial_time <= schedule->time_next()) { break; }
       schedule->next();
@@ -50,6 +51,22 @@ PassiveSchedule::PassiveSchedule(Schedule* schedule,
 
 PassiveSchedule::~PassiveSchedule() {
   if (schedule_) { delete schedule_; }
+}
+
+//----------------------------------------------------------------------
+
+int PassiveSchedule::type() const throw() {
+  ASSERT("PassiveSchedule::type",
+         "The wrapped schedule pointer can't be NULL", schedule_ != nullptr);
+  return schedule_->type();
+}
+
+//----------------------------------------------------------------------
+
+double PassiveSchedule::time_next() const throw() {
+  ASSERT("PassiveSchedule::time_next",
+         "The wrapped schedule pointer can't be NULL", schedule_ != nullptr);
+  return schedule_->time_next();
 }
 
 //----------------------------------------------------------------------
