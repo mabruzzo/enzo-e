@@ -54,6 +54,22 @@ PassiveSchedule::~PassiveSchedule() {
 
 //----------------------------------------------------------------------
 
+int PassiveSchedule::type() const throw() {
+  ASSERT("PassiveSchedule::type",
+         "The wrapped schedule pointer can't be NULL", schedule_ != nullptr);
+  return schedule_->type();
+};
+
+//----------------------------------------------------------------------
+
+double PassiveSchedule::time_next() const throw() {
+  ASSERT("PassiveSchedule::time_next",
+         "The wrapped schedule pointer can't be NULL", schedule_ != nullptr);
+  return schedule_->time_next();
+};
+
+//----------------------------------------------------------------------
+
 void PassiveSchedule::pup (PUP::er &p){
   // NOTE: update this function whenever attributes change
   p | schedule_;

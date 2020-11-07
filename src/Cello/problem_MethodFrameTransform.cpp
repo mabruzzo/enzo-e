@@ -78,41 +78,11 @@ FrameTransformReductionMgr::FrameTransformReductionMgr
   static const std::map<std::string, frame_trans_reduce_enum> reduce_map =
     {{"weighted_average", frame_trans_reduce_enum::weighted_average},
      {"min", frame_trans_reduce_enum::min},
-     {"min_zero_floor", frame_trans_reduce_enum::min_zero_floor}};
+     {"min_zero_floor", frame_trans_reduce_enum::min_zero_floor},
+     {"target_downstream_dist",
+      frame_trans_reduce_enum::target_downstream_dist}};
   select_val_(reduction_type, reduce_map, reduction_type_, "reduction_type",
               "FrameTransformReductionMgr");
-  /*
-  // determine the type of threshold:
-  std::string formatted(threshold_type.size(), ' ');
-  std::transform(threshold_type.begin(), threshold_type.end(),
-                 formatted.begin(), ::tolower);
-  if ((formatted == "") || (formatted == "ignore")) {
-    threshold_type_ = threshold_enum::ignore;
-  } else if (formatted == "lower_limit") {
-    threshold_type_ = threshold_enum::lower_limit;
-  } else if (formatted == "upper_limit") {
-    threshold_type_ = threshold_enum::upper_limit;
-  } else {
-    ERROR("FrameTransformReductionMgr",
-          ("threshold_type must be an empty string, \"ignore\", "
-           "\"lower_limit\" or \"upper_limit\""));
-  }
-
-  std::string formatted_reduc(reduction_type.size(), ' ');
-  std::transform(reduction_type.begin(), reduction_type.end(),
-                 formatted_reduc.begin(), ::tolower);
-  if (formatted_reduc == "weighted_average") {
-    reduction_type_ = frame_trans_reduce_enum::weighted_average;
-  } else if (formatted_reduc == "min") {
-    reduction_type_ = frame_trans_reduce_enum::min;
-  } else if (formatted_reduc == "min_zero_floor") {
-    reduction_type_ = frame_trans_reduce_enum::min_zero_floor;
-  } else {
-    ERROR("std::string reduction_type",
-          ("reduction_type must be \"weighted_average\", \"min\" or "
-           "\"min_zero_floor\""));
-  }
-  */
 }
 
 //----------------------------------------------------------------------
@@ -139,9 +109,99 @@ void FrameTransformReductionMgr::pup(PUP::er &p){
 
 //----------------------------------------------------------------------
 
-template<typename T>
+void FrameTransformReductionMgr::launch_target_downstream_dist_reduction_
+(Block *block, const bool component_transform[3],
+ double time_to_next_transform, precision_type precision,
+ CkCallback &cb) const throw()
+{
+
+  ASSERT("FrameTransformReductionMgr::min_projected_downstream_dist_",
+         "time_to_next_transform must be positive.",
+         time_to_next_transform>0);
+
+  // - downstream_dist is the distance from the lower edge of the domain along
+  //   a given axis
+  // - projected_downstream_dist is the expected downstream distance between
+  //   now and the next timestep when the frame velocity will be updated again.
+  //   Over this interval, velocities are assumed to be constant.
+  const int rank = cello::rank();
+
+  const Config *config_ptr = cello::config();
+  double domain_lower[3] = {0., 0., 0.};
+  for (int i = 0; i< rank; i++){
+    domain_lower[i] = config_ptr->domain_lower[i];
+  }
+
+  // In the future, this needs to be specified as an attribute
+  double target_downstream_dist_[3] = {19.03125,0.,0.};
+  // as a sanity check, make sure that target_downstream_dist_ corresponds to
+  // cell-centered locations on the coarsest grid
+  for (int i = 0; i <rank; i++){
+    double lower = config_ptr->domain_lower[i];
+    double upper = config_ptr->domain_upper[i];
+    double domain_width = upper - lower;
+    long nroot_cells =
+      config_ptr->mesh_root_blocks[i] * config_ptr->mesh_root_size[i];
+
+    double cell_width = domain_width/nroot_cells;
+    double root_index = floor((target_downstream_dist_[i] - lower)/cell_width);
+    if (1e-6 < (cello::err_abs((root_index+0.5)*cell_width,
+                               target_downstream_dist_[i])/cell_width)){
+      ERROR2("FrameTransformReductionMgr",
+             "Along axis-%d, the target downstream distance, %e, is not "
+             "located at a cell-center.", i, target_downstream_dist_[i]);
+    }
+  }
+
+  // Compute widths and offset. These are defined such that the center of cell
+  // along axis ax at index i_ax is given by i_ax * widths + offsets;
+  double widths[3], offset[3];
+  Data* data = block->data();
+  data->field_cell_width(&(widths[0]), &(widths[1]), &(widths[2]));
+  data->lower(&(offset[0]), &(offset[1]), &(offset[2]));
+  for (int i=0; i < 3; i++) {offset[i] += widths[i]*0.5;}
+
+  constexpr double max_dbl = std::numeric_limits<double>::max();
+  double proj_downstream_dist[3] = {max_dbl, max_dbl, max_dbl};
+
+  auto function =
+    [=,&proj_downstream_dist](double thresh_factor, double weight_val,
+                              double v[3], int ix, int iy, int iz)
+    {
+      // compute the current cell location
+      double cur_loc[3];
+      cur_loc[0] = ((double)ix)*widths[0] + offset[0];
+      cur_loc[1] = ((double)iy)*widths[1] + offset[1];
+      cur_loc[2] = ((double)iz)*widths[2] + offset[2];
+
+      for (int i = 0; i < 3; i++){
+        double cur_downstream_dist = cur_loc[i] - domain_lower[i];
+        proj_downstream_dist[i] =
+          std::fmin(proj_downstream_dist[i],
+                    cur_downstream_dist + v[i] * time_to_next_transform);
+      }
+    };
+
+  double velocity[3] = {max_dbl, max_dbl, max_dbl};
+  if (block->is_leaf()) {
+    local_reduction_(block, function, precision);
+
+    for (int i =0; i < 3; i++){
+      if (proj_downstream_dist[i] < max_dbl){
+        velocity[i] = ((proj_downstream_dist[i] - target_downstream_dist_[i])
+                       / time_to_next_transform);
+      }
+    }
+  }
+
+  block->contribute(3*sizeof(double), velocity, CkReduction::min_double, cb);
+
+}
+
 void FrameTransformReductionMgr::launch_reduction
-(Block* block, const bool component_transform[3], CkCallback &cb) const throw()
+(Block* block, const bool component_transform[3],
+ double time_to_next_transform, precision_type precision,
+ CkCallback &cb) const throw()
 {
   if (reduction_type_ == frame_trans_reduce_enum::weighted_average){
 
@@ -164,7 +224,8 @@ void FrameTransformReductionMgr::launch_reduction
     double *momentum = &(message_arr[2]);
 
     auto function =
-      [=](double thresh_factor, double weight_val, double v[3]) {
+      [=](double thresh_factor, double weight_val, double v[3],
+          int ix, int iy, int iz) {
         // since the cell volume is always constant throughout a block, wait
         // multiply by volume until after processing full block
         double cur_mass = thresh_factor * weight_val;
@@ -175,9 +236,8 @@ void FrameTransformReductionMgr::launch_reduction
       };
 
     // calc mass and momentum
-    if (block->is_leaf()) {
-      local_block_reduction_<T,decltype(function)>(block, function);
-    }
+    if (block->is_leaf()) { local_reduction_(block, function, precision); }
+
     for (int i=0; i<3; i++) { if (!component_transform[i]) momentum[i] = 0; }
 
     // multiply mass and momentum by the volume
@@ -202,7 +262,8 @@ void FrameTransformReductionMgr::launch_reduction
 
     // calculate the minimum velocity components for the local block
     auto function =
-      [=, &velocity] (double thresh_factor, double weight_val, double v[3]) {
+      [=, &velocity] (double thresh_factor, double weight_val, double v[3],
+                      int ix, int iy, int iz) {
         // weight_val was used to compute thresh_factor)
         double f = thresh_factor;
         for (int i = 0; i < 3; i++){
@@ -210,9 +271,8 @@ void FrameTransformReductionMgr::launch_reduction
         }
       };
 
-    if (block->is_leaf()) {
-      local_block_reduction_<T,decltype(function)>(block, function);
-    }
+    if (block->is_leaf()) { local_reduction_(block, function,precision); }
+
     for (int i=0; i<3; i++) { if (!component_transform[i]) velocity[i] = 0; }
 
     // optionally apply a floor of zero
@@ -223,6 +283,11 @@ void FrameTransformReductionMgr::launch_reduction
     // launch the reduction
     block->contribute(3*sizeof(double), velocity, CkReduction::min_double,
                       cb);
+  } else if (reduction_type_ ==
+             frame_trans_reduce_enum::target_downstream_dist) {
+    launch_target_downstream_dist_reduction_(block, component_transform,
+                                             time_to_next_transform,
+                                             precision, cb);
   } else {
     ERROR("FrameTransformReductionMgr::launch_reduction",
           "unknown reduction type");
@@ -293,9 +358,27 @@ void FrameTransformReductionMgr::extract_final_velocity
 }
 
 //----------------------------------------------------------------------
+template <class Function>
+void FrameTransformReductionMgr::local_reduction_
+(Block * block, Function func, precision_type precision) const throw()
+{
+  switch (precision) {
+  case precision_single:
+    { local_reduction_helper_<float,Function>(block, func); }
+    break;
+  case precision_double:
+    { local_reduction_helper_<double,Function>(block, func); }
+    break;
+  case precision_extended80:
+  case precision_extended96:
+  case precision_quadruple:
+    { local_reduction_helper_<long double,Function>(block, func); }
+    break;
+  }
+}
 
 template <class T, class Function>
-void FrameTransformReductionMgr::local_block_reduction_
+void FrameTransformReductionMgr::local_reduction_helper_
 (Block * block, Function func) const throw()
 {
   const int rank = cello::rank();
@@ -342,7 +425,7 @@ void FrameTransformReductionMgr::local_block_reduction_
         double cur_v[3] = {0., 0., 0.};
         for (int j=0; j<rank; j++){ cur_v[j] = (double) v3[j][i]; }
 
-        func(thresh_factor, weight_val, cur_v);
+        func(thresh_factor, weight_val, cur_v, ix, iy, iz);
       }
     }
   }
@@ -434,34 +517,26 @@ void MethodFrameTransform::compute( Block * block) throw()
   ASSERT("MethodFrameTransform::compute", "Not currently compatible with AMR",
 	 block->level() == 0 && block->is_leaf());
 
+  // compute the time to the next invocation of MethodFrameTransform::compute
+  double time_to_next_transform = -1;
+   if ((passive_schedule_ != nullptr) &&
+       ( (passive_schedule_->type() == schedule_type_time) ||
+         (passive_schedule_->type() == schedule_type_minimum_time) ) ){
+     double time_at_cycle_end = block->time() + block->dt();
+     time_to_next_transform =
+       passive_schedule_->time_next() - time_at_cycle_end;
+  }
+
   Field field = block->data()->field();
 
   // construct the charm++ callback to indicate that
   // p_method_frame_transform_end should be called after the reduction
   CkCallback cb(CkIndex_Block::p_method_frame_transform_end(NULL),
 		block->proxy_array());
-  
-  precision_type precision = field_precision_(field);
-  switch (precision) {
-  case precision_single:
-    {
-      reduction_mgr_.launch_reduction<float>(block, component_transform_, cb);
-    }
-    break;
-  case precision_double:
-    {
-      reduction_mgr_.launch_reduction<double>(block, component_transform_, cb);
-    }
-    break;
-  case precision_extended80:
-  case precision_extended96:
-  case precision_quadruple:
-    {
-      reduction_mgr_.launch_reduction<long double>(block, component_transform_,
-                                                   cb);
-    }
-    break;
-  }
+
+  reduction_mgr_.launch_reduction(block, component_transform_,
+                                  time_to_next_transform,
+                                  field_precision_(field), cb);
 }
 
 //----------------------------------------------------------------------

@@ -23,6 +23,7 @@ enum frame_trans_reduce_enum {
   weighted_average,
   min,
   min_zero_floor,
+  target_downstream_dist
 };
 
 class FrameTransformReductionMgr{
@@ -61,11 +62,10 @@ public:
   void pup(PUP::er &p);
 
   /// Launch the charm++ reduction to compute the new frame velocity
-  ///
-  /// @tparam T the precision of the block fields
-  template<typename T>
   void launch_reduction(Block * block, const bool component_transform[3],
-                        CkCallback &cb) const throw();
+                        double time_to_next_transform,
+                        precision_type precision, CkCallback &cb)
+    const throw();
 
   /// Function called after completion of the reduction to determine the new
   /// frame velocity (in the current reference frame) from the reduction result
@@ -73,9 +73,21 @@ public:
 
 private: // helper functions
 
+  // helper function that helps with the target_downstream_dist approach
+  void launch_target_downstream_dist_reduction_
+  (Block *block, const bool component_transform[3],
+   double time_to_next_transform, precision_type precision,
+   CkCallback &cb) const throw();
+
   /// helper function used to compute the reduction values for the local block
-  template <class T, class Function>
-  void local_block_reduction_(Block * block, Function func) const throw();
+  template <class Function>
+  void local_reduction_(Block * block, Function func, precision_type precision)
+    const throw();
+
+  template <typename T, class Function>
+  void local_reduction_helper_(Block * block, Function func) const throw();
+
+  
 
 private: // attributes
   /// Name of the density field used for weighting the velocity.
