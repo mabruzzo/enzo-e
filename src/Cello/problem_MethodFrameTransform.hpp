@@ -46,13 +46,17 @@ public:
   /// Main Constructor
   FrameTransformReductionMgr(std::string weight_field, double weight_threshold,
                              std::string threshold_type,
-                             std::string reduction_type) throw();
+                             std::string reduction_type,
+                             const double (&target_downstream_dist)[3],
+                             const bool (&component_transform)[3])
+    throw();
 
   /// Default Constructor - mainly used for charm++ unpacking
   FrameTransformReductionMgr() throw()
-    : weight_field_(""), weight_threshold_(0.0),
-      threshold_type_(threshold_enum::ignore),
-      reduction_type_(frame_trans_reduce_enum::unknown)
+  : weight_field_(""), weight_threshold_(0.0),
+    threshold_type_(threshold_enum::ignore),
+    reduction_type_(frame_trans_reduce_enum::unknown),
+    target_downstream_dist_()
   { }
 
   /// CHARM++ Pack / Unpack function
@@ -62,21 +66,62 @@ public:
   void pup(PUP::er &p);
 
   /// Launch the charm++ reduction to compute the new frame velocity
-  void launch_reduction(Block * block, const bool component_transform[3],
-                        double time_to_next_transform,
+  void launch_reduction(Block * block, double time_to_next_transform,
                         precision_type precision, CkCallback &cb)
-    const throw();
+    const throw()
+  {
+    if (reduction_type_ == frame_trans_reduce_enum::weighted_average){
+      launch_weighted_average_reduction_(block, time_to_next_transform,
+                                         precision, cb);
+    } else if ((reduction_type_ == frame_trans_reduce_enum::min) ||
+               (reduction_type_ == frame_trans_reduce_enum::min_zero_floor)){
+      launch_min_reduction_(block, time_to_next_transform, precision, cb);
+    } else if (reduction_type_ ==
+               frame_trans_reduce_enum::target_downstream_dist){
+      launch_target_downstream_dist_reduction_(block, time_to_next_transform,
+                                               precision, cb);
+    } else {
+      ERROR("FrameTransformReductionMgr::launch_reduction",
+            "unknown reduction type");
+    }
+  }
 
   /// Function called after completion of the reduction to determine the new
   /// frame velocity (in the current reference frame) from the reduction result
-  void extract_final_velocity(CkReductionMsg * msg, double v[3]) const throw();
+  /// @param[in]  msg Pointer to the CkReductionMsg that will be interpretted
+  /// @param[out] v Array where the x, y, and z components of the new frame
+  ///             velocity (measured in the current reference frame) are stored
+  /// @param[out] update_component Stores whether each of output values of v
+  ///             should be used to update the current frame velocity. A true
+  ///             value means to use the value, while false value means that it
+  ///             should not be used.
+  void extract_final_velocity(CkReductionMsg * msg, double (&v)[3],
+                              bool (&update_component)[3]) const throw();
+
+  /// Returns whether a given velocity component will be transformed
+  /// 0,1,2 map to x,y,z
+  bool component_to_be_transformed(int component) const{
+    ASSERT("FrameTransformReductionMgr::component_to_be_tranformed",
+           "component should be 0, 1, or 2",
+           (component>=0) && (component<3));
+    return component_transform_[component];
+  }
 
 private: // helper functions
 
+  // helper function that helps with the weighted_average approach
+  void launch_weighted_average_reduction_
+  (Block *block, double time_to_next_transform, precision_type precision,
+   CkCallback &cb) const throw();
+
+  // helper function that helps with the min/min_zero_floor approach
+  void launch_min_reduction_
+  (Block *block, double time_to_next_transform, precision_type precision,
+   CkCallback &cb) const throw();
+
   // helper function that helps with the target_downstream_dist approach
   void launch_target_downstream_dist_reduction_
-  (Block *block, const bool component_transform[3],
-   double time_to_next_transform, precision_type precision,
+  (Block *block, double time_to_next_transform, precision_type precision,
    CkCallback &cb) const throw();
 
   /// helper function used to compute the reduction values for the local block
@@ -101,6 +146,15 @@ private: // attributes
 
   /// The type of reduction to be applied
   frame_trans_reduce_enum reduction_type_;
+
+  /// The target downstream distance
+  ///
+  /// Only used when reduction_type_ == target_downstream_dist
+  double target_downstream_dist_[3];
+
+  /// Indicates the velocity components to apply the transformation for
+  /// - the corresponding components are ordered (x,y,z)
+  bool component_transform_[3];
 };
   
 
@@ -116,11 +170,12 @@ class MethodFrameTransform : public Method {
 
 public: // interface
   /// Create a new MethodFrameTransform object
-  MethodFrameTransform(bool component_transform[3],
+  MethodFrameTransform(const bool (&component_transform)[3],
 		       std::string weight_field,
 		       double weight_threshold,
 		       std::string threshold_type,
-                       std::string reduction_type);
+                       std::string reduction_type,
+                       const double (&target_downstream_dist)[3]);
 
   /// Charm++ PUP::able declarations
   PUPable_decl(MethodFrameTransform);
@@ -128,7 +183,6 @@ public: // interface
   /// Charm++ PUP::able migration constructor
   MethodFrameTransform (CkMigrateMessage *m)
     : Method (m),
-      component_transform_(), // initialize to (false,false,false)
       reduction_mgr_()
   { }
 
@@ -140,6 +194,8 @@ public: // interface
 
   virtual std::string name () throw () 
   { return "frame_transform"; }
+
+  virtual double timestep ( Block * block) const throw();
 
   /// Resume computation after a reduction
   virtual void compute_resume ( Block * block,
@@ -163,10 +219,6 @@ private: // methods
   precision_type field_precision_(Field &field) const throw();
 
 protected: // attributes
-
-  /// Indicates the velocity components to apply the transformation for
-  /// - the corresponding components are ordered (x,y,z)
-  bool component_transform_[3];
 
   /// Manages the reduction to compute incremental changed in frame velocity
   FrameTransformReductionMgr reduction_mgr_;

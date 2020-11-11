@@ -768,7 +768,7 @@ void Config::read_method_ (Parameters * p) throw()
       method_frame_transform_track_component[i] = p->list_value_logical
 	(i, "Method:frame_transform:track_component", false);
       method_frame_transform_target_downstream_dist[i] = p->list_value_float
-        (i, "Method:frame_transform:track_downstream_dist", 0.);
+        (i, "Method:frame_transform:target_downstream_dist", 0.);
     }
   }
   method_frame_transform_weight_field = p->value_string
