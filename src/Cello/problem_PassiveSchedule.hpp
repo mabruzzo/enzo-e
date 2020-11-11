@@ -84,6 +84,12 @@ public: // functions
   /// timestep is at least double the time interval between events
   bool is_scheduled (int cycle, double time) throw();
 
+  /// Return the type of the underlying schedule
+  int type() const throw();
+
+  /// Return the next scheduled time
+  double time_next() const throw();
+
 private: //attributes
   /// Pointer to a schedule object
   Schedule *schedule_;
