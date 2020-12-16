@@ -145,8 +145,10 @@ public: // interface
       initial_cloud_eint_wind(0.0),
       initial_cloud_metal_mass_frac(0.0),
       initial_cloud_initialize_uniform_bfield(false),
-      initial_cloud_perturb_stddev(0.0),
-      initial_cloud_trunc_dev(0.0),
+      initial_cloud_perturb_Nwaves(0),
+      initial_cloud_perturb_amplitude(std::numeric_limits<double>::min()),
+      initial_cloud_perturb_min_wavelength(std::numeric_limits<double>::min()),
+      initial_cloud_perturb_max_wavelength(std::numeric_limits<double>::min()),
       initial_cloud_perturb_seed(0),
       // EnzoInitialCosmology
       initial_cosmology_temperature(0.0),
@@ -365,8 +367,10 @@ public: // attributes
   double                     initial_cloud_metal_mass_frac;
   bool                       initial_cloud_initialize_uniform_bfield;
   double                     initial_cloud_uniform_bfield[3];
-  double                     initial_cloud_perturb_stddev;
-  double                     initial_cloud_trunc_dev;
+  int                        initial_cloud_perturb_Nwaves;
+  double                     initial_cloud_perturb_amplitude;
+  double                     initial_cloud_perturb_min_wavelength;
+  double                     initial_cloud_perturb_max_wavelength;
   unsigned int               initial_cloud_perturb_seed;
 
   /// EnzoInitialCosmology;
