@@ -542,15 +542,15 @@ MethodFrameTransform::MethodFrameTransform
 
   // we could probably reduce the ghost depth to zero (and possibly change the
   // synch type)
-  const int ir = add_refresh(4,0,neighbor_leaf,sync_barrier,
-			     sync_id_method_frame_transform);
-  refresh(ir)->add_field(field_descr->field_id(weight_field));
+  cello::simulation()->new_refresh_set_name(ir_post_,name());
+  Refresh * refresh = cello::refresh(ir_post_);
+  refresh->add_field(field_descr->field_id(weight_field));
   if (field_descr->is_field("total_energy")){
-    refresh(ir)->add_field(field_descr->field_id("total_energy"));
+    refresh->add_field(field_descr->field_id("total_energy"));
   }
-  if (rank >= 1) refresh(ir)->add_field(field_descr->field_id("velocity_x"));
-  if (rank >= 2) refresh(ir)->add_field(field_descr->field_id("velocity_y"));
-  if (rank >= 3) refresh(ir)->add_field(field_descr->field_id("velocity_z"));
+  if (rank >= 1) refresh->add_field(field_descr->field_id("velocity_x"));
+  if (rank >= 2) refresh->add_field(field_descr->field_id("velocity_y"));
+  if (rank >= 3) refresh->add_field(field_descr->field_id("velocity_z"));
 }
 
 //----------------------------------------------------------------------
