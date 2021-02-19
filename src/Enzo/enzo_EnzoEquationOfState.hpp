@@ -50,6 +50,9 @@ public: // interface
   { }
 
   /// Checks the validity of floor values for the EquationOfState
+  ///
+  /// Note that this should not be used to check the passively advected scalar
+  /// floor. That floor is allowed to be zero.
   static void check_floor(enzo_float floor){
     // if density = 0, NaNs will arise when converting momentum to velocity
     // if pressure = 0, then sound speed will be equal to 0 (possibly causing
@@ -192,6 +195,9 @@ public: // interface
 
   /// returns the thermal pressure floor
   virtual enzo_float get_pressure_floor() const = 0;
+
+  /// returns the passively advected scalar floor. This can be zero.
+  virtual enzo_float get_scalar_density_floor() const = 0;
 
   /// applies the pressure floor to the specific total energy field. If using
   /// the dual-energy formalism, it is also applied to the internal energy

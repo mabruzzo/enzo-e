@@ -190,6 +190,10 @@ parameters
      - `logical`
      - `none`
      - `Lower limit on thermal pressure (must exceed 0)`
+   * - ``"scalar_density_floor"``
+     - `float`
+     - `0.0`
+     - `Lower limit on passive scalars (in density units). Must not be negative.`
    * - ``"riemann_solver"``
      - `string`
      - `hlld`

@@ -176,7 +176,8 @@ void EnzoIntegrableUpdate::update_quantities
 
   // Update passive scalars, it doesn't currently support renormalizing to 1
   update_passive_scalars_(initial_integrable_map, dUcons_map,
-                          out_conserved_passive_scalar, stale_depth,
+                          out_conserved_passive_scalar,
+                          eos->get_scalar_density_floor(), stale_depth,
                           passive_lists);
 
   // For now, not having density floor affect momentum or total energy density
@@ -227,7 +228,8 @@ void EnzoIntegrableUpdate::update_quantities
 
 void EnzoIntegrableUpdate::update_passive_scalars_
 (EnzoEFltArrayMap &initial_integrable_map, EnzoEFltArrayMap &dUcons_map,
- EnzoEFltArrayMap &out_conserved_passive_scalar, int stale_depth,
+ EnzoEFltArrayMap &out_conserved_passive_scalar,
+ enzo_float scalar_density_floor, int stale_depth,
  const std::vector<std::vector<std::string>> &passive_lists) const
 {
 
@@ -256,8 +258,10 @@ void EnzoIntegrableUpdate::update_passive_scalars_
       for (int iz=1; iz<mz-1; iz++) {
 	for (int iy=1; iy<my-1; iy++) {
 	  for (int ix=1; ix<mx-1; ix++) {
-	    out_conserved(iz,iy,ix)
-	      = (cur_specific(iz,iy,ix) * cur_rho(iz,iy,ix) + dU(iz,iy,ix));
+            enzo_float new_conserved
+              = (cur_specific(iz,iy,ix) * cur_rho(iz,iy,ix) + dU(iz,iy,ix));
+	    out_conserved(iz,iy,ix) = std::fmax(new_conserved,
+                                                scalar_density_floor);
 	  }
 	}
       }

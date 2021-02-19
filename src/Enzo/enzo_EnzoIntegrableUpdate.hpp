@@ -134,7 +134,8 @@ private:
   /// (This should called before the density is updated)
   void update_passive_scalars_
   (EnzoEFltArrayMap &initial_integrable_map, EnzoEFltArrayMap &dUcons_map,
-   EnzoEFltArrayMap &out_conserved_passive_scalar, int stale_depth,
+   EnzoEFltArrayMap &out_conserved_passive_scalar,
+   enzo_float scalar_density_floor, int stale_depth,
    const std::vector<std::vector<std::string>> &passive_lists) const;
 
   /// Dynamically allocates and constructs an array of instances of EFlt3DArray

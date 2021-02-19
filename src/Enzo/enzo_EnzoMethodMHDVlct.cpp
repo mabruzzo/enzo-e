@@ -48,6 +48,7 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
 				      double gamma, double theta_limiter,
 				      double density_floor,
 				      double pressure_floor,
+                                      double scalar_density_floor,
 				      std::string mhd_choice,
 				      bool dual_energy_formalism,
 				      double dual_energy_formalism_eta)
@@ -56,7 +57,9 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
   // Initialize equation of state (check the validity of quantity floors)
   EnzoEquationOfState::check_floor(density_floor);
   EnzoEquationOfState::check_floor(pressure_floor);
+  // EnzoEOSIdeal internally checks validity of scalar_density_floor
   eos_ = new EnzoEOSIdeal(gamma, density_floor, pressure_floor,
+                          scalar_density_floor,
 			  dual_energy_formalism, dual_energy_formalism_eta);
 
   // Determine whether magnetic fields are to be used

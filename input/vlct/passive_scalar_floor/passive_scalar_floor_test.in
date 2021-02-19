@@ -1,0 +1,74 @@
+# Problem: Simple test to make sure that VL+CT method properly applies a floor
+#          to passively advected scalars. 
+#          We perturb the mass-fraction variant of the passive scalar
+# Author: Matthew Abruzzo (matthewabruzzo@gmail.com)
+
+   include "input/vlct/vl.incl"
+
+   Domain {
+      lower = [0.0, 0.0, 0.0];
+      upper = [1.0, 1.0, 1.0];
+   }
+
+   Mesh {
+      root_rank   = 3;
+      root_size   = [ 4, 4, 4];
+      root_blocks = [ 1, 1, 1];
+   }
+
+   Method { mhd_vlct { scalar_density_floor = 0.25; } }
+
+   Initial {
+      list = ["value"];
+      value {
+         density = 1.0;
+	 velocity_x = 1.0;
+	 velocity_y = 0.0;
+	 velocity_z = 0.0;
+	 total_energy = 4.0;
+	 pressure = 0.0;
+         red = 0.0;
+      } 
+   }
+
+   Boundary { type = "periodic"; }
+
+   Stopping {
+      cycle = 1;
+   }
+
+   Group {
+      list = ["colour"];
+
+      colour {
+         field_list = ["red"];
+      }
+   }
+
+   Field {
+      list = ["density", "pressure", "velocity_x", "velocity_y", "velocity_z",
+	      "total_energy", "red"];
+
+      gamma = 1.6666666666666667;
+      
+      ghost_depth = 3;
+      padding = 0;
+      alignment = 8;
+   }
+
+   Output { 
+
+      list = ["data"];
+
+      data {
+         type = "data";
+         field_list = ["density", "velocity_x", "velocity_y", "velocity_z",
+	      	       "total_energy", "red"];
+         schedule {
+            var = "cycle";
+            list = [0,1];
+         };
+         dir = ["passive_floor_%d","cycle"];
+      	 name = ["data-%04d.h5", "proc"];
+      };
+   }

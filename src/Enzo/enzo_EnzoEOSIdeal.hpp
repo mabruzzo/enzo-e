@@ -20,15 +20,26 @@ public: // interface
   
   /// Create a new EnzoEOSIdeal object
   EnzoEOSIdeal(double gamma, double density_floor, double pressure_floor,
-	       bool dual_energy_formalism,
+               double scalar_density_floor, bool dual_energy_formalism,
 	       double dual_energy_formalism_eta) throw()
     : EnzoEquationOfState(),
       gamma_(gamma),
       density_floor_(density_floor),
       pressure_floor_(pressure_floor),
+      scalar_density_floor_(scalar_density_floor),
       dual_energy_formalism_(dual_energy_formalism),
       dual_energy_formalism_eta_(dual_energy_formalism_eta)
-  { }
+  {
+    
+    ASSERT("EnzoEOSIdeal", "The scalar_density_floor must not be negative.",
+	   scalar_density_floor >= 0.);
+    if (scalar_density_floor > 0.){
+      ASSERT("EnzoEOSIdeal",
+             ("scalar_density_floor is smaller than the minimum value that "
+              "can be represented enzo_float"),
+             scalar_density_floor >= std::numeric_limits<enzo_float>::min());
+    }
+  }
 
   /// Delete EnzoEOSIdeal object
   ~EnzoEOSIdeal()
@@ -68,9 +79,11 @@ public: // interface
                                      EFlt3DArray &pressure,
                                      int stale_depth) const;
 
-inline  enzo_float get_density_floor() const { return density_floor_; }
+  inline enzo_float get_density_floor() const { return density_floor_; }
 
   enzo_float get_pressure_floor() const { return pressure_floor_; }
+
+  enzo_float get_scalar_density_floor() const { return scalar_density_floor_; }
 
   void apply_floor_to_energy_and_sync(EnzoEFltArrayMap &integrable_map,
                                       int stale_depth) const;
@@ -88,6 +101,7 @@ protected: // attributes
   enzo_float gamma_; // adiabatic index
   enzo_float density_floor_;
   enzo_float pressure_floor_;
+  enzo_float scalar_density_floor_;
   bool dual_energy_formalism_;
   double dual_energy_formalism_eta_;
 };

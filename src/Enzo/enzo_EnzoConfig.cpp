@@ -180,6 +180,7 @@ EnzoConfig::EnzoConfig() throw ()
   method_vlct_theta_limiter(0.0),
   method_vlct_density_floor(0.0),
   method_vlct_pressure_floor(0.0),
+  method_vlct_scalar_density_floor(0.0),
   method_vlct_mhd_choice(""),
   method_vlct_dual_energy(false),
   method_vlct_dual_energy_eta(0.0),
@@ -405,6 +406,7 @@ void EnzoConfig::pup (PUP::er &p)
   p | method_vlct_theta_limiter;
   p | method_vlct_density_floor;
   p | method_vlct_pressure_floor;
+  p | method_vlct_scalar_density_floor;
   p | method_vlct_mhd_choice;
   p | method_vlct_dual_energy;
   p | method_vlct_dual_energy_eta;
@@ -848,6 +850,8 @@ void EnzoConfig::read(Parameters * p) throw()
     ("Method:mhd_vlct:density_floor", 0.0);
   method_vlct_pressure_floor = p->value_float
     ("Method:mhd_vlct:pressure_floor", 0.0);
+  method_vlct_scalar_density_floor = p->value_float
+    ("Method:mhd_vlct:scalar_density_floor", 0.0);
   method_vlct_dual_energy = p->value_logical
     ("Method:mhd_vlct:dual_energy", false);
   method_vlct_dual_energy_eta = p->value_float

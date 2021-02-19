@@ -20,8 +20,20 @@ reconstruction and quantity updates.`
 :Default: :d:`none`
 :Scope:     :z:`Enzo`
 
-:e:`Thermal pressure floor, which must exceed 0 This is applied during
+:e:`Thermal pressure floor, which must exceed 0. This is applied during
 reconstruction and quantity updates.`
+
+----
+
+:Parameter:  :p:`Method` : :p:`mhd_vlct` : :p:`scalar_density_floor`
+:Summary: :s:`Lower limit on thermal pressure`
+:Type:   :t:`float`
+:Default: :d:`0.0`
+:Scope:     :z:`Enzo`
+
+:e:`Floor applied to the passively advected scalars (when treated as a
+density). This must not be negative. It is only applied during
+quantity updates.`
 
 ----
 

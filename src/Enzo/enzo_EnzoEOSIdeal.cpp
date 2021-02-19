@@ -17,6 +17,7 @@ void EnzoEOSIdeal::pup (PUP::er &p)
   p|gamma_;
   p|density_floor_;
   p|pressure_floor_;
+  p|scalar_density_floor_;
   p|dual_energy_formalism_;
   p|dual_energy_formalism_eta_;
 }

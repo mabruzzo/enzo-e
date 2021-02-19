@@ -104,6 +104,7 @@ public: // interface
 		    double gamma, double theta_limiter,
 		    double density_floor,
 		    double pressure_floor,
+		    double scalar_density_floor,
 		    std::string mhd_choice,
 		    bool dual_energy_formalism,
 		    double dual_energy_formalism_eta);
@@ -190,7 +191,7 @@ protected: // methods
   /// Constructs a map containing the field data for each primitive (except for
   /// the passively advected scalars).
   EnzoEFltArrayMap nonpassive_primitive_map_(Block * block) const noexcept;
-  
+
   /// Constructs a map containing the field data for each passively advected
   /// scalar (in conserved form).
   EnzoEFltArrayMap conserved_passive_scalar_map_(Block * block) const noexcept;
