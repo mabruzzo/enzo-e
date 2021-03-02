@@ -95,8 +95,21 @@ public:
   ///             should be used to update the current frame velocity. A true
   ///             value means to use the value, while false value means that it
   ///             should not be used.
-  void extract_final_velocity(CkReductionMsg * msg, double (&v)[3],
-                              bool (&update_component)[3]) const throw();
+  /// @returns The volume integrated value of the weight_field used to compute
+  ///          `v` if using the "weighted_average" reduction type. For other
+  ///          reduction types, this is always 0.
+  double extract_final_velocity(CkReductionMsg * msg, double (&v)[3],
+                                bool (&update_component)[3]) const throw();
+
+  /// Returns the name of the weight field. This will be "", if the reduction
+  /// type isn't "weighted_average"
+  const std::string get_weight_field_name() const throw(){
+    if (reduction_type_ == frame_trans_reduce_enum::weighted_average){
+      return weight_field_;
+    } else {
+      return "";
+    }
+  }
 
   /// Returns whether a given velocity component will be transformed
   /// 0,1,2 map to x,y,z

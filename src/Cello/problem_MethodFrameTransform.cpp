@@ -340,7 +340,7 @@ void FrameTransformReductionMgr::launch_target_downstream_dist_reduction_
 
 //----------------------------------------------------------------------
 
-void FrameTransformReductionMgr::extract_final_velocity
+double FrameTransformReductionMgr::extract_final_velocity
 (CkReductionMsg * msg, double (&v)[3], bool (&update_component)[3])
   const throw()
 {
@@ -351,6 +351,10 @@ void FrameTransformReductionMgr::extract_final_velocity
                             component_transform_[i] );
   }
   double *values=(double *)msg->getData();
+
+  // The volume-integrated weight_field is 0 unless using the "weighted
+  // average" approach.
+  double volume_integrated_weight_field = 0.0;
 
   if (reduction_type_ == frame_trans_reduce_enum::weighted_average){
 
@@ -398,6 +402,7 @@ void FrameTransformReductionMgr::extract_final_velocity
       }
     }
 
+    volume_integrated_weight_field = mass;
   } else {
     ASSERT("FrameTransformReductionMgr::extract_final_velocity",
            "CkReductionMsg is expected to hold 3 doubles",
@@ -414,6 +419,7 @@ void FrameTransformReductionMgr::extract_final_velocity
       }
     }
   }
+  return volume_integrated_weight_field;
 }
 
 //----------------------------------------------------------------------
@@ -709,8 +715,8 @@ void MethodFrameTransform::compute_resume
   // the result of the reduction message
   double frame_velocity[3] = {0., 0., 0.};
   bool update_component[3] = {false, false, false};
-  reduction_mgr_.extract_final_velocity(msg, frame_velocity,
-                                        update_component);
+  double volume_integrated_weight_field = reduction_mgr_.extract_final_velocity
+    (msg, frame_velocity, update_component);
 
   // Update the velocity of the current frame measured with respect to the
   // frame when the gas was originally initialized (add the new frame velocity
@@ -747,6 +753,17 @@ void MethodFrameTransform::compute_resume
         ("Method",
          "Ref-Frame %s-%c-transform: vel = %+20.16e origin-offset = %20.16e",
          prefix, axes[i], new_v[i], offset[i]);
+    }
+
+    // When a weighted-average reduction approach is used, print out the volume
+    // integrated weight-field used to update the frame velocity. (This can
+    // hold useful information for analysis)
+    const std::string weight_field = reduction_mgr_.get_weight_field_name();
+    if (weight_field != ""){
+      cello::monitor()->print
+        ("Method",
+         "Ref-Frame volume-integrated \"%s\" (used for vel update) = %+20.16e",
+         weight_field.c_str(), volume_integrated_weight_field);
     }
   }
 
