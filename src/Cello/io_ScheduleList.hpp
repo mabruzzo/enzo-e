@@ -59,6 +59,9 @@ public: // virtual functions
   /// Whether to perform IO this cycle
   virtual bool write_this_cycle ( int cycle, double time ) throw();
 
+  virtual int cycle_next() const throw()
+  { return ((int(cycle_list_.size()) > last_+1) ? cycle_list_.at(last_+1) : -1); }
+
   virtual double time_next() const throw()
   { return ((int(time_list_.size()) > last_+1) ? time_list_.at(last_+1) : -1.0); }
 

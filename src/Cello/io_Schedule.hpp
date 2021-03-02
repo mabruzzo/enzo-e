@@ -11,12 +11,19 @@
 //----------------------------------------------------------------------
 /// @enum     schedule_enum
 /// @brief    Scheduling types
+///
+/// schedule_type_cycle and schedule_type_time both schedule events when the
+/// underlying variable is equal to the next scheduled value. In contrast,
+/// schedule_type_minimum_time and schedule_type_seconds both schedule events
+/// when the underlying variable is greater than or equal to the next scheduled
+/// value.
 
 enum schedule_enum {
   schedule_type_unknown,
   schedule_type_cycle,
   schedule_type_time,
-  schedule_type_seconds
+  schedule_type_minimum_time,
+  schedule_type_seconds,
 };
 
 typedef int schedule_type;
@@ -72,7 +79,7 @@ public: // functions
   bool is_active() const throw()
   { return active_; };
 
-  /// Set whether the Schedule object is type or not
+  /// Set the Schedule object's type
   void set_type(int type) throw()
   {
     type_ = type; 
@@ -87,6 +94,7 @@ public: // functions
 public: // virtual functions
 
   /// Reduce timestep if next write time is between time and time + dt
+  /// (and the type is not schedule_type_minimum_time)
   virtual double update_timestep(double time, double dt)  const throw() = 0;
 
   /// Whether to perform IO this cycle

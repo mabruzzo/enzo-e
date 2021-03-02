@@ -88,6 +88,13 @@ public: // interface
     method_trace_name(),
   // MethodNull
     method_null_dt(0.0),
+    method_frame_transform_use_frame_transform(),
+    method_frame_transform_track_component(),
+    method_frame_transform_weight_field(),
+    method_frame_transform_weight_threshold(),
+    method_frame_transform_threshold_type(),
+    method_frame_transform_reduction_type(),
+    method_frame_transform_target_downstream_dist(),
     monitor_debug(false),
     monitor_verbose(false),
     num_output(0),
@@ -244,6 +251,13 @@ public: // interface
       method_timestep(),
       method_trace_name(),
       method_null_dt(0.0),
+      method_frame_transform_use_frame_transform(),
+      method_frame_transform_track_component(),
+      method_frame_transform_weight_field(),
+      method_frame_transform_weight_threshold(),
+      method_frame_transform_threshold_type(),
+      method_frame_transform_reduction_type(),
+      method_frame_transform_target_downstream_dist(),
       monitor_debug(false),
       monitor_verbose(false),
       num_output(0),
@@ -448,6 +462,13 @@ public: // attributes
   std::vector<std::string>   method_trace_name;
   double                     method_null_dt;
 
+  bool                       method_frame_transform_use_frame_transform;
+  bool                       method_frame_transform_track_component[3];
+  std::string                method_frame_transform_weight_field;
+  double                     method_frame_transform_weight_threshold;
+  std::string                method_frame_transform_threshold_type;
+  std::string                method_frame_transform_reduction_type;
+  double                     method_frame_transform_target_downstream_dist[3];
 
   // Monitor
 

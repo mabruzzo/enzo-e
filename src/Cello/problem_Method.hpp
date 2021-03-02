@@ -10,6 +10,7 @@
 
 class Refresh;
 class Schedule;
+class PassiveSchedule;
 
 class Method : public PUP::able 
 {
@@ -30,7 +31,7 @@ public: // interface
   
   Method (CkMigrateMessage *m)
     : PUP::able(m),
-    schedule_(NULL),
+    passive_schedule_(NULL),
     courant_(1.0),
     ir_post_(-1),
     neighbor_type_(neighbor_leaf)
@@ -66,12 +67,11 @@ public: // virtual functions
   /// Return the index for the main post-refresh object
   int refresh_id_post() const;
 
-  /// Return the Schedule object pointer
-  Schedule * schedule() throw() 
-  { return schedule_; };
+  /// advance schedule (if necessary) and return whether method is scheduled
+  bool advance_schedule(int cycle, double time) throw();
 
   /// Set schedule
-  void set_schedule (Schedule * schedule) throw();
+  void set_schedule (Schedule * schedule, double initial_time) throw();
 
   double courant() const throw ()
   { return courant_; }
@@ -98,8 +98,8 @@ public: // attributes (static)
 
 protected: // attributes
 
-  /// Schedule object, if any (default is every cycle)
-  Schedule * schedule_;
+  /// PassiveSchedule object, if any (default is every cycle)
+  PassiveSchedule * passive_schedule_;
 
   /// Courant condition for the Method
   double courant_;
