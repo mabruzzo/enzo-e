@@ -112,6 +112,10 @@ void Problem::pup (PUP::er &p)
   for (int i=0; i<n; i++) {
     p | output_list_[i]; // PUP::able
   }
+  // initialize any new Output objects that might have been added to config
+  // from a restart_file while unpacking OutputCheckpoint
+  if (up) initialize_output (cello::config(), cello::simulation()->factory(),
+                             true);
 
   p | prolong_; // PUP::able
   p | restrict_; // PUP::able
@@ -256,12 +260,22 @@ void Problem::initialize_restrict(Config * config) throw()
 //----------------------------------------------------------------------
 
 void Problem::initialize_output
-(Config * config,
- const Factory * factory) throw()
+(const Config * config,
+ const Factory * factory,
+ bool restart_append_objects /* default: false */) throw()
 {
   FieldDescr * field_descr = cello::field_descr();
-  
-  for (int index=0; index < config->num_output; index++) {
+
+  int start = (int)output_list_.size();
+
+  if (!restart_append_objects) { // sanity check
+    ASSERT("Problem::initialize_output",
+           ("No Output objects should be initialized when this function is "
+            "called (except when initializing new Output objects specified at "
+            "restart)"), start == 0);
+  }
+
+  for (int index=start; index < config->num_output; index++) {
 
     std::string type       = config->output_type[index];
 
@@ -867,7 +881,7 @@ Output * Problem::create_output_
 (
  std::string    name,
  int index,
- Config *  config,
+ const Config *  config,
  const Factory * factory
  ) throw ()
 /// @param name           Name of Output object to create

@@ -357,6 +357,10 @@ public: // interface
 
   /// Read values from the Parameters object
   void read (Parameters * parameters) throw();
+
+  /// Read values for new output filesets from a Parameter object representing
+  /// a restart file.
+  void read_output_from_restart (Parameters * parameters) throw();
   
 public: // attributes
 
@@ -601,7 +605,8 @@ protected: // functions
   void read_mesh_        ( Parameters * ) throw();
   void read_method_      ( Parameters * ) throw();
   void read_monitor_     ( Parameters * ) throw();
-  void read_output_      ( Parameters * ) throw();
+  void read_output_      ( Parameters * p,
+                           bool append_restart_parameters = false) throw();
   void read_particle_    ( Parameters * ) throw();
   void read_performance_ ( Parameters * ) throw();
   void read_physics_     ( Parameters * ) throw();

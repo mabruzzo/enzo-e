@@ -194,8 +194,9 @@ public: // interface
   void initialize_stopping(Config * config ) throw();
 
   /// Initialize the output objects
-  void initialize_output(Config * config,
-			 const Factory * factory) throw();
+  void initialize_output(const Config * config,
+                         const Factory * factory,
+                         bool restart_append_objects = false) throw();
 
   /// Initialize the method objects
   void initialize_method(Config * config) throw();
@@ -269,7 +270,7 @@ protected: // functions
 
   /// Create named output object
   virtual Output *   create_output_  
-  (std::string type, int index, Config * config,
+  (std::string type, int index, const Config * config,
    const Factory * ) throw ();
 
   /// Create named prolongation object

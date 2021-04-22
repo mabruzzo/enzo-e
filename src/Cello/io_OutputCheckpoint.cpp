@@ -14,7 +14,7 @@ OutputCheckpoint::OutputCheckpoint
 (
  int index,
  const Factory * factory,
- Config * config,
+ const Config * config,
  int process_count
 ) throw ()
   : Output(index,factory),
@@ -77,6 +77,7 @@ void OutputCheckpoint::update_config_()
     config->testing_time_final[0] = p.value_float
       ("Testing:time_final",0.0);
   }
+  config->read_output_from_restart(&p);
 
 }
 
