@@ -104,8 +104,6 @@ public: // interface
 
 #ifdef CONFIG_USE_GRACKLE
 
-  static void define_required_grackle_fields();
-
   void initialize_grackle_chemistry_data(double current_time);
 
   static void setup_grackle_units(EnzoBlock * enzo_block,
