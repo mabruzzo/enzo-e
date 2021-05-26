@@ -84,22 +84,38 @@ void Method::define_fields () throw()
 
   bool added_fields = false;
 
-  for (int ifield = 0; ifield < required_fields_.size(); ifield++){
-    std::string field = required_fields_[ifield];
-    if( ! field_descr->is_field( field )){
+  for (const std::string &field : required_fields_){
+
+    // get the field_centering
+    int cx, cy, cz;
+    
+    if ( field_centering_.find(field) != field_centering_.end()){
+      cx = field_centering_[field][0];
+      cy = field_centering_[field][1];
+      cz = field_centering_[field][2];
+    } else { // the field is assumed to be cell-centered, by default
+      cx = 0;
+      cy = 0;
+      cz = 0;
+    }
+
+    if( ! field_descr->is_field( field )){ // insert new field
       int id_field = field_descr->insert_permanent( field );
-
       field_descr->set_precision(id_field, config->field_precision);
-
-      if ( field_centering_.find(field) != field_centering_.end()){
-        // field is not cell-centered
-        const int cx = field_centering_[field][0];
-        const int cy = field_centering_[field][1];
-        const int cz = field_centering_[field][2];
-        field_descr->set_centering(id_field, cx, cy, cz);
-      }
+      field_descr->set_centering(id_field, cx, cy, cz);
 
       added_fields = true;
+
+    } else { // validate the centering of the existing field
+      int id_field = field_descr->field_id(field);
+      int cur_cx, cur_cy, cur_cz;
+      field_descr->centering(id_field, &cur_cx, &cur_cy, &cur_cz);
+
+      ASSERT7("Method::define_fields",
+              ("The \"%s\" field is required to have a centering (cx,cy,cz) "
+               "of (%d,%d,%d). It's pre-defined with a centering (%d,%d,%d)"),
+              field.c_str(),   cx,cy,cz,   cur_cx,cur_cy,cur_cz,
+              (cx==cur_cx) && (cy==cur_cy) && (cz==cur_cz));
     }
   }
 
