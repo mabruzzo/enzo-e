@@ -33,7 +33,6 @@
       # Initializes a spherical cloud embedded in a hot gas
 
       # radius of the cloud, must be larger than a cell width
-      #cloud_radius = 3.086e20; # cm
       cloud_radius = 1.;
 
       # cloud center - by default it is set to (0,0,0)
@@ -169,16 +168,8 @@ Units {
  }
 
  Field {
-     # The VL+CT method tracks primitive quantities.
-     #    - bfieldi_x/y/z are interface magnetic fields (aka longitudinal).
-     #      The x/y/z component is the only component tracked at the faces
-     #      between cells along the x/y/z component
-     #    - bfield_x/y/z are the cell-centered magenetic fields. Each
-     #      component is the average value of the corresponding interface
-     #      values
-     list = ["density", "velocity_x", "velocity_y", "velocity_z",
-             "cloud_dye", "metal_density", "temperature", "pressure", 
-	     "total_energy", "internal_energy"];
+     # the fields required by the VL+CT integrator are automatically specified
+     list = ["cloud_dye", "metal_density"];
  }
 
 #======================================================================

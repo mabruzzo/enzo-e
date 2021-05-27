@@ -9,13 +9,6 @@
       };
    }
 
-   Field {
-      # overwrite the list parameter to include internal energy
-      list = ["density",
-              "velocity_x", "velocity_y", "velocity_z",
-	      "total_energy", "internal_energy", "pressure"];
-   }
-
    Output {
       data {
          # overwrite field_list to include "internal_energy"

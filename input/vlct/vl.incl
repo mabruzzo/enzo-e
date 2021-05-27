@@ -56,8 +56,10 @@
       #      between cells along the x/y/z component)
       #    - bfield_x/y/z (the cell-centered magenetic fields. Each component
       #      is the average value of the corresponding interface values)
-      list = ["density", "velocity_x", "velocity_y", "velocity_z",
-	      "total_energy", "pressure"];
+      # These fields are automatically specified
+
+      # pressure must be specified since it's in the "derived" group
+      list = ["pressure"];
 
       courant=0.4;
       gamma = 1.6666666666666667;
