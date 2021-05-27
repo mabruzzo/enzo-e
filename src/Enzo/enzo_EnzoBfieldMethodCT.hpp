@@ -37,8 +37,15 @@ public: // interface
     EnzoBfieldMethodCT::pup(p);
   }
 
-  /// checks that the interface bfields exist and have the required shapes
-  void check_required_fields() const noexcept;
+  /// Appends the fields required by the current method to required_fields (if
+  /// the field is not already present) and specifies the field's centering (if
+  /// it's not cell-centered) in field_centering
+  ///
+  /// This is primarily meant to be used by a `Method` instance for determining
+  /// the required fields.
+  virtual void specify_required_fields
+  (std::vector<std::string> &required_fields,
+   std::map<std::string,std::array<int,3>> &field_centering) const noexcept;
 
   /// Overwrites the component of the reconstructed bfields along the axis of
   /// reconstruction with given dimension with corresponding face-centerd

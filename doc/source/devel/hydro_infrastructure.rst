@@ -1180,9 +1180,11 @@ Currently, only one such method exists:
 
 .. code-block:: c++
 
-   void check_required_fields() const noexcept;
+   void specify_required_fields
+     (std::vector<std::string> &required_fields,
+      std::map<std::string,std::array<int,3>> &field_centering) const noexcept;
 
-These may change in the future.
+This is intended to help an MHD integrator specify it's required fields.
 
 How to extend
 -------------

@@ -63,43 +63,47 @@ void EnzoBfieldMethodCT::register_target_block_
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethodCT::check_required_fields() const noexcept
+void EnzoBfieldMethodCT::specify_required_fields
+(std::vector<std::string> &required_fields,
+ std::map<std::string,std::array<int,3>> &field_centering) const noexcept
 {
-  FieldDescr * field_descr = cello::field_descr();
-  ASSERT("EnzoBfieldMethodCT::check_required_fields",
-	 ("There must be face-centered permanent fields called \"bfieldi_x\","
-	  "\"bfield_y\" and \"bfield_z\"."),
-	 (field_descr->is_field("bfield_x") &&
-	  field_descr->is_field("bfield_y") &&
-	  field_descr->is_field("bfield_z")));
+  auto register_field = [&](const std::string & field,
+			    const std::array<int,3> &centering)
+    {
+      const bool preregistered = std::find(required_fields.begin(),
+					   required_fields.end(),
+					   field) != required_fields.end();
 
-  std::vector<std::string> names = {"bfieldi_x", "bfieldi_y", "bfieldi_z"};
-  std::vector<std::string> axes = {"x", "y", "z"};
-  for (std::size_t i = 0; i < 3; i++){
-    std::string name = names[i];
-    // first check that field exists
-    ASSERT1("EnzoBfieldMethodCT::check_required_fields",
-	    "There must be face-centered permanent fields called \"%s\"",
-	    name.c_str(), field_descr->is_field(name));
+      if (!preregistered){
+	required_fields.push_back(field);
+	field_centering[field] = centering;
+      } else { // validate the centering requirements
+	std::array<int,3> cur_centering;
+	auto search = field_centering.find(field);
+	if (search != field_centering.end()){
+	  cur_centering = search->second;
+	} else { // the field is assumed to be cell-centered, by default
+	  cur_centering = {0,0,0};
+	}
 
-    int field_id = field_descr->field_id(name);
-    // next check the centering of the field
-    int centering[3] = {0, 0, 0};
-    field_descr->centering(field_id, &centering[0], &centering[1],
-			   &centering[2]);
-    for (std::size_t j = 0; j<3; j++){
-      if (j!=i){
-	ASSERT2("EnzoBfieldMethodCT::update_refresh",
-		"The \"%s\" field must be cell-centered along the %s-axis",
-		name.c_str(), axes[j].c_str(), centering[j] == 0);
-      } else {
-	ASSERT2("EnzoBfieldMethodCT::update_refresh",
-		"The \"%s\" field must be face-centered along the %s-axis",
-		name.c_str(), axes[j].c_str(), centering[j] == 1);
+	for (std::size_t i = 0; i < 3; i++){
+	  ASSERT7("EnzoBfieldMethodCT::specify_required_fields",
+		  ("The \"%s\" field is required to have a centering "
+		   "(cx,cy,cz) of (%d,%d,%d). It's pre-registered with a "
+		   "centering (%d,%d,%d)"),
+		  field.c_str(),   centering[0],centering[1],centering[2],
+		  cur_centering[0],cur_centering[1],cur_centering[2],
+		  cur_centering[i] == centering[i]);
+	}
       }
-    }
+    };
 
-  }
+  register_field("bfield_x",  {0,0,0});
+  register_field("bfield_y",  {0,0,0});
+  register_field("bfield_z",  {0,0,0});
+  register_field("bfieldi_x", {1,0,0});
+  register_field("bfieldi_y", {0,1,0});
+  register_field("bfieldi_z", {0,0,1});
 }
 
 //----------------------------------------------------------------------

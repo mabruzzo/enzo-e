@@ -103,14 +103,17 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
   build_field_l_(primitive_quantities, primitive_field_list_);
 
   // pressure is currently a required field (for computing the timestep)
-  // (fields are not required for any other primitives)
-  this->required_fields_ = {"pressure"};
-  this->required_fields_.insert(this->required_fields_.end(),
-				this->integration_field_list_.begin(),
-				this->integration_field_list_.end());
+  // note: fields are not required for any other primitives
+  required_fields_ = {"pressure"};
+  required_fields_.insert(required_fields_.end(),
+			  integration_field_list_.begin(),
+			  integration_field_list_.end());
+  if (bfield_method_ != nullptr) {
+    bfield_method_->specify_required_fields(required_fields_,
+					    field_centering_);
+  }
 
   this->define_fields();
-  if (bfield_method_ != nullptr) { bfield_method_->check_required_fields(); }
 
   // Finally, initialize the default Refresh object
   cello::simulation()->new_refresh_set_name(ir_post_,name());

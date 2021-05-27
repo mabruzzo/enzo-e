@@ -107,8 +107,15 @@ public: // interface
 
   // Descriptor methods
 
-  /// checks that all required fields exist and have the required shapes
-  virtual void check_required_fields() const noexcept = 0;
+  /// Appends the fields required by the current method to required_fields (if
+  /// the field is not already present) and specifies the field's centering (if
+  /// it's not cell-centered) in field_centering
+  ///
+  /// This is primarily meant to be used by a `Method` instance for determining
+  /// the required fields.
+  virtual void specify_required_fields
+  (std::vector<std::string> &required_fields,
+   std::map<std::string,std::array<int,3>> &field_centering) const noexcept =0;
 
   // Physics methods
   
