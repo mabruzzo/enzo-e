@@ -32,12 +32,6 @@ static void build_field_l_(const std::vector<std::string> &quantity_l,
       field_l.push_back(quantity);
     }
   }
-
-  FieldDescr * field_descr = cello::field_descr();
-  for (const std::string& field : field_l){
-    ASSERT1("EnzoMethodMHDVlct", "\"%s\" must be a permanent field",
-	    field.c_str(), field_descr->is_field(field));
-  }
 }
 
 //----------------------------------------------------------------------
