@@ -72,7 +72,13 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
 
   // Determine whether magnetic fields are to be used
   mhd_choice_ = parse_bfield_choice_(mhd_choice);
+  if (mhd_choice_ == bfield_choice::constrained_transport) {
+    bfield_method_ = new EnzoBfieldMethodCT(2);
+  } else {
+    bfield_method_ = nullptr;
+  }
 
+  // Initialize the Riemann Solver
   riemann_solver_ = EnzoRiemann::construct_riemann
     (rsolver, mhd_choice_ != bfield_choice::no_bfield,
      eos_->uses_dual_energy_formalism());
@@ -96,17 +102,15 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
   build_field_l_(integration_quantities, integration_field_list_);
   build_field_l_(primitive_quantities, primitive_field_list_);
 
-  // make sure "pressure" is defined (it's needed to compute the timestep)
-  FieldDescr * field_descr = cello::field_descr();
-  ASSERT("EnzoMethodMHDVlct", "\"pressure\" must be a permanent field",
-	 field_descr->is_field("pressure"));
+  // pressure is currently a required field (for computing the timestep)
+  // (fields are not required for any other primitives)
+  this->required_fields_ = {"pressure"};
+  this->required_fields_.insert(this->required_fields_.end(),
+				this->integration_field_list_.begin(),
+				this->integration_field_list_.end());
 
-  if (mhd_choice_ == bfield_choice::constrained_transport) {
-    bfield_method_ = new EnzoBfieldMethodCT(2);
-    bfield_method_->check_required_fields();
-  } else {
-    bfield_method_ = nullptr;
-  }
+  this->define_fields();
+  if (bfield_method_ != nullptr) { bfield_method_->check_required_fields(); }
 
   // Finally, initialize the default Refresh object
   cello::simulation()->new_refresh_set_name(ir_post_,name());
