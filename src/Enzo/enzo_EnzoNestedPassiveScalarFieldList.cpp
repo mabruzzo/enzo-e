@@ -51,13 +51,15 @@ EnzoNestedPassiveScalarFieldList::build_nested_list_() noexcept
 void EnzoNestedPassiveScalarFieldList::pup(PUP::er &p) {
   p | initialized_;
 
-  if (p.isUnpacking()){
-    std::vector<str_vec_t>* temp_vals = new std::vector<str_vec_t>();
-    p | *temp_vals;
-    nested_names_ = std::const_pointer_cast<const std::vector<str_vec_t>>
-      (std::shared_ptr<std::vector<str_vec_t>>(temp_vals));
-  } else {
-    std::vector<str_vec_t> temp_copy = *nested_names_;
-    p | temp_copy;
+  if (initialized_){
+    if (p.isUnpacking()){
+      std::vector<str_vec_t>* temp_vals = new std::vector<str_vec_t>();
+      p | *temp_vals;
+      nested_names_ = std::const_pointer_cast<const std::vector<str_vec_t>>
+	(std::shared_ptr<std::vector<str_vec_t>>(temp_vals));
+    } else {
+      std::vector<str_vec_t> temp_copy = *nested_names_;
+      p | temp_copy;
+    }
   }
 }
