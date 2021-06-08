@@ -19,7 +19,7 @@ public: // interface
 
   /// Create a new BoundaryValue
   BoundaryValue() throw() 
-  : Boundary (), value_(NULL), field_list_()
+  : Boundary (), value_(), field_list_() 
   {
     for (int axis_ind=0; axis_ind<3; axis_ind++) {
       for (int face_ind=0; face_ind<2; face_ind++) {
@@ -29,7 +29,7 @@ public: // interface
   }
 
   /// Create a new BoundaryValue
-  BoundaryValue(axis_enum axis, face_enum face, Value * value, 
+  BoundaryValue(axis_enum axis, face_enum face, Value&& value, 
 		std::vector<std::string> field_list,
 		bool possible_velocity_frame_transform = false,
 		const std::vector<Boundary*> * earlier_boundaries = 0) throw();
@@ -42,7 +42,7 @@ public: // interface
 
   BoundaryValue(CkMigrateMessage *m)
     : Boundary (m),
-      value_(NULL),
+      value_(),
       field_list_()
   {
     for (int axis_ind=0; axis_ind<3; axis_ind++) {
@@ -58,17 +58,7 @@ public: // interface
     // NOTE: change this function whenever attributes change
     Boundary::pup(p); 
     TRACEPUP;
-
-    int has_value = (value_!=NULL);
-    p | has_value;
-    if (has_value){
-      if (p.isUnpacking()){
-        value_ = new Value;
-      }
-      p | *value_;
-    } else {
-      value_ = NULL;
-    }
+    p | value_;
     p | field_list_;
 
     for (int axis_ind=0; axis_ind<3; axis_ind++){
@@ -109,7 +99,7 @@ protected: // functions
 
 protected: // attributes
 
-  Value * value_;
+  Value value_;
   std::vector<std::string> field_list_;
 
   /// If the velocity frame tranform should be applied on a given face

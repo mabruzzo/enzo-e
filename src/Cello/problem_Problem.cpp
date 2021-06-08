@@ -584,13 +584,13 @@ Boundary * Problem::create_boundary_
 	     param_str.c_str(),param_type);
     }
 
-    Value * value = new Value (parameters, param_str);
+    Value value(parameters, param_str);
 
     axis_enum axis = (axis_enum) config->boundary_axis[index];
     face_enum face = (face_enum) config->boundary_face[index];
 
-    return new BoundaryValue
-      (axis, face, value, config->boundary_field_list[index],
+    return new BoundaryValue 
+      (axis, face, std::move(value), config->boundary_field_list[index],
        config->method_frame_transform_use_frame_transform, &boundary_list_);
 
   } else if (type == "periodic") {

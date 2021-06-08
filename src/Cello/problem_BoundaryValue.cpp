@@ -32,13 +32,13 @@ void update_boundary_mask_(bool mask[3][2], axis_enum axis, face_enum face,
 
 //----------------------------------------------------------------------
 
-BoundaryValue::BoundaryValue(axis_enum axis, face_enum face, Value * value, 
+BoundaryValue::BoundaryValue(axis_enum axis, face_enum face, Value&& value, 
 			     std::vector<std::string> field_list,
 			     bool possible_velocity_frame_transform,
 			     const std::vector<Boundary*> * earlier_boundaries)
   throw()
   : Boundary(axis,face,0),
-    value_(value),
+    value_(std::move(value)),
     field_list_(field_list)
 {
   // Initialize velocity_frame_transform_ values
@@ -198,10 +198,10 @@ void BoundaryValue::enforce
 	    array = new float [ndx*ndy*ndz];
 	  }
 	  
-	  value_->evaluate((float *)array+i0, t, 
-			   ndx,nx,x+ix0, 
-			   ndy,ny,y+iy0,
-			   ndz,nz,z+iz0);
+	  value_.evaluate((float *)array+i0, t, 
+                          ndx,nx,x+ix0, 
+                          ndy,ny,y+iy0,
+                          ndz,nz,z+iz0);
 	  if (mask_ != nullptr) {
 	    for (int i=0; i<ndx*ndy*ndz; i++) ((float *)temp)[i]=((float *)array)[i];
 	    delete [] ((float*)array);
@@ -216,10 +216,10 @@ void BoundaryValue::enforce
 	    temp = (double *)array;
 	    array = new double [ndx*ndy*ndz];
 	  }
-	  value_->evaluate((double *)array+i0, t, 
-			   ndx,nx,x+ix0, 
-			   ndy,ny,y+iy0,
-			   ndz,nz,z+iz0);
+	  value_.evaluate((double *)array+i0, t, 
+                          ndx,nx,x+ix0, 
+                          ndy,ny,y+iy0,
+                          ndz,nz,z+iz0);
 	  if (mask_ != nullptr) {
 	    for (int i=0; i<ndx*ndy*ndz; i++) ((double *)temp)[i]=((double *)array)[i];
 	    delete [] ((double *)array);
@@ -236,10 +236,10 @@ void BoundaryValue::enforce
 	    temp = (long double *)array;
 	    array = new long double [ndx*ndy*ndz];
 	  }
-	  value_->evaluate((long double *)array+i0, t, 
-			   ndx,nx,x+ix0, 
-			   ndy,ny,y+iy0,
-			   ndz,nz,z+iz0);
+	  value_.evaluate((long double *)array+i0, t, 
+                          ndx,nx,x+ix0, 
+                          ndy,ny,y+iy0,
+                          ndz,nz,z+iz0);
 	  if (mask_ != nullptr) {
 	    for (int i=0; i<ndx*ndy*ndz; i++) 
 	      ((long double *)temp)[i]=((long double *)array)[i];
