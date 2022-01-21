@@ -228,6 +228,7 @@ extern "C" {
 #include "enzo_EnzoMethodPmUpdate.hpp"
 #include "enzo_EnzoMethodPpm.hpp"
 #include "enzo_EnzoMethodPpml.hpp"
+#include "enzo_EnzoMethodSummaryReport.hpp"
 #include "enzo_EnzoMethodTurbulence.hpp"
 #include "enzo_EnzoMethodMHDVlct.hpp"
 

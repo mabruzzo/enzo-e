@@ -87,6 +87,7 @@ module enzo {
   PUPable EnzoMethodPmUpdate;
   PUPable EnzoMethodPpm;
   PUPable EnzoMethodPpml;
+  PUPable EnzoMethodSummaryReport;
   PUPable EnzoMethodTurbulence;
   PUPable EnzoMethodMHDVlct;
 
@@ -149,6 +150,9 @@ module enzo {
 
     // EnzoMethodTurbulence synchronization entry methods
     entry void p_method_turbulence_end(CkReductionMsg *msg);
+
+    // EnzoMethodSummaryReport synchronization entry methods
+    entry void p_method_summary_report_end(CkReductionMsg *msg);
 
     // EnzoMethodGravity synchronization entry methods
     entry void p_method_gravity_continue();

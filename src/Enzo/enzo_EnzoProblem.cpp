@@ -577,6 +577,27 @@ Method * EnzoProblem::create_method_
        enzo_config->method_turbulence_mach_number,
        enzo_config->physics_cosmology);
 
+  } else if (name == "summary_report"){
+
+    int total_num_summaries = 0;
+    int summary_report_index = -1; // start at -1 since 0-indexed
+
+    for (size_t i=0; i < enzo_config->method_list.size(); i++) {
+      if (enzo_config->method_list[i] == name){
+        total_num_summaries++;
+        if (i <= static_cast<std::size_t>(index_method)){
+          summary_report_index++;
+        }
+      }
+    }
+
+    method = new EnzoMethodSummaryReport
+      (enzo_config->initial_cloud_density_cloud,
+       enzo_config->initial_cloud_density_wind,
+       enzo_config->initial_cloud_eint_wind,
+       enzo_config->method_vlct_dual_energy,
+       total_num_summaries, summary_report_index);
+
   } else if (name == "check_gravity") {
 
     method = new EnzoMethodCheckGravity
