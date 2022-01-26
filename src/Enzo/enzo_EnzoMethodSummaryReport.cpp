@@ -9,6 +9,48 @@
 #include "enzo.hpp"
 #include <limits> // numeric_limits
 
+namespace{
+
+  template<class T>
+  bool map_contains_key_(const std::map<std::string,T>& m,
+                         const std::string& key)
+  { return m.find(key) != m.cend(); }
+
+
+  // return true when a reduction is launch.
+  bool launch_next_reduction_
+    (Block * block,
+     std::map<std::string, std::queue<std::vector<double>>>& pending_reductions)
+  {
+    std::string name = block->name();
+    if (!map_contains_key_(pending_reductions, name)) {
+      ERROR1("launch_next_reduction_",
+             "pending_reductions is missing an entry for the block, %s.",
+             name.c_str());
+    }
+
+    if (pending_reductions[name].empty()){
+      pending_reductions.erase(name); // erase entry for name
+      return false;
+    } else {
+      std::queue<std::vector<double>>& reduce_q = pending_reductions[name];
+
+      // for safety, make a copy of the first element of reduce_q.
+      // Then delete the first element from reduce_q
+      std::vector<double> outdoubles = reduce_q.front();
+      reduce_q.pop();
+
+      EnzoBlock * enzo_block = enzo::block(block);
+      CkCallback callback (CkIndex_EnzoBlock::p_method_summary_report_end(NULL),
+                           enzo_block->proxy_array());
+      // contribute has a special interface for passing vectors:
+      enzo_block->contribute(outdoubles, CkReduction::sum_double, callback);
+      return true;
+    }
+  }
+
+}
+
 //----------------------------------------------------------------------
 
 EnzoMethodSummaryReport::EnzoMethodSummaryReport(double density_cloud,
@@ -25,8 +67,8 @@ EnzoMethodSummaryReport::EnzoMethodSummaryReport(double density_cloud,
     dens_selectors_(), // we'll initialize this later when we need them
     eint_selectors_(), // we'll initialize this later when we need them
     total_num_summaries_(total_num_summaries),
-    summary_report_index_(summary_report_index)
-    
+    summary_report_index_(summary_report_index),
+    pending_reductions_()
 {
   ASSERT("EnzoMethodSummaryReport::EnzoMethodSummaryReport",
          "density_cloud, density_wind, and eint_wind must be nonzero",
@@ -80,6 +122,9 @@ namespace{
   ///
   /// this assumes that that ghost zones have already been clipped from each
   /// array (and that all arrays have the same shape)
+  ///
+  /// based on our problem size and type, we can get away with representing
+  /// integer counts of cells as doubles (without any loss of precision)
   inline std::vector<summary_stat<double>> summarize_vals_
     (const std::vector<SelectFunctor_>& selectors,
      EFlt3DArray selection_field, EFlt3DArray density, EFlt3DArray velocity_x,
@@ -174,14 +219,25 @@ std::vector<SelectFunctor_> build_eint_selectors_(double eint_w,
 
 //----------------------------------------------------------------------
 
+std::size_t EnzoMethodSummaryReport::num_selectors_ () throw()
+{
+  if (dens_selectors_.size() == 0){
+    dens_selectors_ = build_dens_selectors_(density_cloud_, chi_);
+    eint_selectors_ = build_eint_selectors_(eint_wind_, chi_);
+  }
+
+  return dens_selectors_.size() + eint_selectors_.size();
+}
+  
+
+//----------------------------------------------------------------------
+
 void EnzoMethodSummaryReport::compute ( Block * block) throw()
 {
-  EnzoBlock * enzo_block = enzo::block(block);
-
   double hx,hy,hz;
   block->data()->field_cell_width(&hx,&hy,&hz);
   double cell_volume = hx*hy*hz;
-  
+
   Field field = block->data()->field();
   int gx,gy,gz;
   field.ghost_depth (0,&gx,&gy,&gz);
@@ -190,13 +246,11 @@ void EnzoMethodSummaryReport::compute ( Block * block) throw()
          (gx == gy) & (gy == gz));
   EnzoFieldArrayFactory arr_factory(block, gx);
 
-  if (dens_selectors_.size() == 0){
-    dens_selectors_ = build_dens_selectors_(density_cloud_, chi_);
-    eint_selectors_ = build_eint_selectors_(eint_wind_, chi_);
-  }
+  // get the total number of selectors (this will initialize them if they
+  // haven't already been initialized)
+  std::size_t expected_size = num_selectors_();
 
-  std::size_t expected_size = dens_selectors_.size() + eint_selectors_.size();
-
+  // compute all of the summaries
   std::vector<summary_stat<double>> summaries;
   if (block->is_leaf()) {
     EFlt3DArray density = arr_factory.from_name("density");
@@ -246,25 +300,36 @@ void EnzoMethodSummaryReport::compute ( Block * block) throw()
          "summaries has an unexpected length",
          summaries.size() == expected_size);
 
+  // now, pack the summaries up and store them in reduction_queue
+  std::queue<std::vector<double>> reduction_queue;
 
-  // based on our problem size and type, we can get away with representing
-  // integer counts of cells as doubles (without any loss of precision)
-  const std::size_t n_stat_members = summary_stat<double>::n_members();
-  std::vector<double> outdoubles(n_stat_members * summaries.size());
-  for (std::size_t i = 0; i < summaries.size(); i++){
-    const auto& summary = summaries[i];
+  for (const auto& summary : summaries){
+    std::vector<double> tmp(summary_stat<double>::n_members());
 
-    outdoubles[i*n_stat_members] = summary.cell_count;
-    outdoubles[i*n_stat_members + 1] = summary.mass;
-    outdoubles[i*n_stat_members + 2] = summary.momentum_x;
-    outdoubles[i*n_stat_members + 3] = summary.energy;
-    outdoubles[i*n_stat_members + 4] = summary.cloud_dye_mass;
+    tmp[0] = summary.cell_count;
+    tmp[1] = summary.mass;
+    tmp[2] = summary.momentum_x;
+    tmp[3] = summary.energy;
+    tmp[4] = summary.cloud_dye_mass;
+
+    reduction_queue.push(std::move(tmp));
   }
 
-  CkCallback callback (CkIndex_EnzoBlock::p_method_summary_report_end(NULL),
-		       enzo_block->proxy_array());
-  // contribute has a special interface for passing vectors:
-  enzo_block->contribute(outdoubles, CkReduction::sum_double, callback);
+  // now insert the reduction_queue into pending_reductions_
+  std::string block_name = block->name();
+  if (map_contains_key_(pending_reductions_, block_name)) {
+    ERROR1("EnzoMethodSummaryReport::compute",
+           "pending_reductions_ should not already contain %s",
+           block_name.c_str());
+  }
+  pending_reductions_.emplace(std::move(block_name),
+                              std::move(reduction_queue));
+
+  // finally, launch the reduction
+  bool successful_launch = launch_next_reduction_(block, pending_reductions_);
+
+  ASSERT("EnzoMethodSummaryReport::compute", "Something went wrong",
+         successful_launch == true);
 }
 
 //----------------------------------------------------------------------
@@ -297,25 +362,38 @@ void EnzoMethodSummaryReport::compute_resume
          n_stat_members == 5);
 
   if (block->index().is_root()) {
-    
-    for (std::size_t i = 0; i < num_selections; i++){
-      std::size_t offset = i*n_stat_members;
-      long long int cell_count = static_cast<long long int>(values[offset]);
-      double mass = values[offset+1];
-      double momentum_x = values[offset+2];
-      double energy = values[offset+3];
-      double cloud_dye_mass = values[offset+4];
 
-      cello::monitor()->print
-        ("Method",
-         "Summary-%d/%d- %d: %12lld, %+20.16e, %+20.16e, %+20.16e, %+20.16e",
-         summary_report_index_, total_num_summaries_, i,
-         cell_count, mass, momentum_x, energy, cloud_dye_mass);
+    // determine cur_reduction_index
+    std::string block_name = block->name();
+    if (!map_contains_key_(pending_reductions_, block_name)) {
+      ERROR1("EnzoMethodSummaryReport::compute",
+             "pending_reductions_ should contain %s",
+             block_name.c_str());
     }
+    std::size_t remaining_reductions = pending_reductions_[block_name].size();
+    std::size_t total_num_reductions = num_selectors_();
+    std::size_t cur_reduction_index = // 0-index based
+      total_num_reductions - (remaining_reductions + 1);
+
+    long long int cell_count = static_cast<long long int>(values[0]);
+    double mass = values[1];
+    double momentum_x = values[2];
+    double energy = values[3];
+    double cloud_dye_mass = values[4];
+
+    cello::monitor()->print
+      ("Method",
+       "Summary-%d/%d- %d: %12lld, %+20.16e, %+20.16e, %+20.16e, %+20.16e",
+       summary_report_index_, total_num_summaries_, cur_reduction_index,
+       cell_count, mass, momentum_x, energy, cloud_dye_mass);
   }
 
   delete msg;
-  block->compute_done();
+
+  bool successful_launch = launch_next_reduction_(block, pending_reductions_);
+  if (!successful_launch){
+    block->compute_done();
+  }
 }
 
 //----------------------------------------------------------------------

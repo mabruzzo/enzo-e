@@ -9,6 +9,9 @@
 #ifndef ENZO_ENZO_METHOD_PHASE_SUMMARY_HPP
 #define ENZO_ENZO_METHOD_PHASE_SUMMARY_HPP
 
+#include <map>
+#include <queue>
+
 struct SelectFunctor_{
   enzo_float lower_bound;
   enzo_float upper_bound;
@@ -44,7 +47,8 @@ public: // interface
       dens_selectors_(),
       eint_selectors_(),
       total_num_summaries_(0),
-      summary_report_index_(0)
+      summary_report_index_(0),
+      pending_reductions_()
   { }
 
   /// CHARM++ Pack / Unpack function
@@ -60,6 +64,8 @@ public: // interface
 
     p | total_num_summaries_;
     p | summary_report_index_;
+
+    // don't pup pending_reductions_ (It should be empty anyways)
   }
 
   /// Apply the method to advance a block one timestep 
@@ -73,6 +79,12 @@ public: // interface
 				CkReductionMsg * msg) throw();
 
   virtual double timestep ( Block * block) const throw();
+
+private:
+
+  /// returns the number of selectors. Builds the selectors if they aren't
+  /// already initialized
+  std::size_t num_selectors_() throw();
 
 protected: // attributes
 
@@ -88,6 +100,10 @@ protected: // attributes
   int total_num_summaries_;
   /// index of the current summary report
   int summary_report_index_;
+
+  /// The following are used to help break up reductions into smaller message
+  /// sizes
+  std::map<std::string, std::queue<std::vector<double>>> pending_reductions_;
 };
 
 #endif /* ENZO_ENZO_METHOD_PHASE_SUMMARY_HPP */
