@@ -194,10 +194,21 @@ std::vector<SelectFunctor_> build_eint_selectors_(double eint_w,
   double log10_chi = std::log10(chi);
 
   // _tmp gives the inner bin edges in units of log(eint/eint_cl)/log(chi)
-  std::array<double, 6> _tmp = {0.08333333333333333, 0.25,
-                                0.4166666666666667,  0.5833333333333334,
-                                0.75, 0.9166666666666666};
-  std::array<double, _tmp.size()> inner_bin_edges;
+  std::vector<double> _tmp;
+  if (false){ // just include bin edges
+    _tmp = {0.08333333333333333, 0.25,
+            0.4166666666666667,  0.5833333333333334,
+            0.75, 0.9166666666666666};
+  } else { // include bin edges and bin_centers (i/12 for i in range(13))
+    _tmp = {0.0, 0.08333333333333333,
+            0.16666666666666666, 0.25,
+            0.3333333333333333, 0.4166666666666667,
+            0.5, 0.5833333333333334,
+            0.6666666666666666, 0.75,
+            0.8333333333333334, 0.9166666666666666,
+            1.0};
+  }
+  std::vector<double> inner_bin_edges(_tmp.size(), 0.);
   for (std::size_t i = 0; i < inner_bin_edges.size(); i++){
     inner_bin_edges[i] = std::pow(10.0, log10_chi* _tmp[i]) * eint_cl;
   }
@@ -401,6 +412,12 @@ void EnzoMethodSummaryReport::compute_resume
 double EnzoMethodSummaryReport::timestep ( Block * block ) const throw()
 {
   double out = std::numeric_limits<double>::max();
+
+  if (summary_report_index_ != 0){
+    // this is necessary to avoid some problems with using multiple instances
+    // in a single cycle
+    return out;
+  }
 
   // this is a somewhat hacky workaround. We would be better off updating
   // the control_stopping code
