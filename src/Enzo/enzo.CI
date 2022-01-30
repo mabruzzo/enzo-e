@@ -88,6 +88,8 @@ module enzo {
   PUPable EnzoMethodPpm;
   PUPable EnzoMethodPpml;
   PUPable EnzoMethodSummaryReport;
+  PUPable EnzoMethodSummaryReport2;
+  PUPable EnzoMethodSummaryReport3;
   PUPable EnzoMethodTurbulence;
   PUPable EnzoMethodMHDVlct;
 

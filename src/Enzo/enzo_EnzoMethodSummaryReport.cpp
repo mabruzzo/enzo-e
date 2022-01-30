@@ -374,6 +374,8 @@ void EnzoMethodSummaryReport::compute_resume
 
   if (block->index().is_root()) {
 
+    std::string method_name = this->name();
+
     // determine cur_reduction_index
     std::string block_name = block->name();
     if (!map_contains_key_(pending_reductions_, block_name)) {
@@ -394,8 +396,9 @@ void EnzoMethodSummaryReport::compute_resume
 
     cello::monitor()->print
       ("Method",
-       "Summary-%d/%d- %d: %12lld, %+20.16e, %+20.16e, %+20.16e, %+20.16e",
-       summary_report_index_, total_num_summaries_, cur_reduction_index,
+       "%s-%d/%d- %d: %12lld, %+20.16e, %+20.16e, %+20.16e, %+20.16e",
+       method_name.c_str(), summary_report_index_, total_num_summaries_,
+       cur_reduction_index,
        cell_count, mass, momentum_x, energy, cloud_dye_mass);
   }
 

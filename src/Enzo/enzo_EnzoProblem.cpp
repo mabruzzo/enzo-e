@@ -596,8 +596,39 @@ Method * EnzoProblem::create_method_
        enzo_config->initial_cloud_density_wind,
        enzo_config->initial_cloud_eint_wind,
        enzo_config->method_vlct_dual_energy,
-       total_num_summaries, summary_report_index);
+       1, 0);
+  } else if ((name == "summary_report2") || name == ("summary_report3")){
 
+    // this is a hack!
+    int summary_report_index = -1;
+    for (size_t i=0; i < enzo_config->method_list.size(); i++) {
+      if (enzo_config->method_list[i] == "summary_report"){
+        summary_report_index = static_cast<int>(i);
+      }
+    }
+
+    ASSERT("EnzoProblem::create_method_",
+           "summary_report must also be specified",
+           summary_report_index != -1);
+    
+    config->method_schedule_index[index_method] =
+      config->method_schedule_index[summary_report_index];
+
+    if (name == "summary_report2"){
+      method = new EnzoMethodSummaryReport2
+        (enzo_config->initial_cloud_density_cloud,
+         enzo_config->initial_cloud_density_wind,
+         enzo_config->initial_cloud_eint_wind,
+         enzo_config->method_vlct_dual_energy,
+         1, 0);
+    } else {
+      method = new EnzoMethodSummaryReport3
+        (enzo_config->initial_cloud_density_cloud,
+         enzo_config->initial_cloud_density_wind,
+         enzo_config->initial_cloud_eint_wind,
+         enzo_config->method_vlct_dual_energy,
+         1, 0);
+    }
   } else if (name == "check_gravity") {
 
     method = new EnzoMethodCheckGravity
