@@ -596,9 +596,9 @@ Method * EnzoProblem::create_method_
        enzo_config->initial_cloud_density_wind,
        enzo_config->initial_cloud_eint_wind,
        enzo_config->method_vlct_dual_energy,
-       1, 0);
+       total_num_summaries, summary_report_index);
   } else if ((name == "summary_report2") || name == ("summary_report3")){
-
+    ERROR("EnzoProblem::create_method_", "this should not get called");
     // this is a hack!
     int summary_report_index = -1;
     for (size_t i=0; i < enzo_config->method_list.size(); i++) {
