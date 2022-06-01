@@ -37,8 +37,11 @@ public: // interface
     EnzoBfieldMethodCT::pup(p);
   }
 
-  /// checks that the interface bfields exist and have the required shapes
-  void check_required_fields() const noexcept;
+  /// defines the required fields if they don't already exist.
+  ///
+  /// For any of the required fields that already exist, this confirms that
+  /// they have the appropriate centering.
+  void define_required_fields() const noexcept;
 
   /// Overwrites the component of the reconstructed bfields along the axis of
   /// reconstruction with given dimension with corresponding face-centerd

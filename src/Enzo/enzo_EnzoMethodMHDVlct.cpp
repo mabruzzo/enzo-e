@@ -94,7 +94,7 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
 
   if (mhd_choice_ == bfield_choice::constrained_transport) {
     bfield_method_ = new EnzoBfieldMethodCT(2);
-    bfield_method_->check_required_fields();
+    bfield_method_->define_required_fields();
   } else {
     bfield_method_ = nullptr;
   }

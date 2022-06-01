@@ -107,8 +107,11 @@ public: // interface
 
   // Descriptor methods
 
-  /// checks that all required fields exist and have the required shapes
-  virtual void check_required_fields() const noexcept = 0;
+  /// defines the required fields if they don't already exist.
+  ///
+  /// For any of the required fields that already exist, this confirms that
+  /// they have the appropriate centering.
+  virtual void define_required_fields() const noexcept = 0;
 
   // Physics methods
   

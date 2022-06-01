@@ -299,7 +299,7 @@ namespace cello {
   {
     FieldDescr * field_descr = cello::field_descr();
     Config   * config  = (Config *) cello::config();
-    if( ! field_descr->is_field( field_name )){
+    if( ! field_descr->is_field( field_name )){ // insert new field
       const int id_field = field_descr->insert_permanent( field_name );
  
       field_descr->set_precision(id_field, config->field_precision);
@@ -307,6 +307,16 @@ namespace cello {
       if ( cx != 0 || cy != 0 || cz != 0 ) {
         field_descr->set_centering(id_field, cx, cy, cz);
       }
+    } else { // validate the centering of the existing field
+      int id_field = field_descr->field_id(field_name);
+      int cur_cx, cur_cy, cur_cz;
+      field_descr->centering(id_field, &cur_cx, &cur_cy, &cur_cz);
+      ASSERT7("Method::define_fields",
+              ("The \"%s\" field is required to have a centering (cx,cy,cz) "
+               "of (%d,%d,%d). It was previously defined with a centering of "
+               "(%d,%d,%d)"),
+              field_name.c_str(),   cx,cy,cz,   cur_cx,cur_cy,cur_cz,
+              (cx==cur_cx) & (cy==cur_cy) & (cz==cur_cz));
     }
     return field_descr->field_id(field_name);
   }

@@ -79,7 +79,7 @@ void EnzoBfieldMethodCT::register_target_block_
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethodCT::check_required_fields() const noexcept
+void EnzoBfieldMethodCT::define_required_fields() const noexcept
 {
   FieldDescr * field_descr = cello::field_descr();
   ASSERT("EnzoBfieldMethodCT::check_required_fields",
@@ -89,33 +89,10 @@ void EnzoBfieldMethodCT::check_required_fields() const noexcept
 	  field_descr->is_field("bfield_y") &&
 	  field_descr->is_field("bfield_z")));
 
-  std::vector<std::string> names = {"bfieldi_x", "bfieldi_y", "bfieldi_z"};
-  std::vector<std::string> axes = {"x", "y", "z"};
-  for (std::size_t i = 0; i < 3; i++){
-    std::string name = names[i];
-    // first check that field exists
-    ASSERT1("EnzoBfieldMethodCT::check_required_fields",
-	    "There must be face-centered permanent fields called \"%s\"",
-	    name.c_str(), field_descr->is_field(name));
-
-    int field_id = field_descr->field_id(name);
-    // next check the centering of the field
-    int centering[3] = {0, 0, 0};
-    field_descr->centering(field_id, &centering[0], &centering[1],
-			   &centering[2]);
-    for (std::size_t j = 0; j<3; j++){
-      if (j!=i){
-	ASSERT2("EnzoBfieldMethodCT::update_refresh",
-		"The \"%s\" field must be cell-centered along the %s-axis",
-		name.c_str(), axes[j].c_str(), centering[j] == 0);
-      } else {
-	ASSERT2("EnzoBfieldMethodCT::update_refresh",
-		"The \"%s\" field must be face-centered along the %s-axis",
-		name.c_str(), axes[j].c_str(), centering[j] == 1);
-      }
-    }
-
-  }
+  // define the face-centered magnetic field components
+  cello::define_field("bfieldi_x", 1, 0, 0);
+  cello::define_field("bfieldi_y", 0, 1, 0);
+  cello::define_field("bfieldi_z", 0, 0, 1);
 }
 
 //----------------------------------------------------------------------
