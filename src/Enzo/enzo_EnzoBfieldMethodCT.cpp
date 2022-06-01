@@ -81,13 +81,10 @@ void EnzoBfieldMethodCT::register_target_block_
 
 void EnzoBfieldMethodCT::define_required_fields() const noexcept
 {
-  FieldDescr * field_descr = cello::field_descr();
-  ASSERT("EnzoBfieldMethodCT::check_required_fields",
-	 ("There must be face-centered permanent fields called \"bfieldi_x\","
-	  "\"bfield_y\" and \"bfield_z\"."),
-	 (field_descr->is_field("bfield_x") &&
-	  field_descr->is_field("bfield_y") &&
-	  field_descr->is_field("bfield_z")));
+  // define the cell-centered magnetic field components
+  cello::define_field("bfield_x", 0, 0, 0);
+  cello::define_field("bfield_y", 0, 0, 0);
+  cello::define_field("bfield_z", 0, 0, 0);
 
   // define the face-centered magnetic field components
   cello::define_field("bfieldi_x", 1, 0, 0);

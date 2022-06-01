@@ -84,10 +84,12 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (std::string rsolver,
 
   // Determine the lists of fields that are required to hold the integration
   // quantities and primitives and ensure that they are defined
-  check_field_l_(integration_field_list_);
-  check_field_l_(primitive_field_list_);
+  // TODO(mabruzzo): replace the following 2 lines
+  //check_field_l_(integration_field_list_);
+  //check_field_l_(primitive_field_list_);
 
   // make sure "pressure" is defined (it's needed to compute the timestep)
+  // TODO(mabruzzo): replace the following 2 lines
   FieldDescr * field_descr = cello::field_descr();
   ASSERT("EnzoMethodMHDVlct", "\"pressure\" must be a permanent field",
 	 field_descr->is_field("pressure"));
