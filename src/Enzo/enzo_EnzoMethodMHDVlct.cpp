@@ -466,8 +466,7 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
       //   hydrogen (which modifes the adiabtic index)
       const bool ignore_grackle = true;
       eos_->primitive_from_integration(cur_integration_map, primitive_map,
-                                       stale_depth, passive_list,
-                                       ignore_grackle);
+                                       stale_depth, passive_list);
 
       // Compute flux along each dimension
       EnzoEFltArrayMap *flux_maps[3] = {&xflux_map, &yflux_map, &zflux_map};

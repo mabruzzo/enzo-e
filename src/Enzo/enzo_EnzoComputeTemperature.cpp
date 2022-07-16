@@ -89,14 +89,14 @@ void EnzoComputeTemperature::compute_(Block * block,
 
   Field field = enzo_block->data()->field();
 
-  const enzo_float gamma = enzo::fluid_props()->gamma();
+  const enzo_float gamma = enzo::fluid_props()->gamma(); //EnzoBlock::Gamma[cello::index_static()];
 
   if (enzo::config()->method_grackle_use_grackle){
 
 #ifdef CONFIG_USE_GRACKLE
     const EnzoMethodGrackle* grackle_method = enzo::grackle_method();
-    grackle_method->calculate_temperature(EnzoFieldAdaptor(block, i_hist_), t,
-                                          0, grackle_units, grackle_fields);
+    grackle_method->calculate_temperature(block, t, grackle_units,
+					  grackle_fields, i_hist_);
 #else
     ERROR("EnzoComputeTemperature::compute_()",
           "Attempting to compute temperature with method Grackle "

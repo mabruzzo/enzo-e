@@ -41,6 +41,7 @@ EnzoMethodGrackle::EnzoMethodGrackle
   /// Define Grackle's internal data structures
   time_grackle_data_initialized_ = ENZO_FLOAT_UNDEFINED;
   initialize_grackle_chemistry_data(time);
+  
 #endif /* CONFIG_USE_GRACKLE */
 }
 
@@ -58,6 +59,9 @@ void EnzoMethodGrackle::define_required_grackle_fields()
   // (e.g. to set up a refresh object), can ensure that the fields are defined
 
   if (!enzo::config()->method_grackle_use_grackle) {return;}
+
+  FieldDescr * field_descr = cello::field_descr();
+  Config   * config  = (Config *) cello::config();  
 
   // special container for ensuring color fields are properly grouped
 
@@ -78,14 +82,14 @@ void EnzoMethodGrackle::define_required_grackle_fields()
   if (rank>=3) cello::define_field ("velocity_z");
 
   // Get Grackle parameters defining fields to define
-
+  
   const int metal_cooling      = grackle_chemistry->metal_cooling;
   const int chemistry_level    = grackle_chemistry->primordial_chemistry;
   const int specific_heating   = grackle_chemistry->use_specific_heating_rate;
   const int volumetric_heating = grackle_chemistry->use_volumetric_heating_rate;
 
   // Metal cooling fields
-
+  
   if (metal_cooling > 0) {
     cello::define_field_in_group ("metal_density", "color");
   }
@@ -119,7 +123,7 @@ void EnzoMethodGrackle::define_required_grackle_fields()
 
   if (volumetric_heating) {
     cello::define_field("volumetric_heating_rate");
-  }
+  }    
 
 }
 #endif /* CONFIG_USE_GRACKLE */
@@ -139,12 +143,14 @@ void EnzoMethodGrackle::compute ( Block * block) throw()
 
 #else /* CONFIG_USE_GRACKLE */
 
+    EnzoBlock * enzo_block = enzo::block(block);
+
     // Start timer
     Simulation * simulation = cello::simulation();
     if (simulation)
       simulation->performance()->start_region(perf_grackle,__FILE__,__LINE__);
 
-    this->compute_(block);
+    this->compute_(enzo_block);
 
     if (simulation)
       simulation->performance()->stop_region(perf_grackle,__FILE__,__LINE__);
@@ -224,17 +230,21 @@ void EnzoMethodGrackle::setup_grackle_units (double current_time,
   grackle_units->a_units       = 1.0;
   grackle_units->a_value       = 1.0;
   if (grackle_units->comoving_coordinates){
-    if (current_time < 0){
-      ERROR("EnzoMethodGrackle::setup_grackle_units",
-            "A valid current_time value is required");
-    }
-
     enzo_float cosmo_a  = 1.0;
     enzo_float cosmo_dt = 0.0;
 
     EnzoPhysicsCosmology * cosmology = enzo::cosmology();
 
-    grackle_units->density_units  = cosmology->density_units();
+    // Have to explicitly initialize current_time and current_redshift here because 
+    // this function is called in the constructor, and cosmology units are not initialized 
+    // until after Simulation::initialize() completes (see EnzoSimulation::r_startup_begun()). 
+
+    if (current_time == 0) {
+       current_time = cosmology->time_from_redshift(enzo::config()->physics_cosmology_initial_redshift);
+       cosmology->set_current_redshift(cosmology->redshift_from_time(current_time));
+    }
+
+    grackle_units->density_units  = cosmology->density_units(); 
     grackle_units->length_units = cosmology->length_units();
     grackle_units->time_units  = cosmology->time_units();
     grackle_units->velocity_units = cosmology->velocity_units();
@@ -254,98 +264,97 @@ void EnzoMethodGrackle::setup_grackle_units (double current_time,
 
 #endif
 
-//----------------------------------------------------------------------------
-
-#ifdef CONFIG_USE_GRACKLE
-
-void EnzoMethodGrackle::setup_grackle_units (const EnzoFieldAdaptor& fadaptor,
-                                             code_units * grackle_units
-                                             ) throw()
-{
-  const EnzoConfig * config = enzo::config();
-    double current_time =
-      (config->physics_cosmology) ? fadaptor.compute_time() : -1.0;
-    setup_grackle_units(current_time, grackle_units);
-}
-
-#endif
-
 //--------------------------------------------------------------------------
 
 #ifdef CONFIG_USE_GRACKLE
 
 void EnzoMethodGrackle::setup_grackle_fields
-(const EnzoFieldAdaptor& fadaptor,
+(Block * block,
+ // Setup Grackle field struct for storing field data that will be passed
+ // into Grackle. Initialize fields, if true, will also assign values to
+ // the fields (equal to uniform background values). This is meant to be
+ // used at initialization, and is by default false.
  grackle_field_data * grackle_fields,
- int stale_depth, /* default: 0 */
- bool omit_cell_width /* default false */
+ int i_hist /*default 0 */
  ) const throw()
 {
 
+  EnzoBlock * enzo_block = enzo::block(block);
+  Field field = enzo_block->data()->field();
+
+  int gx,gy,gz;
+  field.ghost_depth (0,&gx,&gy,&gz);
+
+  int nx,ny,nz;
+  field.size (&nx,&ny,&nz);
+
+  int ngx = nx + 2*gx;
+  int ngy = ny + 2*gy;
+  int ngz = nz + 2*gz;
+
+  gr_int grid_dimension[3] = {ngx, ngy, ngz};
+  gr_int grid_start[3]     = {gx,      gy,      gz};
+  gr_int grid_end[3]       = {gx+nx-1, gy+ny-1, gz+nz-1} ;
+
+  const gr_int rank = cello::rank();
+
   // Grackle grid dimenstion and grid size
-  grackle_fields->grid_rank      = cello::rank();
+  grackle_fields->grid_rank      = rank;
   grackle_fields->grid_dimension = new int[3];
   grackle_fields->grid_start     = new int[3];
   grackle_fields->grid_end       = new int[3];
 
-  fadaptor.get_grackle_field_grid_props(grackle_fields->grid_dimension,
-                                        grackle_fields->grid_start,
-                                        grackle_fields->grid_end);
-
-  if (stale_depth > 0){
-    ERROR("EnzoMethodGrackle::setup_grackle_fields", "untested");
-    for (int i = 1; i <= grackle_fields->grid_rank; i++){
-      grackle_fields->grid_start[i-1] += stale_depth;
-      grackle_fields->grid_end[i-1] -= stale_depth;
-
-      // reminder for following check: grackle_fields->grid_end is inclusive
-      if (grackle_fields->grid_end[i-1] < grackle_fields->grid_start[i-1]){
-        ERROR("EnzoMethodGrackle::setup_grackle_fields",
-              "stale_depth is too large");
-      }
-    }
-  } else if (stale_depth < 0){
-    ERROR("EnzoMethodGrackle::setup_grackle_fields",
-          "can't handle negative stale_depth");
+  for (int i=0; i<3; i++){
+    grackle_fields->grid_dimension[i] = grid_dimension[i];
+    grackle_fields->grid_start[i]     = grid_start[i];
+    grackle_fields->grid_end[i]       = grid_end[i];
   }
 
-  if (omit_cell_width){
-    grackle_fields->grid_dx = 0.0;
-  } else {
-    double hx, hy, hz;
-    fadaptor.cell_width(&hx,&hy,&hz);
-    grackle_fields->grid_dx = hx;
-  }
+  double hx, hy, hz;
+  enzo_block->cell_width(&hx,&hy,&hz);
+  grackle_fields->grid_dx = hx;
 
   // Setup all fields to be passed into grackle
-  grackle_fields->density         = fadaptor.ptr_for_grackle("density", true);
-  grackle_fields->internal_energy = fadaptor.ptr_for_grackle("internal_energy",
-                                                             true);
-  grackle_fields->x_velocity      = fadaptor.ptr_for_grackle("velocity_x");
-  grackle_fields->y_velocity      = fadaptor.ptr_for_grackle("velocity_y");
-  grackle_fields->z_velocity      = fadaptor.ptr_for_grackle("velocity_z");
+  grackle_fields->density         = (gr_float *) field.values("density", i_hist);
+  grackle_fields->internal_energy = (gr_float *) field.values("internal_energy", i_hist);
+  grackle_fields->x_velocity      = (gr_float *) field.values("velocity_x", i_hist);
+  grackle_fields->y_velocity      = (gr_float *) field.values("velocity_y", i_hist);
+  grackle_fields->z_velocity      = (gr_float *) field.values("velocity_z", i_hist);
 
   // Get chemical species fields if they exist
 
-  // primordial_chemistry > 0 fields
-  grackle_fields->HI_density      = fadaptor.ptr_for_grackle("HI_density");
-  grackle_fields->HII_density     = fadaptor.ptr_for_grackle("HII_density");
-  grackle_fields->HeI_density     = fadaptor.ptr_for_grackle("HeI_density");
-  grackle_fields->HeII_density    = fadaptor.ptr_for_grackle("HeII_density");
-  grackle_fields->HeIII_density   = fadaptor.ptr_for_grackle("HeIII_density");
-  grackle_fields->e_density       = fadaptor.ptr_for_grackle("e_density");
+  // primordial_chemistry == 0 fields
+  grackle_fields->HI_density      = field.is_field("HI_density") ?
+                       (gr_float *) field.values("HI_density", i_hist)     : NULL;
+  grackle_fields->HII_density     = field.is_field("HII_density") ?
+                       (gr_float *) field.values("HII_density", i_hist)    : NULL;;
+  grackle_fields->HeI_density     = field.is_field("HeI_density") ?
+                       (gr_float *) field.values("HeI_density", i_hist)    : NULL;
+  grackle_fields->HeII_density    = field.is_field("HeII_density") ?
+                       (gr_float *) field.values("HeII_density", i_hist)   : NULL;
+  grackle_fields->HeIII_density   = field.is_field("HeIII_density") ?
+                       (gr_float *) field.values("HeIII_density", i_hist)  : NULL;
+  grackle_fields->e_density       = field.is_field("e_density") ?
+                       (gr_float *) field.values("e_density", i_hist)      : NULL;
 
-  // primordial_chemistry > 1 fields
-  grackle_fields->HM_density      = fadaptor.ptr_for_grackle("HM_density");
-  grackle_fields->H2I_density     = fadaptor.ptr_for_grackle("H2I_density");
-  grackle_fields->H2II_density    = fadaptor.ptr_for_grackle("H2II_density");
+  // primordial_chemistry == 1 fields
+  grackle_fields->HM_density      = field.is_field("HM_density") ?
+                       (gr_float *) field.values("HM_density", i_hist)     : NULL;
+  grackle_fields->H2I_density     = field.is_field("H2I_density") ?
+                       (gr_float *) field.values("H2I_density", i_hist) : NULL;
+  grackle_fields->H2II_density    = field.is_field("H2II_density") ?
+                       (gr_float *) field.values("H2II_density", i_hist) : NULL;
 
-  // primordial_chemistry > 2 fields
-  grackle_fields->DI_density      = fadaptor.ptr_for_grackle("DI_density");
-  grackle_fields->DII_density     = fadaptor.ptr_for_grackle("DII_density");
-  grackle_fields->HDI_density     = fadaptor.ptr_for_grackle("HDI_density");
+  // primordial_chemistry == 2 fields
+  grackle_fields->DI_density      = field.is_field("DI_density") ?
+                       (gr_float *) field.values("DI_density", i_hist) : NULL;
+  grackle_fields->DII_density     = field.is_field("DII_density") ?
+                       (gr_float *) field.values("DII_density", i_hist) : NULL;
+  grackle_fields->HDI_density     = field.is_field("HDI_density") ?
+                       (gr_float *) field.values("HDI_density", i_hist) : NULL;
 
-  grackle_fields->metal_density   = fadaptor.ptr_for_grackle("metal_density");
+  grackle_fields->metal_density   = field.is_field("metal_density") ?
+                       (gr_float *) field.values("metal_density", i_hist) : NULL;
 
   /* Leave these as NULL for now and save for future development */
   gr_float * volumetric_heating_rate = NULL;
@@ -367,7 +376,6 @@ void EnzoMethodGrackle::update_grackle_density_fields(
                                Block * block,
                                grackle_field_data * grackle_fields
                                ) const throw() {
-
   // Intended for use at problem initialization. Scale species
   // density fields to be sensible mass fractions of the initial
   // density field. Problem types that require finer-tuned control
@@ -454,21 +462,12 @@ void EnzoMethodGrackle::update_grackle_density_fields(
 
 #ifdef CONFIG_USE_GRACKLE
 
-void EnzoMethodGrackle::compute_ ( Block * block) throw()
+void EnzoMethodGrackle::compute_ ( EnzoBlock * enzo_block) throw()
 {
+
   const EnzoConfig * enzo_config = enzo::config();
-  if (block->cycle() == enzo_config->initial_cycle) {
-    bool nohydro = ( (enzo::problem()->method("ppm") == nullptr) |
-                     (enzo::problem()->method("mhd_vlct") == nullptr) |
-                     (enzo::problem()->method("ppml") == nullptr) );
 
-    ASSERT("EnzoMethodGrackle::compute_",
-           "The current implementation requires the dual-energy formalism to "
-           "be in use, when EnzoMethodGrackle is used with a (M)HD-solver",
-           nohydro | !enzo::fluid_props()->dual_energy_config().is_disabled());
-  }
-
-  Field field = block->data()->field();
+  Field field = enzo_block->data()->field();
 
   int gx,gy,gz;
   field.ghost_depth (0,&gx,&gy,&gz);
@@ -485,16 +484,14 @@ void EnzoMethodGrackle::compute_ ( Block * block) throw()
   /* Set code units for use in grackle */
   grackle_field_data grackle_fields;
 
-  EnzoFieldAdaptor fadaptor(block, 0);
-
-  setup_grackle_units(fadaptor, &this->grackle_units_);
-  setup_grackle_fields(fadaptor, &grackle_fields);
+  setup_grackle_units(enzo_block, &this->grackle_units_);
+  setup_grackle_fields(enzo_block, &grackle_fields);
 
   chemistry_data * grackle_chemistry =
     enzo::config()->method_grackle_chemistry;
 
   // Solve chemistry
-  double dt = block->dt();
+  double dt = enzo_block->dt;
   if (local_solve_chemistry(grackle_chemistry, &grackle_rates_,
 			    &grackle_units_, &grackle_fields, dt)
       == ENZO_FAIL) {
@@ -502,8 +499,11 @@ void EnzoMethodGrackle::compute_ ( Block * block) throw()
     "Error in local_solve_chemistry.\n");
   }
 
-  // enforce metallicity floor (if one was provided)
-  enforce_metallicity_floor(block);
+  if (metallicity_floor_ > 0.0)
+  {
+     enforce_metallicity_floor(enzo_block);
+  }
+
 
   /* Correct total energy for changes in internal energy */
   gr_float * v3[3];
@@ -533,7 +533,7 @@ void EnzoMethodGrackle::compute_ ( Block * block) throw()
 
   // For testing purposes - reset internal energies with changes in mu
   if (enzo_config->initial_grackle_test_reset_energies){
-    this->ResetEnergies(block);
+    this->ResetEnergies(enzo_block);
   }
 
   delete_grackle_fields(&grackle_fields);
@@ -552,7 +552,8 @@ double EnzoMethodGrackle::timestep ( Block * block ) throw()
 
 #ifdef CONFIG_USE_GRACKLE
   if (config->method_grackle_use_cooling_timestep){
-    Field field = block->data()->field();
+    EnzoBlock * enzo_block = enzo::block(block);
+    Field field = enzo_block->data()->field();
 
     enzo_float * cooling_time = field.is_field("cooling_time") ?
                         (enzo_float *) field.values("cooling_time") : NULL;
@@ -576,8 +577,7 @@ double EnzoMethodGrackle::timestep ( Block * block ) throw()
       delete_cooling_time = true;
     }
 
-    calculate_cooling_time(EnzoFieldAdaptor(block,0), cooling_time, 0,
-                           nullptr, nullptr);
+    calculate_cooling_time(block, cooling_time, NULL, NULL, 0);
 
     // make sure to exclude the ghost zone. Because there is no refresh before
     // this method is called (at least during the very first cycle) - this can
@@ -604,25 +604,13 @@ double EnzoMethodGrackle::timestep ( Block * block ) throw()
 
 #ifdef CONFIG_USE_GRACKLE
 
-void EnzoMethodGrackle::enforce_metallicity_floor(Block * block) throw()
+
+void EnzoMethodGrackle::enforce_metallicity_floor(EnzoBlock * enzo_block) throw()
 {
-  const EnzoFluidFloorConfig& fluid_floors
-    = enzo::fluid_props()->fluid_floor_config();
-
-  if (!fluid_floors.has_metal_mass_frac_floor()){
-    return; // return early if the floor has not been defined
-  }
-
-  const enzo_float metal_mass_frac_floor = fluid_floors.metal_mass_frac();
-
   // MUST have metal_density field tracked
-  Field field = block->data()->field();
+  Field field = enzo_block->data()->field();
   enzo_float * density = (enzo_float*) field.values("density");
   enzo_float * metal_density  = (enzo_float*) field.values("metal_density");
-  ASSERT("EnzoMethodGrackle::enforce_metallicity_floor",
-         ("Can't enforce metallicity floor when the \"metal_density\" field "
-          "doesn't exist"),
-         metal_density != nullptr);
 
   int gx,gy,gz;
   field.ghost_depth (0,&gx,&gy,&gz);
@@ -638,11 +626,11 @@ void EnzoMethodGrackle::enforce_metallicity_floor(Block * block) throw()
     for (int iy=0; iy<ngy; iy++){
       for (int ix=0; ix<ngx; ix++){
         int i = INDEX(ix,iy,iz,ngx,ngy);
-        metal_density[i] = std::max(metal_density[i],
-                                    metal_mass_frac_floor * density[i]);
+        double Z = metal_density[i] / density[i] / enzo_constants::metallicity_solar;
+        if (Z < metallicity_floor_) metal_density[i] = density[i] * metallicity_floor_ * enzo_constants::metallicity_solar;
       }
     }
-  }
+  }     
   return;
 }
 #endif
@@ -743,10 +731,11 @@ void EnzoMethodGrackle::ResetEnergies ( Block * block) throw()
 //----------------------------------------------------------------------
 
 void EnzoMethodGrackle::compute_local_property_
-(const EnzoFieldAdaptor& fadaptor, enzo_float* values, int stale_depth,
- code_units* grackle_units, grackle_field_data* grackle_fields,
+(Block * block, enzo_float* values, code_units* grackle_units,
+ grackle_field_data* grackle_fields, int i_hist,
  grackle_local_property_func func, std::string func_name) const throw()
 {
+  EnzoBlock * enzo_block = enzo::block(block);
   const EnzoConfig * enzo_config = enzo::config();
 
   code_units cur_grackle_units_;
@@ -755,35 +744,16 @@ void EnzoMethodGrackle::compute_local_property_
   // setup grackle units if they are not already provided
   if (!grackle_units){
     grackle_units = &cur_grackle_units_;
-    EnzoMethodGrackle::setup_grackle_units(fadaptor, grackle_units);
+    EnzoMethodGrackle::setup_grackle_units(enzo_block, grackle_units, i_hist);
   }
 
   // if grackle fields are not provided, define them
   bool delete_grackle_fields = false;
   if (!grackle_fields){
-    // the cell width is not used for computing for local properties. Thus, we
-    // don't require it (for cases where fadaptor wraps EnzoEFltArrayMap)
-    bool omit_cell_width = true;
-
     grackle_fields  = &cur_grackle_fields;
-    EnzoMethodGrackle::setup_grackle_fields(fadaptor, grackle_fields,
-                                            stale_depth, omit_cell_width);
+    EnzoMethodGrackle::setup_grackle_fields(enzo_block, grackle_fields,
+					    i_hist);
     delete_grackle_fields = true;
-  }
-
-  for (int i = 1; i <= grackle_fields->grid_rank; i++){
-    int ax_start = grackle_fields->grid_start[i-1];
-    int ax_end = grackle_fields->grid_end[i-1];
-    int ax_dim = grackle_fields->grid_dimension[i-1];
-
-    // currently, Grackle's local_calculate_pressure, local_calculate_gamma,
-    // & local_calculate_temperature functions ignore grid_start & grid_end
-    // This assertion makes sure users won't get unexpected results...
-    ASSERT("EnzoMethodGrackle::compute_local_property_",
-           ("until PR #106 is merged into Grackle, we require "
-            "grackle_fields->grid_start & grackle_fields->grid_end to include "
-            "all data"),
-           (ax_start == 0) & ((ax_end+1) == ax_dim));
   }
 
   // because this function is const-qualified, grackle_rates_ currently has
