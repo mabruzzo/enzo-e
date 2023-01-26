@@ -48,7 +48,34 @@ EnzoMethodGrackle::EnzoMethodGrackle
 //----------------------------------------------------------------------
 
 #ifdef CONFIG_USE_GRACKLE
- 
+
+namespace{ // anonymous namespace just defines functions used locally
+  void dump_data_to_disk_(std::string fname, Field& field){
+
+    std::vector<std::string> field_names =
+      {"density", "internal_energy", "velocity_x", "velocity_y", "velocity_z",
+       "HI_density", "HII_density",
+       "HeI_density", "HeII_density", "HeIII_density",
+       "e_density",
+       "HM_density", "H2I_density", "H2II_density",
+       "DI_density", "DII_density", "HDI_density",
+       "metal_density"
+      };
+
+    std::vector<std::pair<std::string, CelloArray<enzo_float,3>>> vec_list;
+
+    for (const std::string& name: field_names){
+      if (field.values(name) != nullptr){
+        vec_list.push_back({name, field.view<enzo_float>(name)});
+      }
+    }
+
+    disk_utils::dump_arrays_to_hdf5<enzo_float>(fname, vec_list);
+  }
+}
+
+//----------------------------------------------------------------------
+
 void EnzoMethodGrackle::define_required_grackle_fields()
 {
   // Gather list of fields that MUST be defined for this method and
@@ -487,6 +514,11 @@ void EnzoMethodGrackle::compute_ ( EnzoBlock * enzo_block) throw()
   setup_grackle_units(enzo_block, &this->grackle_units_);
   setup_grackle_fields(enzo_block, &grackle_fields);
 
+  std::string block_name = enzo_block->name();
+  CkPrintf("Grackle::compute start: %s\n", block_name.c_str());
+  fflush(stdout);
+  dump_data_to_disk_("precompute__" + block_name + ".h5", field);
+
   chemistry_data * grackle_chemistry =
     enzo::config()->method_grackle_chemistry;
 
@@ -498,6 +530,9 @@ void EnzoMethodGrackle::compute_ ( EnzoBlock * enzo_block) throw()
     ERROR("EnzoMethodGrackle::compute()",
     "Error in local_solve_chemistry.\n");
   }
+
+  CkPrintf("Grackle::compute stop: %s\n", block_name.c_str());
+  fflush(stdout);
 
   if (metallicity_floor_ > 0.0)
   {
