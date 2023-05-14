@@ -72,6 +72,7 @@
 ----
 
 .. par:parameter::  Particle:particle_type:constants
+
    :Summary: :s:`List of constant names, data types and values.`
    :Type:    :t:`list` ( :t:`string` )
    :Default: :d:`none`
@@ -96,6 +97,7 @@
 ----
 
 .. par:parameter:: Particle:particle_type:interleaved
+
    :Summary: :s:`Format of output files`
    :Type:    :t:`logical`
    :Default: :d:`false`
