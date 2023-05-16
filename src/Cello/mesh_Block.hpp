@@ -266,7 +266,8 @@ public: // interface
   //--------------------------------------------------
 
   /// Initiate applying all Initial conditions.
-  void p_initial_begin();
+  void p_initial_begin() { initial_begin(); }
+  void initial_begin();
   void initial_new_begin_();
 
   /// Continue to the next Initial conditions object
