@@ -229,6 +229,7 @@ extern "C" { // declare the names of Grackle types so can reduce the usage of
 #include "tests/EnzoInitialAccretionTest.hpp"
 #include "initial/EnzoInitialShuCollapse.hpp"
 #include "tests/EnzoInitialBBTest.hpp"
+#include "initial/EnzoInitialShearStream.hpp"
 
 #include "mesh/EnzoRefineShock.hpp"
 #include "mesh/EnzoRefineParticleMass.hpp"

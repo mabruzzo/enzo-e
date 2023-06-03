@@ -288,6 +288,8 @@ Initial * EnzoProblem::create_initial_
        enzo_config->initial_bb_test_nominal_sound_speed,
        enzo_config->initial_bb_test_angular_rotation_velocity,
        enzo_config->initial_bb_test_external_density);
+  } else if (type == "shear_stream") {
+    initial = new EnzoInitialShearStream(cycle, time);
   } else {
     initial = Problem::create_initial_
       (type,index,config,parameters);
