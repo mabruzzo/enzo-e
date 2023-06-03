@@ -218,6 +218,7 @@ extern "C" {
 #include "tests/EnzoInitialAccretionTest.hpp"
 #include "initial/EnzoInitialShuCollapse.hpp"
 #include "tests/EnzoInitialBBTest.hpp"
+#include "initial/EnzoInitialShearStream.hpp"
 
 #include "mesh/EnzoRefineShock.hpp"
 #include "mesh/EnzoRefineParticleMass.hpp"
