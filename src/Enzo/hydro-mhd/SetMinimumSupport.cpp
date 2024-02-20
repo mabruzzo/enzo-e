@@ -8,6 +8,8 @@
 #include "cello.hpp"
 
 #include "enzo.hpp"
+
+#include "Enzo/utils/utils.hpp" // enzo_utils::consistent_cube_cellwidths
  
 //----------------------------------------------------------------------
  
@@ -15,7 +17,6 @@ int EnzoBlock::SetMinimumSupport(enzo_float &MinimumSupportEnergyCoefficient,
                                  enzo_float minimum_pressure_support_parameter,
 				 bool comoving_coordinates)
 {
-  const int in = cello::index_static();
 
   Field field = data()->field();
   if (field.num_permanent() > 0) {  // TODO: revisit if-clause. This could be
@@ -70,12 +71,11 @@ int EnzoBlock::SetMinimumSupport(enzo_float &MinimumSupportEnergyCoefficient,
     // I'm don't totally understand where the extra CosmoFactor comes in...
     // that was here earlier
 
-    // TODO: check that CellWidth[0], CellWidth[1], and CellWidth[2] are
-    //       identical
-
-    // ToDo: figure out how to properly configure this variable. It used to be
-    // a static global variable of EnzoBlock, but it could never be configured
-    const enzo_float GravitationalConstant = 1.0;
+    ASSERT("EnzoBlock::SetMinimumSupport",
+           "This function currently requires that cells are perfect cubes. "
+           "The cell-widths are NOT all equal",
+           enzo_utils::consistent_cube_cellwidths(CellWidth[0], CellWidth[1],
+                                                  CellWidth[2]));
 
     const enzo_float gamma = enzo::fluid_props()->gamma();
     MinimumSupportEnergyCoefficient =
