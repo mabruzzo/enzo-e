@@ -36,6 +36,10 @@ endif()
 # Ensure the custom modules to find Charm++ and Grackle are included
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+# we process this down below, but we need to parse this now before handling
+# dependencies
+option(USE_DOUBLE_PREC "Use double precision. Turn off for single precision." ON)
+
 #----------------------------------------------------------------------------------------
 # External libs
 
@@ -80,8 +84,13 @@ git submodule of grackle")
   else()
     # we should figure out how to direct the build-system to build grackle as a
     # static or shard library that respects GRACKLE_USE_STATIC_LIBS
-    # -> honestly, it may make more sense to just drop this as an option and
-    #    simply rely upon the BUILD_SHARED_LIBS variable
+    # -> honestly, it may make more sense to just drop this as an option from
+    #    Enzo-E (the name is a little confusing, anyways) and simply rely upon
+    #    the BUILD_SHARED_LIBS variable
+    set(GRACKLE_USE_DOUBLE ${USE_DOUBLE_PREC})
+    set(GRACKLE_USE_OPENMP OFF) # charm++ dependency has compatibility problems
+                                # with openmp
+
     add_subdirectory(external/grackle)
   endif()
 
@@ -130,7 +139,6 @@ set(Cello_TARGET_LINK_OPTIONS "")
 #----------------------------------------------------------------------------------------
 # Define preprocessor definitions/user configuration options
 
-option(USE_DOUBLE_PREC "Use double precision. Turn off for single precision." ON)
 if (USE_DOUBLE_PREC)
   add_compile_definitions(CONFIG_PRECISION_DOUBLE)
   # PREC_STRING is used during test setup
