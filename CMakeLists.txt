@@ -58,27 +58,43 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>" "${CHARM_COMPILER}"
 
 # Need to process Grackle here as both Cello and Enzo-E depend on it
 option(USE_GRACKLE "Use Grackle Chemistry" ON)
+option(ENZOE_USE_EXTERNAL_GRACKLE "Use externally installed grackle library"
+  OFF)
 # don't bother advertising the following option (but users can
 # overwrite it if they really want to - e.g. to reduce binary size)
 option(GRACKLE_USE_STATIC_LIBS  "sets Grackle's lib-type if USE_GRACKLE=ON" ON)
 if (USE_GRACKLE)
-  find_package(Grackle)
-  if (Grackle_FOUND)
-    # Setting global compile def as performance and simulation Cello libs need the var
-    # We should discuss the use of a central config.hpp (similar to the existing
-    # auto_config.def but also centrally included beyond informational output).
-    add_compile_definitions(CONFIG_USE_GRACKLE)
-
-    # Also specifically setting the defines used in the *.ci files of Cello and Enzo.
-    # Alternatively, figure out a way to extract those from the `COMPILE_DEFINITIONS`
-    # property and directly process in `cmake/charm.cmake`.
-    set(CHARM_PREPROC_DEFS ${CHARM_PREPROC_DEFS} "-DCONFIG_USE_GRACKLE ")
+  if (ENZOE_USE_EXTERNAL_GRACKLE)
+    find_package(Grackle)
+    if (NOT Grackle_FOUND)
+      message(FATAL_ERROR
+        "Configured to use an external Grackle installation, but it couldn't "
+        "be found.\n"
+        "There are a few options:\n"
+        "- disable grackle (e.g., `-DUSE_GRACKLE=OFF`)\n"
+        "- provide a path (e.g., `-DGrackle_ROOT=/GRACKLE/INSTALL/DIRECTORY`)\n"
+        "- compile the version of grackle (tracked as a git-submodule in this "
+        "repository) as part of the Enzo-E build. (e.g.
+git submodule of grackle")
+    endif()
   else()
-    message(FATAL_ERROR
-      "Configured to use Grackle but Grackle library not found.\n"
-      "Either disable grackle (e.g., `-DUSE_GRACKLE=OFF`) or provide path "
-      "(e.g., `-DGrackle_ROOT=/PATH/TO/GRACKLE/INSTALL/DIRECTORY`).")
+    # we should figure out how to direct the build-system to build grackle as a
+    # static or shard library that respects GRACKLE_USE_STATIC_LIBS
+    # -> honestly, it may make more sense to just drop this as an option and
+    #    simply rely upon the BUILD_SHARED_LIBS variable
+    add_subdirectory(external/grackle)
   endif()
+
+  # todo: do some minor refactoring of the Cello-layer so that the following
+  # line is no longer needed on a global level
+  # -> with just a little more refactoring of the enzo-layer, we could get away
+  #    with simply defining this for the chemistry subcomponent
+  add_compile_definitions(CONFIG_USE_GRACKLE)
+
+  # todo: remove the following line (we just need to do some slight refactoring
+  # to remove a single ifdef from src/Enzo/enzo.ci)
+  set(CHARM_PREPROC_DEFS ${CHARM_PREPROC_DEFS} "-DCONFIG_USE_GRACKLE ")
+
 endif()
 
 # TODO: remove the dependency on boost::filesystem (since C++17 now offers
