@@ -3,7 +3,7 @@
 /// @file     io.hpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2011-11-01
-/// @brief    Include file for the \ref Io component 
+/// @brief    Include file for the \ref Io component
 
 #ifndef IO_HPP
 #define IO_HPP
@@ -27,4 +27,3 @@
 #include "_io.hpp"
 
 #endif /* IO_HPP */
-

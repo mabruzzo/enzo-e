@@ -10,38 +10,26 @@
 #define ENZO_REFINE_MASS_HPP
 
 class EnzoRefineMass : public Refine {
-
   /// @class    EnzoRefineMass
   /// @ingroup  Enzo
-  /// @brief    [\ref Enzo] 
+  /// @brief    [\ref Enzo]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  EnzoRefineMass(double min_refine,
-		 double max_coarsen,
-		 int    max_level,
-		 bool include_ghosts,
-		 std::string output,
-		 std::string name,
-		 std::string mass_type,
-		 double level_exponent) throw();
+  EnzoRefineMass(double min_refine, double max_coarsen, int max_level,
+                 bool include_ghosts, std::string output, std::string name,
+                 std::string mass_type, double level_exponent) throw();
 
   /// default constructor
   // EnzoRefineMass () throw() : Refine() {};
 
   PUPable_decl(EnzoRefineMass);
 
-  EnzoRefineMass(CkMigrateMessage *m)
-    : Refine (m),
-      name_(""),
-      mass_ratio_(0.0),
-      level_exponent_(0.0)
-  { }
+  EnzoRefineMass(CkMigrateMessage* m)
+      : Refine(m), name_(""), mass_ratio_(0.0), level_exponent_(0.0) {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
     // NOTE: change this function whenever attributes change
     Refine::pup(p);
@@ -51,12 +39,11 @@ public: // interface
   }
 
   /// Evaluate the refinement criteria, updating the refinement field
-  virtual int apply (Block * block) throw();
+  virtual int apply(Block* block) throw();
 
-  virtual std::string name () const { return "mass"; };
+  virtual std::string name() const { return "mass"; };
 
 private:
-
   /// Field containing density to compare against
   std::string name_;
 
@@ -68,4 +55,3 @@ private:
 };
 
 #endif /* ENZO_REFINE_MASS_HPP */
-

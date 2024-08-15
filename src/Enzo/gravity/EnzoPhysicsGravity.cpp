@@ -12,7 +12,7 @@
 
 //----------------------------------------------------------------------
 
-namespace{ // stuff inside an anonymous namespace is local to this file)
+namespace {  // stuff inside an anonymous namespace is local to this file)
 
 double parse_grav_const_codeU_(ParameterGroup p) {
   // for anybody looking at this implementation as an example of "How to access
@@ -24,16 +24,16 @@ double parse_grav_const_codeU_(ParameterGroup p) {
   // -> here we break these rules purely for the sake of maintaining backwards
   //    compatability!
 
-  Parameters * all_parameters = cello::simulation()->parameters();
+  Parameters* all_parameters = cello::simulation()->parameters();
 
   std::string legacy_parname = "Method:gravity:grav_const";
   std::string actual_par_basename = "grav_const_codeU";
 
   const std::vector<std::string>& method_list = enzo::config()->method_list;
   bool has_grav_method = std::find(method_list.begin(), method_list.end(),
-                            "gravity") != method_list.end();
-  bool has_legacy_par = (has_grav_method &&
-                         (all_parameters->param(legacy_parname) != nullptr));
+                                   "gravity") != method_list.end();
+  bool has_legacy_par =
+      (has_grav_method && (all_parameters->param(legacy_parname) != nullptr));
   bool has_actual_par = p.param(actual_par_basename) != nullptr;
 
   if (has_legacy_par && has_actual_par) {
@@ -50,17 +50,13 @@ double parse_grav_const_codeU_(ParameterGroup p) {
   } else {
     return p.value_float(actual_par_basename, -1.0);
   }
-
 }
 
-} // close anonymous namespace
+}  // namespace
 
 //----------------------------------------------------------------------
 
-EnzoPhysicsGravity::EnzoPhysicsGravity(ParameterGroup p)
-  : Physics()
-{
-
+EnzoPhysicsGravity::EnzoPhysicsGravity(ParameterGroup p) : Physics() {
   // When grav_const_code_units is positive, it specifies the gravitational
   // constant in code units. Otherwise, the gravitational constant is
   // defined such that it's equal to the value of
@@ -72,7 +68,8 @@ EnzoPhysicsGravity::EnzoPhysicsGravity(ParameterGroup p)
   } else {
     ASSERT("EnzoPhysicsGravity::EnzoPhysicsGravity",
            "users aren't allowed to specify the gravitational constant in "
-           "a cosmological simulation", enzo::cosmology() == nullptr);
+           "a cosmological simulation",
+           enzo::cosmology() == nullptr);
     grav_constant_codeU_ = grav_const_code_units;
   }
 }

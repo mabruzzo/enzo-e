@@ -9,37 +9,26 @@
 #define IO_IO_WRITER_HPP
 
 class IoWriter : public CBase_IoWriter {
-
   /// @class    IoWriter
   /// @ingroup  Io
-  /// @brief    [\ref Io] 
+  /// @brief    [\ref Io]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  IoWriter() throw()
-  : CBase_IoWriter()
-  {  }
+  IoWriter() throw() : CBase_IoWriter() {}
 
   /// CHARM++ migration constructor
-  IoWriter (CkMigrateMessage *m) :
-    CBase_IoWriter(m)
-  { }
+  IoWriter(CkMigrateMessage* m) : CBase_IoWriter(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p) 
-  {
+  void pup(PUP::er& p) {
     TRACEPUP;
     CBase_IoWriter::pup(p);
   }
 
-private: // functions
-
-private: // attributes
-
+private:  // functions
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
-
 };
 
 #endif /* IO_IO_WRITER_HPP */
-

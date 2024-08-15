@@ -12,11 +12,10 @@
 
 #include "problem.hpp"
 
-void generate_input()
-{
+void generate_input() {
   std::fstream fp;
 
-  fp.open ("test.in",std::fstream::out);
+  fp.open("test.in", std::fstream::out);
 
   fp << "Group {\n";
   fp << "  value_png  = [1.0,\"input/Cello.png\"];\n";
@@ -24,12 +23,9 @@ void generate_input()
   fp << "}\n";
 
   fp.close();
-
 }
 
-PARALLEL_MAIN_BEGIN
-{
-
+PARALLEL_MAIN_BEGIN {
   PARALLEL_INIT;
 
   Parameters parameters;
@@ -37,7 +33,7 @@ PARALLEL_MAIN_BEGIN
   generate_input();
   parameters.read("test.in");
 
-  unit_init(0,1);
+  unit_init(0, 1);
 
   unit_class("MaskExpr");
 
@@ -49,49 +45,49 @@ PARALLEL_MAIN_BEGIN
   const double xm = -1.0;
   const double ym = -2.0;
   const double zm = -3.0;
-  const double xp =  1.0;
-  const double yp =  2.0;
-  const double zp =  3.0;
-  const double t =   7.0;
-  FieldDescr * field_descr = new FieldDescr;
-  ParticleDescr * particle_descr = new ParticleDescr;
+  const double xp = 1.0;
+  const double yp = 2.0;
+  const double zp = 3.0;
+  const double t = 7.0;
+  FieldDescr* field_descr = new FieldDescr;
+  ParticleDescr* particle_descr = new ParticleDescr;
 
-  Data data(nx,ny,nz, 1, xm,xp,ym,yp,zm,zp,
-	    field_descr, particle_descr);
+  Data data(nx, ny, nz, 1, xm, xp, ym, yp, zm, zp, field_descr, particle_descr);
 
   double x[nx], y[ny], z[nz];
 
-  std::shared_ptr<Mask> mask = std::make_shared<MaskExpr> (parameters.param("Group:value_x_lt_y",1));
+  std::shared_ptr<Mask> mask =
+      std::make_shared<MaskExpr>(parameters.param("Group:value_x_lt_y", 1));
 
-  unit_func ("Mask()");
-  unit_assert (mask != NULL);
+  unit_func("Mask()");
+  unit_assert(mask != NULL);
 
-  data.field_cells(x,y,z);
+  data.field_cells(x, y, z);
 
   unit_finalize();
 
-  unit_func ("evaluate(ix,iy,iz)");
+  unit_func("evaluate(ix,iy,iz)");
 
-  for (int ix=0; ix<nx; ix++) {
-    for (int iy=0; iy<ny; iy++) {
-      for (int iz=0; iz<nz; iz++) {
-	unit_assert (mask->evaluate(t,x[ix],y[iy],z[iz]) == 
-		     (x[ix] +0.5*t < 2*y[iy]-z[iz]));
+  for (int ix = 0; ix < nx; ix++) {
+    for (int iy = 0; iy < ny; iy++) {
+      for (int iz = 0; iz < nz; iz++) {
+        unit_assert(mask->evaluate(t, x[ix], y[iy], z[iz]) ==
+                    (x[ix] + 0.5 * t < 2 * y[iy] - z[iz]));
       }
     }
   }
 
-  bool bitmask[nx*ny*nz];
+  bool bitmask[nx * ny * nz];
 
-  mask->evaluate(bitmask,t,nx,nx,x,ny,ny,y,nz,nz,z);
+  mask->evaluate(bitmask, t, nx, nx, x, ny, ny, y, nz, nz, z);
 
-  unit_func ("evaluate(mask,nx,ny,nz)");
+  unit_func("evaluate(mask,nx,ny,nz)");
 
-  for (int ix=0; ix<nx; ix++) {
-    for (int iy=0; iy<ny; iy++) {
-      for (int iz=0; iz<nz; iz++) {
-	int i=ix+nx*(iy+ny*iz);
-	unit_assert (bitmask[i] ==  (x[ix] +0.5*t < 2*y[iy]-z[iz]));
+  for (int ix = 0; ix < nx; ix++) {
+    for (int iy = 0; iy < ny; iy++) {
+      for (int iz = 0; iz < nz; iz++) {
+        int i = ix + nx * (iy + ny * iz);
+        unit_assert(bitmask[i] == (x[ix] + 0.5 * t < 2 * y[iy] - z[iz]));
       }
     }
   }
@@ -100,4 +96,3 @@ PARALLEL_MAIN_BEGIN
 }
 
 PARALLEL_MAIN_END
-

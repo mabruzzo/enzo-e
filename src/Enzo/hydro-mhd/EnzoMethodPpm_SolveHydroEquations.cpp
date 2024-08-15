@@ -21,7 +21,7 @@
 #include "Enzo/enzo.hpp"
 #include "Enzo/hydro-mhd/hydro-mhd.hpp"
 
-#include "Enzo/hydro-mhd/ppm_fortran/ppm_fortran.hpp" // FORTRAN_NAME(ppm_de)
+#include "Enzo/hydro-mhd/ppm_fortran/ppm_fortran.hpp"  // FORTRAN_NAME(ppm_de)
 
 // #define IE_ERROR_FIELD
 // #define DEBUG_PPM
@@ -29,43 +29,32 @@
 // #define DEBUG_FLUX
 //----------------------------------------------------------------------
 
-int EnzoMethodPpm::SolveHydroEquations
-(
- EnzoBlock& block,
- enzo_float time,
- enzo_float dt,
- bool comoving_coordinates,
- bool single_flux_array,
- bool diffusion,
- int flattening,
- bool pressure_free,
- bool steepening,
- bool use_minimum_pressure_support,
- enzo_float minimum_pressure_support_parameter
- )
-{
+int EnzoMethodPpm::SolveHydroEquations(
+    EnzoBlock& block, enzo_float time, enzo_float dt, bool comoving_coordinates,
+    bool single_flux_array, bool diffusion, int flattening, bool pressure_free,
+    bool steepening, bool use_minimum_pressure_support,
+    enzo_float minimum_pressure_support_parameter) {
   /* initialize */
 
   int dim, size;
 
   Field field = block.data()->field();
-  int gx,gy,gz;
-  int mx,my,mz;
-  field.ghost_depth(0,&gx,&gy,&gz);
-  field.dimensions(0,&mx,&my,&mz);
+  int gx, gy, gz;
+  int mx, my, mz;
+  field.ghost_depth(0, &gx, &gy, &gz);
+  field.dimensions(0, &mx, &my, &mz);
 
 #ifdef IE_ERROR_FIELD
   int num_ie_error = 0;
-  int *ie_error_x = new int [mx*my*mz];
-  int *ie_error_y = new int [mx*my*mz];
-  int *ie_error_z = new int [mx*my*mz];
+  int* ie_error_x = new int[mx * my * mz];
+  int* ie_error_y = new int[mx * my * mz];
+  int* ie_error_z = new int[mx * my * mz];
 #else
   int num_ie_error = -1;
-  int *ie_error_x = nullptr;
-  int *ie_error_y = nullptr;
-  int *ie_error_z = nullptr;
+  int* ie_error_x = nullptr;
+  int* ie_error_y = nullptr;
+  int* ie_error_z = nullptr;
 #endif
-
 
   //------------------------------
   // Prepare color field parameters
@@ -73,23 +62,20 @@ int EnzoMethodPpm::SolveHydroEquations
 
   // ncolor: number of color fields
 
-  int    ncolor  = field.groups()->size("color");
+  int ncolor = field.groups()->size("color");
 
   // colorpt: the color 'array' (contains all color fields)
-  enzo_float * colorpt = (enzo_float *) field.permanent();
+  enzo_float* colorpt = (enzo_float*)field.permanent();
 
   // coloff: offsets into the color array (for each color field)
-  int * coloff   = (ncolor > 0) ? (new int [ncolor]) : NULL;
+  int* coloff = (ncolor > 0) ? (new int[ncolor]) : NULL;
   int index_color = 0;
-  for (int index_field = 0;
-       index_field < field.field_count();
-       index_field++) {
+  for (int index_field = 0; index_field < field.field_count(); index_field++) {
     std::string name = field.field_name(index_field);
-    if (field.groups()->is_in(name,"color")) {
-      coloff[index_color++]
-	= (enzo_float *)(field.values(index_field)) - colorpt;
+    if (field.groups()->is_in(name, "color")) {
+      coloff[index_color++] =
+          (enzo_float*)(field.values(index_field)) - colorpt;
     }
-
   }
 
   /* Compute size (in enzo_floats) of the current grid. */
@@ -97,43 +83,44 @@ int EnzoMethodPpm::SolveHydroEquations
   int rank = cello::rank();
 
   size = 1;
-  for (dim = 0; dim < rank; dim++)
-    size *= block.GridDimension[dim];
+  for (dim = 0; dim < rank; dim++) size *= block.GridDimension[dim];
 
-  enzo_float * density         = (enzo_float *) field.values("density");
-  enzo_float * total_energy    = (enzo_float *) field.values("total_energy");
-  enzo_float * internal_energy = (enzo_float *) field.values("internal_energy");
+  enzo_float* density = (enzo_float*)field.values("density");
+  enzo_float* total_energy = (enzo_float*)field.values("total_energy");
+  enzo_float* internal_energy = (enzo_float*)field.values("internal_energy");
 
   /* velocity_x must exist, but if y & z aren't present, then create blank
      buffers for them (since the solver needs to advect something). */
 
-  enzo_float * velocity_x = NULL;
-  enzo_float * velocity_y = NULL;
-  enzo_float * velocity_z = NULL;
+  enzo_float* velocity_x = NULL;
+  enzo_float* velocity_y = NULL;
+  enzo_float* velocity_z = NULL;
 
-  velocity_x = (enzo_float *) field.values("velocity_x");
+  velocity_x = (enzo_float*)field.values("velocity_x");
 
   if (rank >= 2) {
-    velocity_y = (enzo_float *) field.values("velocity_y");
+    velocity_y = (enzo_float*)field.values("velocity_y");
   } else {
     velocity_y = new enzo_float[size];
-    for (int i=0; i<size; i++) velocity_y[i] = 0.0;
+    for (int i = 0; i < size; i++) velocity_y[i] = 0.0;
   }
 
-    if (rank >= 3) {
-    velocity_z = (enzo_float *) field.values("velocity_z");
+  if (rank >= 3) {
+    velocity_z = (enzo_float*)field.values("velocity_z");
   } else {
     velocity_z = new enzo_float[size];
-    for (int i=0; i<size; i++) velocity_z[i] = 0.0;
+    for (int i = 0; i < size; i++) velocity_z[i] = 0.0;
   }
 
-  enzo_float * acceleration_x  = field.is_field("acceleration_x") ?
-    (enzo_float *) field.values("acceleration_x") : NULL;
-  enzo_float * acceleration_y  = field.is_field("acceleration_y") ?
-    (enzo_float *)field.values("acceleration_y") : NULL;
-  enzo_float * acceleration_z  = field.is_field("acceleration_z") ?
-    (enzo_float *)field.values("acceleration_z") : NULL;
-
+  enzo_float* acceleration_x = field.is_field("acceleration_x")
+                                   ? (enzo_float*)field.values("acceleration_x")
+                                   : NULL;
+  enzo_float* acceleration_y = field.is_field("acceleration_y")
+                                   ? (enzo_float*)field.values("acceleration_y")
+                                   : NULL;
+  enzo_float* acceleration_z = field.is_field("acceleration_z")
+                                   ? (enzo_float*)field.values("acceleration_z")
+                                   : NULL;
 
   /* Determine if Gamma should be a scalar or a field. */
 
@@ -141,9 +128,9 @@ int EnzoMethodPpm::SolveHydroEquations
   enzo_float gamma = fluid_props->gamma();
 
   enzo_float dual_eta1, dual_eta2;
-  const bool idual_ = fluid_props->dual_energy_config().bryan95_formulation
-    (&dual_eta1, &dual_eta2);
-  int idual = (int) idual_;
+  const bool idual_ = fluid_props->dual_energy_config().bryan95_formulation(
+      &dual_eta1, &dual_eta2);
+  int idual = (int)idual_;
 
   /* Set minimum support. */
 
@@ -154,37 +141,38 @@ int EnzoMethodPpm::SolveHydroEquations
                                 minimum_pressure_support_parameter,
                                 comoving_coordinates) == ENZO_FAIL) {
       ERROR("EnzoMethodPpm::SolveHydroEquations()",
-	    "enzo::SetMinimumSupport() returned ENZO_FAIL");
+            "enzo::SetMinimumSupport() returned ENZO_FAIL");
     }
   }
 
   /* Set density floor. */
-  const EnzoFluidFloorConfig& fluid_floor_config
-               = fluid_props->fluid_floor_config();
-  enzo_float density_floor = fluid_floor_config.has_density_floor() ?
-                 fluid_floor_config.density() : 0.0;
+  const EnzoFluidFloorConfig& fluid_floor_config =
+      fluid_props->fluid_floor_config();
+  enzo_float density_floor = fluid_floor_config.has_density_floor()
+                                 ? fluid_floor_config.density()
+                                 : 0.0;
 
   if (density_floor > 0.0) {
-    for (int i=0; i<mx*my*mz; i++) {
-
+    for (int i = 0; i < mx * my * mz; i++) {
       if (density[i] < density_floor) {
-          double d_pre = density[i];
-          density[i] = density_floor;
-          double density_ratio = density[i] / d_pre;
+        double d_pre = density[i];
+        density[i] = density_floor;
+        double density_ratio = density[i] / d_pre;
 
-          // rescale color fields to account for change in
-          // baryon mass from enforcing density floor
-          for (int ic = 0; ic < ncolor; ic++){
-            enzo_float * cfield = (enzo_float *)
-            field.values(field.groups()->item("color",ic));
-            cfield[i] *= density_ratio;
-          }
+        // rescale color fields to account for change in
+        // baryon mass from enforcing density floor
+        for (int ic = 0; ic < ncolor; ic++) {
+          enzo_float* cfield =
+              (enzo_float*)field.values(field.groups()->item("color", ic));
+          cfield[i] *= density_ratio;
+        }
       }
     }
   }
 
-  enzo_float pressure_floor = fluid_floor_config.has_pressure_floor() ?
-                 fluid_floor_config.pressure() : 0.0;
+  enzo_float pressure_floor = fluid_floor_config.has_pressure_floor()
+                                  ? fluid_floor_config.pressure()
+                                  : 0.0;
 
   /* allocate space for fluxes */
 
@@ -193,85 +181,98 @@ int EnzoMethodPpm::SolveHydroEquations
   /* fix grid quantities so they are defined to at least 3 dims */
 
   for (int i = rank; i < 3; i++) {
-    block.GridDimension[i]   = 1;
-    block.GridStartIndex[i]  = 0;
-    block.GridEndIndex[i]    = 0;
+    block.GridDimension[i] = 1;
+    block.GridStartIndex[i] = 0;
+    block.GridEndIndex[i] = 0;
     //      GridGlobalStart[i] = 0;
   }
 
   /* allocate temporary space for solver (enough to fit 31 of the largest
      possible 2d slices plus 4*ncolor). */
 
-  int tempsize = MAX(MAX(block.GridDimension[0]*block.GridDimension[1],
-			 block.GridDimension[1]*block.GridDimension[2]),
-		     block.GridDimension[2]*block.GridDimension[0]);
+  int tempsize = MAX(MAX(block.GridDimension[0] * block.GridDimension[1],
+                         block.GridDimension[1] * block.GridDimension[2]),
+                     block.GridDimension[2] * block.GridDimension[0]);
 
-  enzo_float *temp = new enzo_float[tempsize*(32+ncolor*4)];
+  enzo_float* temp = new enzo_float[tempsize * (32 + ncolor * 4)];
 
   /* create and fill in arrays which are easier for the solver to
      understand. */
 
-  size = NumberOfSubgrids*3*(18+2*ncolor) + 1;
+  size = NumberOfSubgrids * 3 * (18 + 2 * ncolor) + 1;
 
-  int * array = new int[size];
-  for (int i=0; i<size; i++) array[i] = 0;
+  int* array = new int[size];
+  for (int i = 0; i < size; i++) array[i] = 0;
 
-  int * p = array;
-  int *leftface  = p; p+=3;
-  int *rightface = p; p+=3;
-  int *istart    = p; p+=3;
-  int *jstart    = p; p+=3;
-  int *iend      = p; p+=3;
-  int *jend      = p; p+=3;
-  int *dindex    = p; p+=3*2; // 3 axes 2 faces
-  int *Eindex    = p; p+=3*2;
-  int *uindex    = p; p+=3*2;
-  int *vindex    = p; p+=3*2;
-  int *windex    = p; p+=3*2;
-  int *geindex   = p; p+=3*2;
-  int *colindex  = p; p+=3*2*ncolor;
+  int* p = array;
+  int* leftface = p;
+  p += 3;
+  int* rightface = p;
+  p += 3;
+  int* istart = p;
+  p += 3;
+  int* jstart = p;
+  p += 3;
+  int* iend = p;
+  p += 3;
+  int* jend = p;
+  p += 3;
+  int* dindex = p;
+  p += 3 * 2;  // 3 axes 2 faces
+  int* Eindex = p;
+  p += 3 * 2;
+  int* uindex = p;
+  p += 3 * 2;
+  int* vindex = p;
+  p += 3 * 2;
+  int* windex = p;
+  p += 3 * 2;
+  int* geindex = p;
+  p += 3 * 2;
+  int* colindex = p;
+  p += 3 * 2 * ncolor;
 
   // Offsets computed from the "standard" pointer to the start of each
   // flux data
 
-  FluxData * flux_data = block.data()->flux_data();
+  FluxData* flux_data = block.data()->flux_data();
 
-  enzo_float * flux_array = (single_flux_array) ?
-    flux_data->flux_array() : temp;
+  enzo_float* flux_array = (single_flux_array) ? flux_data->flux_array() : temp;
 
-  if (flux_array == nullptr) flux_array = temp; // required if flux_correction not used
+  if (flux_array == nullptr)
+    flux_array = temp;  // required if flux_correction not used
 
   //  enzo_float * flux_array = temp;
-  
+
   // int l3[3] = {gx,gy,gz};
   // int u3[3] = {mx-gx,my-gy,mz-gz};
-  int l3[3] = {gx,gy,gz};
-  int u3[3] = {mx-gx-1,my-gy-1,mz-gz-1};
+  int l3[3] = {gx, gy, gz};
+  int u3[3] = {mx - gx - 1, my - gy - 1, mz - gz - 1};
   const int nf = flux_data->num_fields();
 
 #ifdef DEBUG_FLUX
-  long long min=std::numeric_limits<long long>::max();
-  long long max=std::numeric_limits<long long>::lowest();
-#endif  
- 
-  index_color = 0; 
-  for (int i_f=0; i_f<nf; i_f++) {
-    int * flux_index = 0;
+  long long min = std::numeric_limits<long long>::max();
+  long long max = std::numeric_limits<long long>::lowest();
+#endif
+
+  index_color = 0;
+  for (int i_f = 0; i_f < nf; i_f++) {
+    int* flux_index = 0;
     const int index_field = flux_data->index_field(i_f);
     const std::string field_name = field.field_name(index_field);
 
-    if (field_name == "density")         flux_index = dindex;
-    if (field_name == "velocity_x")      flux_index = uindex;
-    if (field_name == "velocity_y")      flux_index = vindex;
-    if (field_name == "velocity_z")      flux_index = windex;
-    if (field_name == "total_energy")    flux_index = Eindex;
+    if (field_name == "density") flux_index = dindex;
+    if (field_name == "velocity_x") flux_index = uindex;
+    if (field_name == "velocity_y") flux_index = vindex;
+    if (field_name == "velocity_z") flux_index = windex;
+    if (field_name == "total_energy") flux_index = Eindex;
     if (field_name == "internal_energy") flux_index = geindex;
-    
-    if (field.groups()->is_in(field_name,"color")) {
-      flux_index = colindex + 3*2*index_color;
+
+    if (field.groups()->is_in(field_name, "color")) {
+      flux_index = colindex + 3 * 2 * index_color;
       index_color++;
     }
-    for (int axis=0; axis<rank; axis++) {
+    for (int axis = 0; axis < rank; axis++) {
       leftface[axis] = l3[axis];
       rightface[axis] = u3[axis];
 
@@ -281,22 +282,20 @@ int EnzoMethodPpm::SolveHydroEquations
       jstart[axis] = l3[axis_j];
       iend[axis] = u3[axis_i];
       jend[axis] = u3[axis_j];
-      for (int face=0; face<2; face++) {
-        FaceFluxes * ff_b = flux_data->block_fluxes(axis,face,i_f);
-        flux_index[axis*2+face] =
-          ff_b->flux_array() - flux_array;
-#ifdef DEBUG_FLUX        
-        min = std::min(min,(long long)flux_index[axis*2+face]);
-        max = std::max(max,(long long)flux_index[axis*2+face]);
-#endif        
+      for (int face = 0; face < 2; face++) {
+        FaceFluxes* ff_b = flux_data->block_fluxes(axis, face, i_f);
+        flux_index[axis * 2 + face] = ff_b->flux_array() - flux_array;
+#ifdef DEBUG_FLUX
+        min = std::min(min, (long long)flux_index[axis * 2 + face]);
+        max = std::max(max, (long long)flux_index[axis * 2 + face]);
+#endif
       }
     }
   }
 
 #ifdef DEBUG_FLUX
-  CkPrintf ("DEBUG_FLUX %s %lld %lld\n",block.name().c_str(),min,max);
+  CkPrintf("DEBUG_FLUX %s %lld %lld\n", block.name().c_str(), min, max);
 #endif
-  
 
   //==================================================
   //    enzo_float *standard = SubgridFluxes[0]->LeftFluxes[0][0];
@@ -308,27 +307,27 @@ int EnzoMethodPpm::SolveHydroEquations
 
   enzo_float cosmo_a = 1.0, cosmo_dadt = 0.0;
 
-  EnzoPhysicsCosmology * cosmology = enzo::cosmology();
+  EnzoPhysicsCosmology* cosmology = enzo::cosmology();
 
   if (comoving_coordinates) {
-    cosmology->compute_expansion_factor(&cosmo_a, &cosmo_dadt, time+0.5*dt);
+    cosmology->compute_expansion_factor(&cosmo_a, &cosmo_dadt, time + 0.5 * dt);
   }
 
-  ASSERT ("EnzoMethodPpm::SolveHydroEquations()",
-	  "comoving_coordinates enabled but missing EnzoPhysicsCosmology",
-	  ! (comoving_coordinates && (cosmology == NULL)) );
+  ASSERT("EnzoMethodPpm::SolveHydroEquations()",
+         "comoving_coordinates enabled but missing EnzoPhysicsCosmology",
+         !(comoving_coordinates && (cosmology == NULL)));
 
   /* Create a cell width array to pass (and convert to absolute coords). */
 
-  enzo_float * CellWidthTemp[MAX_DIMENSION];
+  enzo_float* CellWidthTemp[MAX_DIMENSION];
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
-    CellWidthTemp[dim] = new enzo_float [block.GridDimension[dim]];
+    CellWidthTemp[dim] = new enzo_float[block.GridDimension[dim]];
     if (dim < rank) {
-      for (int i=0; i<block.GridDimension[dim]; i++)
-	CellWidthTemp[dim][i] = (cosmo_a*block.CellWidth[dim]);
+      for (int i = 0; i < block.GridDimension[dim]; i++)
+        CellWidthTemp[dim][i] = (cosmo_a * block.CellWidth[dim]);
     } else {
-      for (int i=0; i<block.GridDimension[dim]; i++)
-	CellWidthTemp[dim][i] = 1.0;
+      for (int i = 0; i < block.GridDimension[dim]; i++)
+        CellWidthTemp[dim][i] = 1.0;
     }
   }
 
@@ -353,73 +352,58 @@ int EnzoMethodPpm::SolveHydroEquations
   int cycle = block.cycle();
 
   FORTRAN_NAME(ppm_de)
-    (
-     density, total_energy, velocity_x, velocity_y, velocity_z,
-     internal_energy,
-     &gravity_on,
-     acceleration_x,
-     acceleration_y,
-     acceleration_z,
-     &gamma, &dt, &cycle,
-     CellWidthTemp[0], CellWidthTemp[1], CellWidthTemp[2],
-     &rank, &block.GridDimension[0], &block.GridDimension[1],
-     &block.GridDimension[2], block.GridStartIndex, block.GridEndIndex,
-     &flattening,
-     &pressure_free_int,
-     &iconsrec, &iposrec,
-     &diffusion_int, &steepening_int,
-     &idual, &dual_eta1, &dual_eta2,
-     &NumberOfSubgrids, leftface, rightface,
-     istart, iend, jstart, jend,
-     flux_array, dindex, Eindex, uindex, vindex, windex,
-     geindex, temp,
-     &ncolor, colorpt, coloff, colindex, &pressure_floor, &density_floor,
-     &error, ie_error_x,ie_error_y,ie_error_z,&num_ie_error
-     );
+  (density, total_energy, velocity_x, velocity_y, velocity_z, internal_energy,
+   &gravity_on, acceleration_x, acceleration_y, acceleration_z, &gamma, &dt,
+   &cycle, CellWidthTemp[0], CellWidthTemp[1], CellWidthTemp[2], &rank,
+   &block.GridDimension[0], &block.GridDimension[1], &block.GridDimension[2],
+   block.GridStartIndex, block.GridEndIndex, &flattening, &pressure_free_int,
+   &iconsrec, &iposrec, &diffusion_int, &steepening_int, &idual, &dual_eta1,
+   &dual_eta2, &NumberOfSubgrids, leftface, rightface, istart, iend, jstart,
+   jend, flux_array, dindex, Eindex, uindex, vindex, windex, geindex, temp,
+   &ncolor, colorpt, coloff, colindex, &pressure_floor, &density_floor, &error,
+   ie_error_x, ie_error_y, ie_error_z, &num_ie_error);
 
-#ifdef EXIT_ON_ERROR  
-  ASSERT2 ("EnzoMethodPpm::SolveHydroEquations",
-           "Error %d in call to ppm_de block %s",error,block.name().c_str(),
-           (error == 0));
-#endif  
-
+#ifdef EXIT_ON_ERROR
+  ASSERT2("EnzoMethodPpm::SolveHydroEquations",
+          "Error %d in call to ppm_de block %s", error, block.name().c_str(),
+          (error == 0));
+#endif
 
 #ifdef IE_ERROR_FIELD
   if (num_ie_error > 0) {
-    CkPrintf ("DEBUG_IE_ERROR num_ie_error = %d\n",num_ie_error);
+    CkPrintf("DEBUG_IE_ERROR num_ie_error = %d\n", num_ie_error);
 
-    enzo_float * error_ie  = (enzo_float*)field.values("internal_energy_error");
-    for (int i=0; i<mx*my*mz; i++) {
+    enzo_float* error_ie = (enzo_float*)field.values("internal_energy_error");
+    for (int i = 0; i < mx * my * mz; i++) {
       error_ie[i] = 0.0;
     }
-    for (int k=0; k<num_ie_error; k++) {
-      int i = ie_error_x[k] + mx*(ie_error_y[k] + my*ie_error_z[k]);
-      CkPrintf ("DEBUG_IE_ERROR setting error_ie[%d (%d %d %d)]\n",
-                i,ie_error_x[k],ie_error_y[k],ie_error_z[k]);
+    for (int k = 0; k < num_ie_error; k++) {
+      int i = ie_error_x[k] + mx * (ie_error_y[k] + my * ie_error_z[k]);
+      CkPrintf("DEBUG_IE_ERROR setting error_ie[%d (%d %d %d)]\n", i,
+               ie_error_x[k], ie_error_y[k], ie_error_z[k]);
       error_ie[i] = 1.0;
     }
   }
 #endif
 
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
-    delete [] CellWidthTemp[dim];
+    delete[] CellWidthTemp[dim];
   }
 
   /* deallocate temporary space for solver */
 
-  delete [] temp;
-  if (rank < 2) delete [] velocity_y;
-  if (rank < 3) delete [] velocity_z;
+  delete[] temp;
+  if (rank < 2) delete[] velocity_y;
+  if (rank < 3) delete[] velocity_z;
 
-  delete [] array;
+  delete[] array;
 
-  delete [] coloff;
+  delete[] coloff;
 #ifdef IE_ERROR_FIELD
-  delete [] ie_error_x;
-  delete [] ie_error_y;
-  delete [] ie_error_z;
+  delete[] ie_error_x;
+  delete[] ie_error_y;
+  delete[] ie_error_z;
 #endif
 
   return ENZO_SUCCESS;
-
 }

@@ -21,103 +21,95 @@ class Factory;
 class MethodOutput;
 
 class MsgOutput : public CMessage_MsgOutput {
-
-public: // interface
-
+public:  // interface
   friend class Block;
   static long counter[CONFIG_NODE_SIZE];
 
   MsgOutput();
 
-  MsgOutput (BlockTrace block_trace,
-             MethodOutput * method_output,
-             FileHdf5 * file) ;
+  MsgOutput(BlockTrace block_trace, MethodOutput* method_output,
+            FileHdf5* file);
 
   virtual ~MsgOutput();
 
   /// Copy constructor
-  MsgOutput(const MsgOutput & msg_output) throw()
-    : CMessage_MsgOutput() // do NOT call copy constructor on base
+  MsgOutput(const MsgOutput& msg_output) throw()
+      : CMessage_MsgOutput()  // do NOT call copy constructor on base
   {
     ++counter[cello::index_static()];
     copy_(msg_output);
-    cello::hex_string(tag_,TAG_LEN); // add new tag for new message
- };
+    cello::hex_string(tag_, TAG_LEN);  // add new tag for new message
+  };
 
-  MsgOutput & operator = (const MsgOutput & msg_output)
-  {
+  MsgOutput& operator=(const MsgOutput& msg_output) {
     copy_(msg_output);
     return *this;
   }
 
   /// Set the DataMsg object
-  void set_data_msg (DataMsg * data_msg);
+  void set_data_msg(DataMsg* data_msg);
 
   /// Copy data from this message into the provided Data object
-  void update (Data * data);
+  void update(Data* data);
 
   /// Return pointer to the BlockTrace object
-  BlockTrace * block_trace() { return &block_trace_; }
+  BlockTrace* block_trace() { return &block_trace_; }
 
   /// Return the Index of the sending Block
   Index index_send();
 
   /// Return the FileHdf5 pointer (ONLY USABLE ON WRITER)
-  FileHdf5 * file() { return file_; }
+  FileHdf5* file() { return file_; }
 
   /// Set the sending index
-  void set_index_send (Index index);
+  void set_index_send(Index index);
 
   /// Set the Block whose data this message will be holding
-  void set_block (Block * block, const Factory * factory);
+  void set_block(Block* block, const Factory* factory);
 
   /// Clear the Block data in this message
   void del_block();
 
-  void print (const char * msg);
+  void print(const char* msg);
 
-  const char * tag() { return tag_;}
+  const char* tag() { return tag_; }
 
-  IoBlock * io_block() { return io_block_; }
+  IoBlock* io_block() { return io_block_; }
 
-  std::string block_name() const  { return block_name_; }
+  std::string block_name() const { return block_name_; }
 
-  double * block_lower() { return block_lower_; }
-  double * block_upper() { return block_upper_; }
+  double* block_lower() { return block_lower_; }
+  double* block_upper() { return block_upper_; }
 
-public: // static methods
-
+public:  // static methods
   /// Pack data to serialize
-  static void * pack (MsgOutput*);
+  static void* pack(MsgOutput*);
 
   /// Unpack data to de-serialize
-  static MsgOutput * unpack(void *);
+  static MsgOutput* unpack(void*);
 
-protected: // methods
-
-  void copy_(const MsgOutput & msg_output)
-  {
-    is_local_      = msg_output.is_local_;
-    index_send_    = msg_output.index_send_;
-    block_trace_   = msg_output.block_trace_;
+protected:  // methods
+  void copy_(const MsgOutput& msg_output) {
+    is_local_ = msg_output.is_local_;
+    index_send_ = msg_output.index_send_;
+    block_trace_ = msg_output.block_trace_;
     method_output_ = msg_output.method_output_;
-    file_          = msg_output.file_;
-    data_msg_      = msg_output.data_msg_;
-    buffer_        = nullptr;
-    io_block_      = msg_output.io_block_;
-    block_name_     = msg_output.block_name_;
-    for (int i=0; i<3; i++) {
-      block_lower_[i]    = msg_output.block_lower_[i];
-      block_upper_[i]    = msg_output.block_upper_[i];
+    file_ = msg_output.file_;
+    data_msg_ = msg_output.data_msg_;
+    buffer_ = nullptr;
+    io_block_ = msg_output.io_block_;
+    block_name_ = msg_output.block_name_;
+    for (int i = 0; i < 3; i++) {
+      block_lower_[i] = msg_output.block_lower_[i];
+      block_upper_[i] = msg_output.block_upper_[i];
     }
     // this looks a little funny, but it's correct. The last arg needs to be
     // TAG_LEN+1 because this->tag is an array of TAG_LEN+1 characters
-    strncpy(tag_,msg_output.tag_,TAG_LEN+1);
-    tag_[TAG_LEN] = '\0'; // for extra safety
+    strncpy(tag_, msg_output.tag_, TAG_LEN + 1);
+    tag_[TAG_LEN] = '\0';  // for extra safety
   }
 
-protected: // attributes
-
+protected:  // attributes
   /// Whether destination is local or remote
   bool is_local_;
 
@@ -128,22 +120,22 @@ protected: // attributes
   BlockTrace block_trace_;
 
   /// Saved pointer to MethodOutput object (on writing Block only!)
-  MethodOutput * method_output_;
+  MethodOutput* method_output_;
 
   /// Saved pointer to FileHdf5 object (on writing Block only!)
-  FileHdf5 * file_;
+  FileHdf5* file_;
 
   /// Associated Block data to output if any
-  DataMsg * data_msg_;
+  DataMsg* data_msg_;
 
   /// Saved Charm++ buffers for deleting after unpack()
-  void * buffer_;
+  void* buffer_;
 
   /// Random hex tag for tracking messages for debugging
-  char tag_[TAG_LEN+1];
+  char tag_[TAG_LEN + 1];
 
   /// Data for the Block
-  IoBlock * io_block_;
+  IoBlock* io_block_;
 
   /// Block meta-data
   std::string block_name_;
@@ -151,8 +143,6 @@ protected: // attributes
   /// Block extents
   double block_lower_[3];
   double block_upper_[3];
-
 };
 
 #endif /* CHARM_MSG_OUTPUT_HPP */
-

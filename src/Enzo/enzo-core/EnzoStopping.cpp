@@ -3,26 +3,25 @@
 /// @file     enzo_EnzoStopping.cpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2017-08-28
-/// @brief    Implementation of EnzoStopping class for Enzo-specific stopping criteria
+/// @brief    Implementation of EnzoStopping class for Enzo-specific stopping
+/// criteria
 
 #include "charm_simulation.hpp"
 #include "enzo.hpp"
 
 //======================================================================
 
-bool EnzoStopping::complete (int    curr_cycle,
-			   double curr_time) const throw()
-{
-  bool stop = Stopping::complete(curr_cycle,curr_time);
+bool EnzoStopping::complete(int curr_cycle, double curr_time) const throw() {
+  bool stop = Stopping::complete(curr_cycle, curr_time);
 
   // check for stopping on redshift
 
-  EnzoPhysicsCosmology * cosmology = enzo::cosmology();
+  EnzoPhysicsCosmology* cosmology = enzo::cosmology();
 
   if (cosmology) {
     cosmology->set_current_time(curr_time);
     stop = (stop || (cosmology->current_redshift() <= stop_redshift_));
   }
-    
+
   return stop;
 }

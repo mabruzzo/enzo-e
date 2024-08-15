@@ -1,7 +1,7 @@
 // See LICENSE_CELLO file for license and copyright information
 
 /// @file     enzo_EnzoMethodPpm.hpp
-/// @author   James Bordner (jobordner@ucsd.edu) 
+/// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     Thu Apr  1 16:14:38 PDT 2010
 /// @brief    [\ref Enzo] Implementation of Enzo PPM hydro method
 
@@ -9,13 +9,11 @@
 #define ENZO_ENZO_METHOD_PPM_HPP
 
 class EnzoMethodPpm : public Method {
-
   /// @class    EnzoMethodPpm
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulate Enzo's PPM hydro method
 
-public: // interface
-
+public:  // interface
   /// Create a new EnzoMethodPpm object
   EnzoMethodPpm(bool store_fluxes_for_corrections, ParameterGroup p);
 
@@ -23,53 +21,44 @@ public: // interface
   PUPable_decl(EnzoMethodPpm);
 
   /// Charm++ PUP::able migration constructor
-  EnzoMethodPpm (CkMigrateMessage *m)
-    : Method (m),
-      comoving_coordinates_(false),
-      store_fluxes_for_corrections_(false),
-      diffusion_(false),
-      flattening_(0),
-      pressure_free_(false),
-      steepening_(false),
-      use_minimum_pressure_support_(false),
-      minimum_pressure_support_parameter_(0.0)
-  {}
+  EnzoMethodPpm(CkMigrateMessage* m)
+      : Method(m),
+        comoving_coordinates_(false),
+        store_fluxes_for_corrections_(false),
+        diffusion_(false),
+        flattening_(0),
+        pressure_free_(false),
+        steepening_(false),
+        use_minimum_pressure_support_(false),
+        minimum_pressure_support_parameter_(0.0) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
 private:
-
   /// This method does most of the heavy-lifting
   ///
   /// @note
   /// This is only a static method for historical reasons. Feel free to better
   /// integrate this with the rest of the class
-  static int SolveHydroEquations(EnzoBlock& block,
-                                 enzo_float time,
-                                 enzo_float dt,
-                                 bool comoving_coordinates,
-                                 bool single_flux_array,
-                                 bool diffusion,
-                                 int flattening,
-                                 bool pressure_free,
+  static int SolveHydroEquations(EnzoBlock& block, enzo_float time,
+                                 enzo_float dt, bool comoving_coordinates,
+                                 bool single_flux_array, bool diffusion,
+                                 int flattening, bool pressure_free,
                                  bool steepening,
                                  bool use_minimum_pressure_support,
                                  enzo_float minimum_pressure_support_parameter);
 
-public: // virtual methods
+public:  // virtual methods
+  /// Apply the method to advance a block one timestep
+  virtual void compute(Block* block) throw();
 
-  /// Apply the method to advance a block one timestep 
-  virtual void compute( Block * block) throw();
-
-  virtual std::string name () throw () 
-  { return "ppm"; }
+  virtual std::string name() throw() { return "ppm"; }
 
   /// Compute maximum timestep for this method
-  virtual double timestep ( Block * block) throw();
+  virtual double timestep(Block* block) throw();
 
-protected: // interface
-
+protected:  // interface
   bool comoving_coordinates_;
   bool store_fluxes_for_corrections_;
 

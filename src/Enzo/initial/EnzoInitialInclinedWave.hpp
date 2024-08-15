@@ -17,10 +17,9 @@
 class ScalarInit;
 class VectorInit;
 
-enum class InitializerForm{ conserved, primitive };
+enum class InitializerForm { conserved, primitive };
 
-struct HydroInitPack{
-
+struct HydroInitPack {
   HydroInitPack() = default;
 
   HydroInitPack(ScalarInit* density_init, VectorInit* velocity_init,
@@ -52,8 +51,7 @@ class EnzoInitialInclinedWave : public Initial {
   /// Circularly Polarized Alfven wave test problems for the VLCT method.
   /// Assumes adiabatic gas.
 
-public: // interface
-
+public:  // interface
   /// Constructor
   EnzoInitialInclinedWave(int cycle, double time, ParameterGroup p) throw();
 
@@ -61,21 +59,19 @@ public: // interface
   PUPable_decl(EnzoInitialInclinedWave);
 
   /// CHARM++ migration constructor
-  EnzoInitialInclinedWave(CkMigrateMessage *m) 
-    : Initial (m),
-      alpha_(0.0),
-      beta_(0.0),
-      gamma_(0.0),
-      amplitude_(0.0),
-      lambda_(0.0),
-      parallel_vel_(std::numeric_limits<double>::min()),
-      pos_vel_(true),
-      wave_type_("")
-  {}
+  EnzoInitialInclinedWave(CkMigrateMessage* m)
+      : Initial(m),
+        alpha_(0.0),
+        beta_(0.0),
+        gamma_(0.0),
+        amplitude_(0.0),
+        lambda_(0.0),
+        parallel_vel_(std::numeric_limits<double>::min()),
+        pos_vel_(true),
+        wave_type_("") {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
+  void pup(PUP::er& p) {
     // NOTE: update whenever attributes change
 
     TRACEPUP;
@@ -90,14 +86,12 @@ public: // interface
     p | pos_vel_;
     p | wave_type_;
   }
-public: // virtual methods
 
+public:  // virtual methods
   /// Initialize the block
-  virtual void enforce_block
-  ( Block * block, const Hierarchy * hierarchy ) throw();
+  virtual void enforce_block(Block* block, const Hierarchy* hierarchy) throw();
 
-private: // functions
-
+private:  // functions
   /// prepares initializers for inclined linear jeans wave
   HydroInitPack prepare_jeans_initializers_(bool is_root_block) const noexcept;
 
@@ -105,7 +99,7 @@ private: // functions
   HydroInitPack prepare_HD_initializers_(bool is_root_block) const noexcept;
 
   /// prepares initializers for inclined MHD waves
-  HydroInitPack prepare_MHD_initializers_(VectorInit **a_init) const noexcept;
+  HydroInitPack prepare_MHD_initializers_(VectorInit** a_init) const noexcept;
 
   /// handles the allocation of initializer of HD quantities for linear waves
   HydroInitPack build_linear_HD_inits_(double density_back, double density_ev,
@@ -121,11 +115,11 @@ private: // functions
   std::vector<std::string> hd_waves_() const throw();
 
   /// Returns whether parallel_vel_ has been specified
-  bool specified_parallel_vel_() const throw()
-  { return parallel_vel_ != std::numeric_limits<double>::min(); }
+  bool specified_parallel_vel_() const throw() {
+    return parallel_vel_ != std::numeric_limits<double>::min();
+  }
 
-private: // attributes
-
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
 
   /// alpha and beta are angles defined between the axis along which the 1D

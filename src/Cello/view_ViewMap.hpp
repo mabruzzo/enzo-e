@@ -40,7 +40,7 @@
 #include <string>
 #include <vector>
 
-template<typename T>
+template <typename T>
 class ViewMap {
   /// @class ViewMap
   /// @ingroup View
@@ -48,41 +48,33 @@ class ViewMap {
   ///
   /// This was originally a concrete type called EnzoEFltArrayMap
 
-public: // interface
-
+public:  // interface
   typedef T value_type;
   typedef typename std::add_const<T>::type const_value_type;
   typedef typename std::remove_const<T>::type nonconst_value_type;
 
   friend class ViewMap<const_value_type>;
 
-  ViewMap(std::string name)
-    : name_(name)
-  { }
+  ViewMap(std::string name) : name_(name) {}
 
-  ViewMap()
-    : ViewMap("")
-  { }
+  ViewMap() : ViewMap("") {}
 
   /// Constructs a map that owns all of its own data.
-  ViewMap(std::string name, const std::vector<std::string> &keys,
-          const std::array<int,3>& shape);
+  ViewMap(std::string name, const std::vector<std::string>& keys,
+          const std::array<int, 3>& shape);
 
-  ViewMap(const std::vector<std::string> &keys,
-          const std::array<int,3>& shape)
-    : ViewMap("", keys, shape)
-  { }
+  ViewMap(const std::vector<std::string>& keys, const std::array<int, 3>& shape)
+      : ViewMap("", keys, shape) {}
 
   /// Constructs a map that wraps existing data.
   ///
   /// Each view must have the same shape.
-  ViewMap(std::string name, const std::vector<std::string> &keys,
-          const std::vector<CelloView<T,3>> &views);
+  ViewMap(std::string name, const std::vector<std::string>& keys,
+          const std::vector<CelloView<T, 3>>& views);
 
-  ViewMap(const std::vector<std::string> &keys,
-          const std::vector<CelloView<T,3>> &views)
-    : ViewMap("", keys, views)
-  { }
+  ViewMap(const std::vector<std::string>& keys,
+          const std::vector<CelloView<T, 3>>& views)
+      : ViewMap("", keys, views) {}
 
   /// conversion constructor that facilitates implicit casts from
   /// ViewMap<nonconst_value_type> to ViewMap<const_value_type>
@@ -91,12 +83,11 @@ public: // interface
   /// This is only defined for instances of ViewMap for which T is const-
   /// qualified. If it were defined in cases where T is not const-qualified,
   /// then it would duplicate the copy-constructor.
-  template<class = std::enable_if<std::is_same<T, const_value_type>::value>>
-  ViewMap(const ViewMap<nonconst_value_type> &other)
-    : name_(other.name_),
-      str_index_map_(other.str_index_map_),
-      views_(other.views_)
-  { }
+  template <class = std::enable_if<std::is_same<T, const_value_type>::value>>
+  ViewMap(const ViewMap<nonconst_value_type>& other)
+      : name_(other.name_),
+        str_index_map_(other.str_index_map_),
+        views_(other.views_) {}
 
   /// Returns a reference to the mapped view associated with the specified
   /// index/key
@@ -113,19 +104,21 @@ public: // interface
   /// Alternatively, we could return a constant reference, but that's like
   /// returning a constant reference to a pointer. In reality, that might be
   /// more advantageous here since a CelloView is larger than a generic ptr.
-  CelloView<T, 3> operator[] (const std::string& key) const noexcept
-  { return at_(key); }
-  CelloView<T, 3> operator[] (std::size_t index) const noexcept
-  { return at_(index); }
+  CelloView<T, 3> operator[](const std::string& key) const noexcept {
+    return at_(key);
+  }
+  CelloView<T, 3> operator[](std::size_t index) const noexcept {
+    return at_(index);
+  }
 
   /// Returns a reference to the mapped view associated with the specified
   /// index/key
-  CelloView<T, 3> at(const std::string& key) const noexcept
-  { return at_(key); }
+  CelloView<T, 3> at(const std::string& key) const noexcept { return at_(key); }
 
   /// Checks whether the container holds the specified key
-  bool contains(const std::string& key) const noexcept
-  { return str_index_map_.contains(key); }
+  bool contains(const std::string& key) const noexcept {
+    return str_index_map_.contains(key);
+  }
 
   /// Similar to `at`, but a slice of the view ommitting staled values is
   /// returned by value
@@ -133,8 +126,9 @@ public: // interface
   /// @note
   /// This is deprecated
   CelloView<T, 3> get(const std::string& key,
-                      int stale_depth = 0) const noexcept
-  { return get_(key, stale_depth); }
+                      int stale_depth = 0) const noexcept {
+    return get_(key, stale_depth);
+  }
 
   /// Provided to help debug
   void print_summary() const noexcept;
@@ -142,7 +136,7 @@ public: // interface
   std::size_t size() const noexcept { return str_index_map_.size(); }
 
   /// Return the name of the instance (if it has one)
-  const std::string& name() const noexcept {return name_;}
+  const std::string& name() const noexcept { return name_; }
 
   /// Returns the length along a given dimension of each contained view
   ///
@@ -154,16 +148,16 @@ public: // interface
   /// elements.
   /// @note
   /// Consider changing the name to view_shape in the future
-  int array_shape(unsigned int dim) const noexcept
-  { return views_.array_shape(dim); }
+  int array_shape(unsigned int dim) const noexcept {
+    return views_.array_shape(dim);
+  }
 
   /// Return a new map holding subsections of each view held by the map
   ///
   /// @param slc_z, slc_y, slc_x Instance of CSlice that specify that are
   ///    passed to the `subarray` method of each contained view.
-  ViewMap<T> subarray_map(const CSlice &slc_z,
-                          const CSlice &slc_y,
-                          const CSlice &slc_x,
+  ViewMap<T> subarray_map(const CSlice& slc_z, const CSlice& slc_y,
+                          const CSlice& slc_x,
                           const std::string& name = "") const;
 
   /// Utility method offered for debugging purposes to check whether the
@@ -175,9 +169,9 @@ public: // interface
   /// @param allow_smaller_ref When `true`, the key-order is only compared for
   ///    first `ref.size()`. When `false` (the default), the map must have the
   ///    same number of keys as `ref`.
-  bool validate_key_order(const std::vector<std::string> &ref,
-                          bool raise_err = true, bool allow_smaller_ref = false)
-    const noexcept;
+  bool validate_key_order(const std::vector<std::string>& ref,
+                          bool raise_err = true,
+                          bool allow_smaller_ref = false) const noexcept;
 
   /// Indicates if the contained views are stored in a single 4D view
   /// (Alternatively they can be stored as an array of pointers)
@@ -191,29 +185,27 @@ public: // interface
   /// @note
   /// The program will abort if this method is called on an object for which
   /// the `contiguous_arrays()` method returns `false`.
-  CelloView<T, 4> get_backing_array() const noexcept
-  { return views_.get_backing_array(); }
+  CelloView<T, 4> get_backing_array() const noexcept {
+    return views_.get_backing_array();
+  }
 
-private: // helper methods
-
+private:  // helper methods
   /// This private constructor is used by subarray_map. It can skip some
   /// unnecessary work relating to initialization
   ViewMap(std::string name, const StringIndRdOnlyMap& str_index_map,
           ViewCollec<T>&& views)
-    : name_(name),
-      str_index_map_(str_index_map),
-      views_(views)
-  { validate_invariants_(); }
+      : name_(name), str_index_map_(str_index_map), views_(views) {
+    validate_invariants_();
+  }
 
   void validate_invariants_() const noexcept;
 
   // The following 3 helper methods should NEVER be publically exposed
   CelloView<T, 3> at_(const std::string& key) const noexcept;
   CelloView<T, 3> at_(std::size_t index) const noexcept;
-  CelloView<T, 3> get_(const std::string& key, int stale_depth)
-    const noexcept;
+  CelloView<T, 3> get_(const std::string& key, int stale_depth) const noexcept;
 
-private: // attributes
+private:  // attributes
   // name_ is to help with debugging!
   std::string name_;
 
@@ -225,23 +217,17 @@ private: // attributes
 
 //----------------------------------------------------------------------
 
-template<typename T>
-ViewMap<T>::ViewMap(std::string name, const std::vector<std::string> &keys,
-                    const std::array<int,3>& shape)
-  : name_(name),
-    str_index_map_(keys),
-    views_(keys.size(), shape)
-{ }
+template <typename T>
+ViewMap<T>::ViewMap(std::string name, const std::vector<std::string>& keys,
+                    const std::array<int, 3>& shape)
+    : name_(name), str_index_map_(keys), views_(keys.size(), shape) {}
 
 //----------------------------------------------------------------------
 
-template<typename T>
-ViewMap<T>::ViewMap(std::string name, const std::vector<std::string> &keys,
-                    const std::vector<CelloView<T,3>> &views)
-  : name_(name),
-    str_index_map_(keys),
-    views_(views)
-{
+template <typename T>
+ViewMap<T>::ViewMap(std::string name, const std::vector<std::string>& keys,
+                    const std::vector<CelloView<T, 3>>& views)
+    : name_(name), str_index_map_(keys), views_(views) {
   ASSERT2("ViewMap::ViewMap",
           "keys and views have lengths %zu and %zu. They should be the same",
           (std::size_t)keys.size(), (std::size_t)views.size(),
@@ -250,35 +236,34 @@ ViewMap<T>::ViewMap(std::string name, const std::vector<std::string> &keys,
 
 //----------------------------------------------------------------------
 
-template<typename T>
-bool ViewMap<T>::validate_key_order(const std::vector<std::string> &ref,
+template <typename T>
+bool ViewMap<T>::validate_key_order(const std::vector<std::string>& ref,
                                     bool raise_err,
-                                    bool allow_smaller_ref) const noexcept
-{
-
+                                    bool allow_smaller_ref) const noexcept {
   std::string name_string =
       (name_ == "") ? "" : (std::string(", \"") + name_ + std::string("\","));
 
-  for (std::size_t i =0; i < std::min(ref.size(),str_index_map_.size()); i++){
+  for (std::size_t i = 0; i < std::min(ref.size(), str_index_map_.size());
+       i++) {
     const std::string k = str_index_map_.key(i);
     bool equal = ref[i] == k;
-    if (!equal && raise_err){
+    if (!equal && raise_err) {
       print_summary();
       ERROR4("ViewMap::validate_key_order",
-	     ("keys of ViewMap%s don't match expectations. At index %d, the "
-	      "key is \"%s\" when it's expected to be \"%s\"\n"),
-	     name_string.c_str(), (int)i, k.c_str(), ref[i].c_str());
-    } else if (!equal){
+             ("keys of ViewMap%s don't match expectations. At index %d, the "
+              "key is \"%s\" when it's expected to be \"%s\"\n"),
+             name_string.c_str(), (int)i, k.c_str(), ref[i].c_str());
+    } else if (!equal) {
       return false;
     }
   }
 
-  if ((!allow_smaller_ref) && (ref.size() != str_index_map_.size())){
-    if (raise_err){
+  if ((!allow_smaller_ref) && (ref.size() != str_index_map_.size())) {
+    if (raise_err) {
       print_summary();
       ERROR3("ViewMap::validate_key_order",
-	     "ViewMap%s doesn't have the expected number of keys. It has %d "
-	     "keys. It's expected to have %d",
+             "ViewMap%s doesn't have the expected number of keys. It has %d "
+             "keys. It's expected to have %d",
              name_string.c_str(), (int)ref.size(), (int)str_index_map_.size());
     } else {
       return false;
@@ -289,15 +274,15 @@ bool ViewMap<T>::validate_key_order(const std::vector<std::string> &ref,
 
 //----------------------------------------------------------------------
 
-template<typename T>
-CelloView<T, 3> ViewMap<T>::at_(const std::string& key) const noexcept
-{ return views_[str_index_map_.at(key)]; }
+template <typename T>
+CelloView<T, 3> ViewMap<T>::at_(const std::string& key) const noexcept {
+  return views_[str_index_map_.at(key)];
+}
 
 //----------------------------------------------------------------------
 
-template<typename T>
-CelloView<T, 3> ViewMap<T>::at_(const std::size_t index) const noexcept
-{
+template <typename T>
+CelloView<T, 3> ViewMap<T>::at_(const std::size_t index) const noexcept {
   ASSERT("ViewMap::at_",
          "index must be less than or equal to the length of the ViewMap.",
          index < size());
@@ -306,18 +291,17 @@ CelloView<T, 3> ViewMap<T>::at_(const std::size_t index) const noexcept
 
 //----------------------------------------------------------------------
 
-template<typename T>
+template <typename T>
 CelloView<T, 3> ViewMap<T>::get_(const std::string& key,
-                                 int stale_depth) const noexcept
-{
+                                 int stale_depth) const noexcept {
   ASSERT("ViewMap::get_", "stale_depth must be >= 0", stale_depth >= 0);
   CelloView<T, 3> view = this->at_(key);
 
   if (stale_depth > 0) {
-    int min_len = stale_depth*2;
-    ASSERT("ViewMap::get_","each dim of arr must exceed 2*stale_depth.",
+    int min_len = stale_depth * 2;
+    ASSERT("ViewMap::get_", "each dim of arr must exceed 2*stale_depth.",
            (min_len < view.shape(0)) && (min_len < view.shape(1)) &&
-           (min_len < view.shape(2)));
+               (min_len < view.shape(2)));
     return view.subarray(CSlice(stale_depth, -stale_depth),
                          CSlice(stale_depth, -stale_depth),
                          CSlice(stale_depth, -stale_depth));
@@ -328,14 +312,13 @@ CelloView<T, 3> ViewMap<T>::get_(const std::string& key,
 
 //----------------------------------------------------------------------
 
-template<typename T>
-void ViewMap<T>::print_summary() const noexcept
-{
+template <typename T>
+void ViewMap<T>::print_summary() const noexcept {
   // TODO: would be nice to encode the template type in the string
 
   std::size_t my_size = size();
-  if (my_size == 0){
-    if (name_ == ""){
+  if (my_size == 0) {
+    if (name_ == "") {
       CkPrintf("Nameless Empty View Map\n");
     } else {
       CkPrintf("\"%s\" Empty View Map\n", name_.c_str());
@@ -343,21 +326,21 @@ void ViewMap<T>::print_summary() const noexcept
     return;
   }
 
-  if (name_ == ""){
+  if (name_ == "") {
     CkPrintf("Nameless View Map");
   } else {
     CkPrintf("\"%s\" View Map", name_.c_str());
   }
 
-  CkPrintf(": entry_shape = (%d, %d, %d)\n{",
-           array_shape(0), array_shape(1), array_shape(2));
+  CkPrintf(": entry_shape = (%d, %d, %d)\n{", array_shape(0), array_shape(1),
+           array_shape(2));
 
-  for ( std::size_t i = 0; i < my_size; i++){
-    if (i != 0){
+  for (std::size_t i = 0; i < my_size; i++) {
+    if (i != 0) {
       CkPrintf(",\n ");
     }
 
-    CelloView<T,3> view = views_[i];
+    CelloView<T, 3> view = views_[i];
     std::string key = str_index_map_.key(i);
     CkPrintf("\"%s\" : CelloView<T,3>(%p)", key.c_str(), (void*)view.data());
   }
@@ -367,21 +350,18 @@ void ViewMap<T>::print_summary() const noexcept
 
 //----------------------------------------------------------------------
 
-template<typename T>
-ViewMap<T> ViewMap<T>::subarray_map(const CSlice &slc_z,
-                                    const CSlice &slc_y,
-                                    const CSlice &slc_x,
-                                    const std::string& name) const
-{
+template <typename T>
+ViewMap<T> ViewMap<T>::subarray_map(const CSlice& slc_z, const CSlice& slc_y,
+                                    const CSlice& slc_x,
+                                    const std::string& name) const {
   return ViewMap<T>(name, str_index_map_,
                     views_.subarray_collec(slc_z, slc_y, slc_x));
 }
 
 //----------------------------------------------------------------------
 
-template<typename T>
-void ViewMap<T>::validate_invariants_() const noexcept
-{
+template <typename T>
+void ViewMap<T>::validate_invariants_() const noexcept {
   // several invariants are alread enforced:
   // - StringIndRdOnlyMap implicitly enforces that there aren't any duplicate
   //   keys, and that a unique key is associated with each integer index from 0

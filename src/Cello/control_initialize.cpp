@@ -16,21 +16,21 @@
 // #define DEBUG_INITIAL
 
 #ifdef DEBUG_INITIAL
-#   define TRACE_INITIAL(MSG,BLOCK)                     \
-  CkPrintf ("TRACE_CONTROL_INITIAL %s %s\n",                    \
-            BLOCK->name().c_str(),MSG); fflush(stdout);
+#define TRACE_INITIAL(MSG, BLOCK)                                              \
+  CkPrintf("TRACE_CONTROL_INITIAL %s %s\n", BLOCK->name().c_str(), MSG);       \
+  fflush(stdout);
 
-#   define TRACE_INITIAL_SIM(MSG)                       \
-  CkPrintf ("TRACE_CONTROL_INITIAL %s\n",MSG); fflush(stdout);
+#define TRACE_INITIAL_SIM(MSG)                                                 \
+  CkPrintf("TRACE_CONTROL_INITIAL %s\n", MSG);                                 \
+  fflush(stdout);
 #else
-#   define TRACE_INITIAL(MSG,BLOCK) /* ... */
-#   define TRACE_INITIAL_SIM(MSG) /* ... */
+#define TRACE_INITIAL(MSG, BLOCK) /* ... */
+#define TRACE_INITIAL_SIM(MSG)    /* ... */
 #endif
 
 //----------------------------------------------------------------------
 
-void Simulation::initialize() throw()
-{
+void Simulation::initialize() throw() {
   TRACE_INITIAL_SIM("Simulation::initialize()");
   set_phase(phase_initial);
 
@@ -44,17 +44,17 @@ void Simulation::initialize() throw()
 
   initialize_data_descr_();
 
-  problem_->initialize_units (config_);
-  problem_->initialize_physics (config_,parameters_);
-  problem_->initialize_boundary(config_,parameters_);
-  problem_->initialize_prolong (config_);
-  problem_->initialize_restrict (config_);
-  problem_->initialize_initial(config_,parameters_);
-  problem_->initialize_method  (config_,factory());
-  problem_->initialize_solver  (config_);
-  problem_->initialize_refine  (config_,parameters_);
+  problem_->initialize_units(config_);
+  problem_->initialize_physics(config_, parameters_);
+  problem_->initialize_boundary(config_, parameters_);
+  problem_->initialize_prolong(config_);
+  problem_->initialize_restrict(config_);
+  problem_->initialize_initial(config_, parameters_);
+  problem_->initialize_method(config_, factory());
+  problem_->initialize_solver(config_);
+  problem_->initialize_refine(config_, parameters_);
   problem_->initialize_stopping(config_);
-  problem_->initialize_output  (config_,factory());
+  problem_->initialize_output(config_, factory());
 
   cello::finalize_fields();
 
@@ -68,29 +68,30 @@ void Simulation::initialize() throw()
   CProxy_Block block_array;
   if (CkMyPe() == 0) {
     bool allocate_data = true;
-    block_array = hierarchy_->new_block_proxy (allocate_data);
+    block_array = hierarchy_->new_block_proxy(allocate_data);
     thisProxy.p_set_block_array(block_array);
   }
 
-  CkCallback callback 
-    (CkIndex_Simulation::r_initialize_block_array(NULL), thisProxy);
+  CkCallback callback(CkIndex_Simulation::r_initialize_block_array(NULL),
+                      thisProxy);
 
   // --------------------------------------------------
-#ifdef TRACE_CONTRIBUTE  
-  CkPrintf ("%s:%d DEBUG_CONTRIBUTE r_initialize_block_array()\n",__FILE__,__LINE__); fflush(stdout);
-#endif  
-  contribute(0,0,CkReduction::concat,callback);
+#ifdef TRACE_CONTRIBUTE
+  CkPrintf("%s:%d DEBUG_CONTRIBUTE r_initialize_block_array()\n", __FILE__,
+           __LINE__);
+  fflush(stdout);
+#endif
+  contribute(0, 0, CkReduction::concat, callback);
   // --------------------------------------------------
 }
 
 //----------------------------------------------------------------------
 
-void Simulation::r_initialize_block_array(CkReductionMsg * msg) 
-{
+void Simulation::r_initialize_block_array(CkReductionMsg* msg) {
   TRACE_INITIAL_SIM("Simulation::r_initialize_block_array_()");
   performance_->start_region(perf_initial);
   delete msg;
-  
+
   initialize_block_array_();
 }
 
@@ -98,28 +99,25 @@ void Simulation::r_initialize_block_array(CkReductionMsg * msg)
 // NEW INITIAL
 //======================================================================
 
-void  Block::initial_new_begin_()
-{
-  TRACE_INITIAL("initial_new_begin_",this);
+void Block::initial_new_begin_() {
+  TRACE_INITIAL("initial_new_begin_", this);
   index_initial_ = 0;
 
-  CkCallback callback 
-    (CkIndex_Block::r_initial_new_next(nullptr), thisProxy);
+  CkCallback callback(CkIndex_Block::r_initial_new_next(nullptr), thisProxy);
 
-  contribute(0,0,CkReduction::concat,callback);
+  contribute(0, 0, CkReduction::concat, callback);
 }
 
 //----------------------------------------------------------------------
 
-void  Block::initial_new_next_()
-{
-  TRACE_INITIAL("initial_new_next_()",this);
-  Initial * initial = cello::problem()->initial(index_initial_);
+void Block::initial_new_next_() {
+  TRACE_INITIAL("initial_new_next_()", this);
+  Initial* initial = cello::problem()->initial(index_initial_);
   const bool initial_restart = cello::config()->initial_restart;
 
   // Bypass initialization on restart (may want exceptions)
-  if (initial && (! initial_restart)) {
-    initial->enforce_block(this,nullptr);
+  if (initial && (!initial_restart)) {
+    initial->enforce_block(this, nullptr);
   } else {
     bool is_first_cycle = (cycle_ == cello::config()->initial_cycle);
     if (is_first_cycle && level() <= cello::config()->mesh_max_initial_level) {
@@ -130,28 +128,24 @@ void  Block::initial_new_next_()
 
 //----------------------------------------------------------------------
 
-void  Block::initial_done()
-{
+void Block::initial_done() {
   if (cello::config()->initial_new) {
-
-    TRACE_INITIAL("initial_new_done",this);
+    TRACE_INITIAL("initial_new_done", this);
 
     // barrier before continuing
-    CkCallback callback (CkIndex_Block::r_initial_new_continue(nullptr), thisProxy);
+    CkCallback callback(CkIndex_Block::r_initial_new_continue(nullptr),
+                        thisProxy);
 
-    contribute(0,0,CkReduction::concat,callback);
+    contribute(0, 0, CkReduction::concat, callback);
   }
 }
 
 //----------------------------------------------------------------------
 
-void  Block::initial_new_continue_()
-{
-  TRACE_INITIAL("initial_new_continue",this);
+void Block::initial_new_continue_() {
+  TRACE_INITIAL("initial_new_continue", this);
   index_initial_++;
   initial_new_next_();
 }
 
 //----------------------------------------------------------------------
-
-

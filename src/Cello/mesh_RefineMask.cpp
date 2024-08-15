@@ -9,27 +9,21 @@
 
 //----------------------------------------------------------------------
 
-RefineMask::RefineMask(Parameters * parameters,
-		       const std::string parameter_name,
-		       int max_level,
-		       bool include_ghosts,
-		       std::string output) throw ()
+RefineMask::RefineMask(Parameters* parameters, const std::string parameter_name,
+                       int max_level, bool include_ghosts,
+                       std::string output) throw()
 
-  : Refine (0.0, 0.0, max_level,include_ghosts, output),
-    value_(new Value(parameters,parameter_name))
-{
-}
+    : Refine(0.0, 0.0, max_level, include_ghosts, output),
+      value_(new Value(parameters, parameter_name)) {}
 
 //----------------------------------------------------------------------
-RefineMask::~RefineMask()
-{
+RefineMask::~RefineMask() {
   if (value_) delete value_;
   value_ = NULL;
 }
 //----------------------------------------------------------------------
 
-void RefineMask::pup (PUP::er &p)
-{
+void RefineMask::pup(PUP::er& p) {
   // NOTE: change this function whenever attributes change
   TRACEPUP;
   Refine::pup(p);
@@ -38,36 +32,32 @@ void RefineMask::pup (PUP::er &p)
 
 //----------------------------------------------------------------------
 
-int RefineMask::apply ( Block * block ) throw ()
-{
-  Data * data = block->data();
+int RefineMask::apply(Block* block) throw() {
+  Data* data = block->data();
   Field field = data->field();
 
-  int nx,ny,nz;
-  field.size(&nx,&ny,&nz);
+  int nx, ny, nz;
+  field.size(&nx, &ny, &nz);
 
-  double * x = new double [nx];
-  double * y = new double [ny];
-  double * z = new double [nz];
+  double* x = new double[nx];
+  double* y = new double[ny];
+  double* z = new double[nz];
   double t = block->time();
 
-  data->field_cells(x,y,z);
+  data->field_cells(x, y, z);
 
-  double * v = new double [nx*ny*nz];
+  double* v = new double[nx * ny * nz];
 
-  value_->evaluate(v, t,
-		   nx,nx,x,
-		   ny,ny,y,
-		   nz,nz,z);
+  value_->evaluate(v, t, nx, nx, x, ny, ny, y, nz, nz, z);
 
   double level_want = 0.0;
 
   // determine desired level
-  for (int ix=0; ix<nx; ix++) {
-    for (int iy=0; iy<ny; iy++) {
-      for (int iz=0; iz<nz; iz++) {
-	int i=ix + nx*(iy + ny*iz);
-	level_want = std::max(level_want,v[i]);
+  for (int ix = 0; ix < nx; ix++) {
+    for (int iy = 0; iy < ny; iy++) {
+      for (int iz = 0; iz < nz; iz++) {
+        int i = ix + nx * (iy + ny * iz);
+        level_want = std::max(level_want, v[i]);
       }
     }
   }
@@ -75,46 +65,44 @@ int RefineMask::apply ( Block * block ) throw ()
   const int level_block = block->level();
 
   if (output_ != "") {
-    void * output = initialize_output_(field.field_data());
-    float  * output_float  = (float*) output;
-    double * output_double = (double*)output;
+    void* output = initialize_output_(field.field_data());
+    float* output_float = (float*)output;
+    double* output_double = (double*)output;
 
-    precision_type precision = field.precision (field.field_id(output_));
-    
-    for (int ix=0; ix<nx; ix++) {
-      for (int iy=0; iy<ny; iy++) {
-	for (int iz=0; iz<nz; iz++) {
-	  int i=ix + nx*(iy + ny*iz);
-	  if (precision == precision_single) {
-	    if (v[i] <  level_block) output_float[i] = -1;
-	    if (v[i] == level_block) output_float[i] =  0;
-	    if (v[i] >  level_block) output_float[i] = +1;
-	  } else if (precision == precision_double) {
-	    if (v[i] <  level_block) output_double[i] = -1;
-	    if (v[i] == level_block) output_double[i] =  0;
-	    if (v[i] >  level_block) output_double[i] = +1;
-	  }
-	}
+    precision_type precision = field.precision(field.field_id(output_));
+
+    for (int ix = 0; ix < nx; ix++) {
+      for (int iy = 0; iy < ny; iy++) {
+        for (int iz = 0; iz < nz; iz++) {
+          int i = ix + nx * (iy + ny * iz);
+          if (precision == precision_single) {
+            if (v[i] < level_block) output_float[i] = -1;
+            if (v[i] == level_block) output_float[i] = 0;
+            if (v[i] > level_block) output_float[i] = +1;
+          } else if (precision == precision_double) {
+            if (v[i] < level_block) output_double[i] = -1;
+            if (v[i] == level_block) output_double[i] = 0;
+            if (v[i] > level_block) output_double[i] = +1;
+          }
+        }
       }
     }
   }
 
-  delete [] v;
+  delete[] v;
 
-  delete [] z;
-  delete [] y;
-  delete [] x;
+  delete[] z;
+  delete[] y;
+  delete[] x;
 
-  int adapt_result = 
-    (level_want > level_block) ? adapt_refine :
-    (level_want < level_block) ? adapt_coarsen : adapt_same;
+  int adapt_result = (level_want > level_block)   ? adapt_refine
+                     : (level_want < level_block) ? adapt_coarsen
+                                                  : adapt_same;
 
   // Don't refine if already at maximum level
-  adjust_for_level_( &adapt_result, block->level() );
-    
-  return adapt_result;
+  adjust_for_level_(&adapt_result, block->level());
 
+  return adapt_result;
 }
 
 //======================================================================
-

@@ -9,47 +9,41 @@
 #define ENZO_ENZO_INITIAL_SEDOV_ARRAY3_HPP
 
 class EnzoInitialSedovArray3 : public Initial {
-
   /// @class    EnzoInitialSedovArray3
   /// @ingroup  Enzo
-  /// @brief    [\ref Enzo] initial conditions for 3D array of Sedov Blasts 
+  /// @brief    [\ref Enzo] initial conditions for 3D array of Sedov Blasts
 
-public: // interface
-
+public:  // interface
   /// CHARM++ constructor
   EnzoInitialSedovArray3() throw()
-  : Initial (),
-    radius_relative_(0.0),
-    pressure_in_(0.0),
-    pressure_out_(0.0),
-    density_(0.0)
-  { }
-  
+      : Initial(),
+        radius_relative_(0.0),
+        pressure_in_(0.0),
+        pressure_out_(0.0),
+        density_(0.0) {}
+
   /// Constructor
-  EnzoInitialSedovArray3(const EnzoConfig * enzo_config) throw();
+  EnzoInitialSedovArray3(const EnzoConfig* enzo_config) throw();
 
   /// CHARM++ PUP::able declaration
   PUPable_decl(EnzoInitialSedovArray3);
 
   /// CHARM++ migration constructor
-  EnzoInitialSedovArray3(CkMigrateMessage *m)
-    : Initial (m),
-      radius_relative_(0.0),
-      pressure_in_(0.0),
-      pressure_out_(0.0),
-      density_(0.0)
-  {}
+  EnzoInitialSedovArray3(CkMigrateMessage* m)
+      : Initial(m),
+        radius_relative_(0.0),
+        pressure_in_(0.0),
+        pressure_out_(0.0),
+        density_(0.0) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Initialize the block
 
-  virtual void enforce_block
-  ( Block * block, const Hierarchy * hierarchy ) throw();
+  virtual void enforce_block(Block* block, const Hierarchy* hierarchy) throw();
 
-private: // attributes
-
+private:  // attributes
   /// Size of the array of Sedov blasts
   int array_[3];
 
@@ -62,8 +56,6 @@ private: // attributes
 
   /// initial density
   double density_;
-
 };
 
 #endif /* ENZO_ENZO_INITIAL_SEDOV_ARRAY3_HPP */
-

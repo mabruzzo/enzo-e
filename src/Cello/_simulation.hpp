@@ -23,4 +23,3 @@
 #include "simulation_Simulation.hpp"
 
 #endif /* _SIMULATION_HPP */
-

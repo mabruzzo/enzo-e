@@ -11,10 +11,10 @@
 
 #include <pup_stl.h>
 #include <type_traits>
-#include <functional> // used to check function signature
+#include <functional>  // used to check function signature
 
 // defining RIEMANN_DEBUG adds some extra error checking, useful for debugging
-//#define RIEMANN_DEBUG
+// #define RIEMANN_DEBUG
 
 //----------------------------------------------------------------------
 
@@ -24,12 +24,14 @@ struct HydroLUT {
   /// @brief    [\ref Enzo] Encapsulates a compile-time LUT for pure
   ///           hydrodynamics that is used for implementing Riemann Solvers
 
-  enum vals { density=0,
-	      velocity_i,
-	      velocity_j,
-	      velocity_k,
-	      total_energy,
-	      num_entries};
+  enum vals {
+    density = 0,
+    velocity_i,
+    velocity_j,
+    velocity_k,
+    total_energy,
+    num_entries
+  };
 
   // in the future, automatically calculate the following
   static const std::size_t specific_start = 1;
@@ -37,20 +39,22 @@ struct HydroLUT {
 
 //----------------------------------------------------------------------
 
-struct MHDLUT{
+struct MHDLUT {
   /// @class    MHDLUT
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates a compile-time LUT for MHD that is
   ///           that is to be used for implementing Riemann Solvers
-  enum vals { density=0,
-	      bfield_i,
-	      bfield_j,
-	      bfield_k,
-	      velocity_i,
-	      velocity_j,
-	      velocity_k,
-	      total_energy,
-	      num_entries};
+  enum vals {
+    density = 0,
+    bfield_i,
+    bfield_j,
+    bfield_k,
+    velocity_i,
+    velocity_j,
+    velocity_k,
+    total_energy,
+    num_entries
+  };
   // in the future, automatically calculate the following
   static const std::size_t specific_start = 4;
 };
@@ -58,8 +62,8 @@ struct MHDLUT{
 //----------------------------------------------------------------------
 
 // SPHINX-SNIPPET-KERNELCONFIG-START-INCLUDE
-template<typename EOSStructT>
-struct KernelConfig{
+template <typename EOSStructT>
+struct KernelConfig {
   /// @class    KernelConfig
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Stores the configuration options, input arrays, and
@@ -111,11 +115,11 @@ struct KernelConfig{
   ///   cell interface
   /**@{*/
   /// array to store the computed fluxes
-  const CelloView<enzo_float,4> flux_arr;
+  const CelloView<enzo_float, 4> flux_arr;
   /// array of primitives reconstructed on the left side of cell interfaces
-  const CelloView<const enzo_float,4> prim_arr_l;
+  const CelloView<const enzo_float, 4> prim_arr_l;
   /// array of primitives reconstructed on the right side of cell interfaces
-  const CelloView<const enzo_float,4> prim_arr_r;
+  const CelloView<const enzo_float, 4> prim_arr_r;
   /**@}*/
 
   /// @name DualEnergyArrays
@@ -133,9 +137,9 @@ struct KernelConfig{
   /// When `flux_arr.shape(0) > LUT::num_entries`, this can technically alias
   /// one of `flux_arr`'s subarrays without a corresponding `LUT` entry. In
   /// practice, kernels will NEVER be affected by this.
-  const CelloView<enzo_float,3> internal_energy_flux_arr;
+  const CelloView<enzo_float, 3> internal_energy_flux_arr;
   /// array to store the velocity (along `dim`) computed at the cell interface
-  const CelloView<enzo_float,3> velocity_i_bar_arr;
+  const CelloView<enzo_float, 3> velocity_i_bar_arr;
   /**@}*/
 };
 // SPHINX-SNIPPET-KERNELCONFIG-END-INCLUDE
@@ -143,8 +147,7 @@ struct KernelConfig{
 //----------------------------------------------------------------------
 
 template <class KernelFunctor>
-class EnzoRiemannImpl : public EnzoRiemann
-{
+class EnzoRiemannImpl : public EnzoRiemann {
   /// @class    EnzoRiemannImpl
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Provides implementation of approximate Riemann
@@ -180,10 +183,7 @@ class EnzoRiemannImpl : public EnzoRiemann
                 "KernelFunctor must define the method: "
                 "void KernelFunctor::operator() (int,int,int)");
 
-
-
-public: // interface
-
+public:  // interface
   /// Constructor
   ///
   /// @param internal_energy Indicates whether internal_energy is an
@@ -192,23 +192,23 @@ public: // interface
                   bool internal_energy);
 
   /// Virtual destructor
-  virtual ~EnzoRiemannImpl(){ delete scratch_ptr_; };
+  virtual ~EnzoRiemannImpl() { delete scratch_ptr_; };
 
-  void solve (const EnzoEFltArrayMap &prim_map_l,
-	      const EnzoEFltArrayMap &prim_map_r,
-              EnzoEFltArrayMap &flux_map, const int dim,
-	      const int stale_depth,
-	      const str_vec_t &passive_list,
-              const CelloView<enzo_float,3> * const interface_velocity) const;
+  void solve(const EnzoEFltArrayMap& prim_map_l,
+             const EnzoEFltArrayMap& prim_map_r, EnzoEFltArrayMap& flux_map,
+             const int dim, const int stale_depth,
+             const str_vec_t& passive_list,
+             const CelloView<enzo_float, 3>* const interface_velocity) const;
 
-  const std::vector<std::string> integration_quantity_keys() const noexcept
-  { return integration_quantity_keys_; }
+  const std::vector<std::string> integration_quantity_keys() const noexcept {
+    return integration_quantity_keys_;
+  }
 
-  const std::vector<std::string> primitive_quantity_keys() const noexcept
-  { return primitive_quantity_keys_; }
+  const std::vector<std::string> primitive_quantity_keys() const noexcept {
+    return primitive_quantity_keys_;
+  }
 
-private: // helper methods
-
+private:  // helper methods
   /// Actually executes the Riemann Solver
   ///
   /// @note
@@ -217,8 +217,7 @@ private: // helper methods
   static void solve_(const KernelConfig<EOSStructT> config,
                      const int stale_depth) noexcept;
 
-private: //attributes
-
+private:  // attributes
   /// expected keys (and key-order) that the `solve` method expects the
   /// `flux_map` argument to have
   std::vector<std::string> integration_quantity_keys_;
@@ -238,18 +237,17 @@ private: //attributes
 //----------------------------------------------------------------------
 
 template <class KernelFunctor>
-EnzoRiemannImpl<KernelFunctor>::EnzoRiemannImpl
-(const EnzoRiemann::FactoryArgs factory_args,const bool internal_energy)
-  : EnzoRiemann(factory_args)
-{
+EnzoRiemannImpl<KernelFunctor>::EnzoRiemannImpl(
+    const EnzoRiemann::FactoryArgs factory_args, const bool internal_energy)
+    : EnzoRiemann(factory_args) {
   integration_quantity_keys_ =
-    enzo_riemann_utils::get_quantity_keys<LUT>(false);
+      enzo_riemann_utils::get_quantity_keys<LUT>(false);
   primitive_quantity_keys_ = enzo_riemann_utils::get_quantity_keys<LUT>(true);
 
-  for (std::string key : integration_quantity_keys_){
+  for (std::string key : integration_quantity_keys_) {
     ASSERT("EnzoRiemannImpl::EnzoRiemannImpl",
-	   "No support for a LUT directly containing \"internal_energy\"",
-	   key != "internal_energy");
+           "No support for a LUT directly containing \"internal_energy\"",
+           key != "internal_energy");
   }
 
   calculate_internal_energy_flux_ = internal_energy;
@@ -263,28 +261,24 @@ EnzoRiemannImpl<KernelFunctor>::EnzoRiemannImpl
 //----------------------------------------------------------------------
 
 template <class KernelFunctor>
-void EnzoRiemannImpl<KernelFunctor>::solve
-(const EnzoEFltArrayMap &prim_map_l, const EnzoEFltArrayMap &prim_map_r,
- EnzoEFltArrayMap &flux_map, const int dim,
- const int stale_depth, const str_vec_t &passive_list,
- const CelloView<enzo_float,3> * const interface_velocity) const
-{
-
+void EnzoRiemannImpl<KernelFunctor>::solve(
+    const EnzoEFltArrayMap& prim_map_l, const EnzoEFltArrayMap& prim_map_r,
+    EnzoEFltArrayMap& flux_map, const int dim, const int stale_depth,
+    const str_vec_t& passive_list,
+    const CelloView<enzo_float, 3>* const interface_velocity) const {
   // Currently just going to assume that we have an Ideal Equation of State
   // (should probably test that...)
-  const EnzoEOSIdeal eos_struct
-    = enzo::fluid_props()->eos_variant().get<EnzoEOSIdeal>();
+  const EnzoEOSIdeal eos_struct =
+      enzo::fluid_props()->eos_variant().get<EnzoEOSIdeal>();
 
   // The strategy is to allocate some scratch space for internal_energy_flux &
   // velocity_i_bar_array, even if we don't care about dual-energy in order to
   // avoid branching.
   const bool calculate_internal_energy_flux = calculate_internal_energy_flux_;
   EFlt3DArray internal_energy_flux, velocity_i_bar_array;
-  enzo_riemann_utils::prep_dual_energy_arrays_(calculate_internal_energy_flux,
-                                               flux_map, interface_velocity,
-                                               scratch_ptr_,
-                                               internal_energy_flux,
-                                               velocity_i_bar_array);
+  enzo_riemann_utils::prep_dual_energy_arrays_(
+      calculate_internal_energy_flux, flux_map, interface_velocity,
+      scratch_ptr_, internal_energy_flux, velocity_i_bar_array);
 
 #ifdef RIEMANN_DEBUG
   check_key_order_(prim_map_l, true, passive_list);
@@ -306,19 +300,16 @@ void EnzoRiemannImpl<KernelFunctor>::solve
                                               flux_map.at("density"),
                                               stale_depth, passive_list);
 
-  if (LUT::has_bfields){
+  if (LUT::has_bfields) {
     // If Dedner Fluxes are required, they might get handled here
   }
-
 }
 
 //----------------------------------------------------------------------
 
 template <class KernelFunctor>
-void EnzoRiemannImpl<KernelFunctor>::solve_
-(const KernelConfig<EOSStructT> config, const int stale_depth)
-  noexcept
-{
+void EnzoRiemannImpl<KernelFunctor>::solve_(
+    const KernelConfig<EOSStructT> config, const int stale_depth) noexcept {
   const KernelFunctor kernel{config};
 
   // preload shape of arrays (to inform compiler they won't change)
@@ -329,9 +320,9 @@ void EnzoRiemannImpl<KernelFunctor>::solve_
   // compute the flux at all non-stale cell interfaces
   for (int iz = stale_depth; iz < mz - stale_depth; iz++) {
     for (int iy = stale_depth; iy < my - stale_depth; iy++) {
-      #pragma omp simd
+#pragma omp simd
       for (int ix = stale_depth; ix < mx - stale_depth; ix++) {
-        kernel(iz,iy,ix);
+        kernel(iz, iy, ix);
       }
     }
   }

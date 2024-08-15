@@ -28,6 +28,3 @@
 #include "_data.hpp"
 
 #endif /* DATA_HPP */
-
-
-

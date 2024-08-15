@@ -9,57 +9,47 @@
 #ifndef DATA_IT_INDEX_HPP
 #define DATA_IT_INDEX_HPP
 
-class ItIndex : public PUP::able 
-{
-
+class ItIndex : public PUP::able {
   /// @class    ItIndex
   /// @ingroup  Data
   /// @brief    [\ref Data] Abstract iterator base class for Index indices
 
-public: // interface
-
+public:  // interface
   /// Create an iterator over integers 0 to count-1
-  ItIndex () throw () : size_(0)
-  { }
+  ItIndex() throw() : size_(0) {}
 
   /// Virtual destructor
-  virtual ~ItIndex () throw()
-  { }
+  virtual ~ItIndex() throw() {}
 
   /// Charm++ PUP::able declarations
   PUPable_abstract(ItIndex);
 
   /// Charm++ PUP::able migration constructor
-  ItIndex (CkMigrateMessage *m)
-    : PUP::able(m),
-      size_(0)
-  { }
+  ItIndex(CkMigrateMessage* m) : PUP::able(m), size_(0) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p) 
-  {
+  void pup(PUP::er& p) {
     TRACEPUP;
-    PUP::able::pup(p); 
+    PUP::able::pup(p);
     p | size_;
   };
 
   /// Number of elements contained in the list
-  int size () const throw() { return size_; }
+  int size() const throw() { return size_; }
 
   /// Go to the first value
-  virtual void first () throw() = 0;
+  virtual void first() throw() = 0;
 
   /// Go to the next value
-  virtual void next () throw() = 0;
+  virtual void next() throw() = 0;
 
   /// Return the current value
-  virtual int value () const throw() = 0;
+  virtual int value() const throw() = 0;
 
   /// Return whether iterating is complete
-  virtual bool done () const throw() = 0;
+  virtual bool done() const throw() = 0;
 
-protected: // attributes
-
+protected:  // attributes
   int size_;
 };
 

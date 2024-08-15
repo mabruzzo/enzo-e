@@ -13,8 +13,7 @@
 
 //----------------------------------------------------------------------
 
-void Initial::pup (PUP::er &p)
-{
+void Initial::pup(PUP::er& p) {
   // NOTE: change this function whenever attributes change
 
   TRACEPUP;
@@ -23,11 +22,8 @@ void Initial::pup (PUP::er &p)
 
   p | cycle_;
   p | time_;
-
 }
 
 //----------------------------------------------------------------------
 
-void Initial::enforce_block(Block * block, const Hierarchy * hierarchy) throw()
-{
-}
+void Initial::enforce_block(Block* block, const Hierarchy* hierarchy) throw() {}

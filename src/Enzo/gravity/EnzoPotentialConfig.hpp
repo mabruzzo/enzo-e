@@ -36,7 +36,6 @@
 #define ENZO_GRAVITY_ENZO_POTENTIAL_CONFIG_HPP
 
 struct EnzoPotentialConfigGalaxy {
-
   /// @class    EnzoPotentialConfigGalaxy
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] tracks the parameters needed for a background
@@ -44,7 +43,6 @@ struct EnzoPotentialConfigGalaxy {
   ///
   /// If we ever start using the idea of a Galaxy model across multiple Methods,
   /// it might make sense to somehow convert this into a Physics class
-
 
   /// dark matter mass (default units of solar masses)
   double DM_mass;
@@ -61,12 +59,12 @@ struct EnzoPotentialConfigGalaxy {
   /// bulge radius (default units of kpc)
   double bulge_radius;
   /// angular momentum vector unit vector
-  std::array<double,3> amom_uvec;
+  std::array<double, 3> amom_uvec;
   /// core radius (default units of kpc)
   double rcore;
 
   static EnzoPotentialConfigGalaxy from_parameters(ParameterGroup p) {
-    double DM_mass = p.value_float("DM_mass",-1.0);
+    double DM_mass = p.value_float("DM_mass", -1.0);
     double DM_mass_radius = p.value_float("DM_mass_radius", 0.0);
     double stellar_r = p.value_float("stellar_scale_height_r", 1.0E-10);
     double stellar_z = p.value_float("stellar_scale_height_z", 1.0E-10);
@@ -75,15 +73,15 @@ struct EnzoPotentialConfigGalaxy {
     double bulge_radius = p.value_float("bulge_radius", 1.0E-10);
 
     // deal with angular-momentum argument
-    std::array<double,3> amom;
+    std::array<double, 3> amom;
     for (int axis = 0; axis < 3; axis++) {
-      amom[axis] = p.list_value_float(axis,"angular_momentum",0);
+      amom[axis] = p.list_value_float(axis, "angular_momentum", 0);
     }
     double amom_mag = std::hypot(amom[0], amom[1], amom[2]);
     ASSERT("EnzoPotentialConfigGalaxy::from_parameters",
            "angular_momentum must be non-zero", amom_mag > 0);
-    std::array<double, 3> amom_uvec = {amom[0]/amom_mag, amom[1]/amom_mag,
-                                       amom[2]/amom_mag};
+    std::array<double, 3> amom_uvec = {amom[0] / amom_mag, amom[1] / amom_mag,
+                                       amom[2] / amom_mag};
 
     double rcore = p.value_float("core_radius", 1.0E-10);
 
@@ -92,27 +90,27 @@ struct EnzoPotentialConfigGalaxy {
             "units of solar masses",
             DM_mass, (DM_mass > 0));
 
-    return {DM_mass, DM_mass_radius, stellar_r, stellar_z,
-            stellar_mass, bulge_mass, bulge_radius, amom_uvec, rcore};
+    return {DM_mass,    DM_mass_radius, stellar_r, stellar_z, stellar_mass,
+            bulge_mass, bulge_radius,   amom_uvec, rcore};
   }
 
   /// static method to convert from default units to code units
-  static EnzoPotentialConfigGalaxy to_codeU
-  (const EnzoPotentialConfigGalaxy& pack_dfltU, const Units* units) noexcept
-  {
-    return
-      { pack_dfltU.DM_mass * enzo_constants::mass_solar / units->mass(),
+  static EnzoPotentialConfigGalaxy to_codeU(
+      const EnzoPotentialConfigGalaxy& pack_dfltU,
+      const Units* units) noexcept {
+    return {
+        pack_dfltU.DM_mass * enzo_constants::mass_solar / units->mass(),
         pack_dfltU.DM_mass_radius * enzo_constants::kpc_cm / units->length(),
         pack_dfltU.stellar_r * enzo_constants::kpc_cm / units->length(),
         pack_dfltU.stellar_z * enzo_constants::kpc_cm / units->length(),
         pack_dfltU.stellar_mass * enzo_constants::mass_solar / units->mass(),
         pack_dfltU.bulge_mass * enzo_constants::mass_solar / units->mass(),
         pack_dfltU.bulge_radius * enzo_constants::kpc_cm / units->length(),
-        pack_dfltU.amom_uvec, // unit vector has no units to convert
-        pack_dfltU.rcore * enzo_constants::kpc_cm / units->length() };
+        pack_dfltU.amom_uvec,  // unit vector has no units to convert
+        pack_dfltU.rcore * enzo_constants::kpc_cm / units->length()};
   }
 
-  void pup(PUP::er &p) {
+  void pup(PUP::er& p) {
     p | DM_mass;
     p | DM_mass_radius;
     p | stellar_r;
@@ -133,27 +131,24 @@ struct EnzoPotentialConfigPointMass {
   /// @brief    [\ref Enzo] tracks the parameters needed for a background
   ///           potential of an isolated point-mass
 
-
   /// point-source mass (default units of solar masses)
   double mass;
   /// core-radius (default units of cm)
   double rcore;
 
   static EnzoPotentialConfigPointMass from_parameters(ParameterGroup p) {
-    return {p.value_float("mass",0.0),
-            p.value_float("core_radius", 1.0E-10)};
+    return {p.value_float("mass", 0.0), p.value_float("core_radius", 1.0E-10)};
   }
 
   /// static method to convert from default units to code units
-  static EnzoPotentialConfigPointMass to_codeU
-  (const EnzoPotentialConfigPointMass& pack_dfltU, const Units* units) noexcept
-  {
-    return
-      { pack_dfltU.mass * enzo_constants::mass_solar / units->mass(),
-        pack_dfltU.rcore / units->length() };
+  static EnzoPotentialConfigPointMass to_codeU(
+      const EnzoPotentialConfigPointMass& pack_dfltU,
+      const Units* units) noexcept {
+    return {pack_dfltU.mass * enzo_constants::mass_solar / units->mass(),
+            pack_dfltU.rcore / units->length()};
   }
 
-  void pup(PUP::er &p) {
+  void pup(PUP::er& p) {
     p | mass;
     p | rcore;
   }

@@ -20,7 +20,6 @@
 #ifndef ENZO_ENZO_CENTERED_FIELD_REGISTRY_HPP
 #define ENZO_ENZO_CENTERED_FIELD_REGISTRY_HPP
 
-
 //----------------------------------------------------------------------
 
 /// @var      passive_group_names
@@ -39,7 +38,7 @@ const std::vector<std::string> passive_group_names = {"color"};
 ///  - specific - the field is a specific primitive fluid property (multiply by
 ///    density to get conserved, e.g. velocity) primitive
 ///  - other - anything else (e.g. temperature, pressure)
-enum class FieldCat{conserved, specific, other};
+enum class FieldCat { conserved, specific, other };
 
 //----------------------------------------------------------------------
 
@@ -64,45 +63,45 @@ enum class FieldCat{conserved, specific, other};
 ///
 /// As additional physics are added this table should be updated (e.g.
 /// cr_energy, cr_flux).
-#define FIELD_TABLE                                                          \
-  /* Hydro & MHD Fields directly related to Advection */                     \
-  ENTRY(                density, SCALAR, FieldCat::conserved, T)             \
-  ENTRY(               velocity, VECTOR,  FieldCat::specific, T)             \
-  ENTRY(           total_energy, SCALAR,  FieldCat::specific, T)             \
-  ENTRY(                 bfield, VECTOR, FieldCat::conserved, T)             \
-  /* only an actively advected quantity under the dual energy formalism */   \
-  ENTRY(        internal_energy, SCALAR,  FieldCat::specific, T)             \
-  /* Derived Fields */                                                       \
-  ENTRY(               pressure, SCALAR,     FieldCat::other, F)             \
-  ENTRY(            temperature, SCALAR,     FieldCat::other, F)             \
-  ENTRY(           cooling_time, SCALAR,     FieldCat::other, F)             \
-  ENTRY(           acceleration, VECTOR,  FieldCat::specific, F)             \
-  /* Grackle Related Fields */                                               \
-  ENTRY(  specific_heating_rate, SCALAR,     FieldCat::other, F)             \
-  ENTRY(volumetric_heating_rate, SCALAR,     FieldCat::other, F)             \
-  ENTRY(             HI_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(            HII_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(            HeI_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(           HeII_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(          HeIII_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(              e_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(             HM_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(            H2I_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(           H2II_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(             DI_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(            DII_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(            HDI_density, SCALAR, FieldCat::conserved, F)             \
-  ENTRY(          metal_density, SCALAR, FieldCat::conserved, F)             \
-  /* Field for Gravity */                                                    \
-  ENTRY(              potential, SCALAR,  FieldCat::specific, F)             \
-  /* Fields for Turbulence */                                                \
-  ENTRY(                driving, VECTOR,  FieldCat::specific, F)
+#define FIELD_TABLE                                                            \
+  /* Hydro & MHD Fields directly related to Advection */                       \
+  ENTRY(density, SCALAR, FieldCat::conserved, T)                               \
+  ENTRY(velocity, VECTOR, FieldCat::specific, T)                               \
+  ENTRY(total_energy, SCALAR, FieldCat::specific, T)                           \
+  ENTRY(bfield, VECTOR, FieldCat::conserved, T)                                \
+  /* only an actively advected quantity under the dual energy formalism */     \
+  ENTRY(internal_energy, SCALAR, FieldCat::specific, T)                        \
+  /* Derived Fields */                                                         \
+  ENTRY(pressure, SCALAR, FieldCat::other, F)                                  \
+  ENTRY(temperature, SCALAR, FieldCat::other, F)                               \
+  ENTRY(cooling_time, SCALAR, FieldCat::other, F)                              \
+  ENTRY(acceleration, VECTOR, FieldCat::specific, F)                           \
+  /* Grackle Related Fields */                                                 \
+  ENTRY(specific_heating_rate, SCALAR, FieldCat::other, F)                     \
+  ENTRY(volumetric_heating_rate, SCALAR, FieldCat::other, F)                   \
+  ENTRY(HI_density, SCALAR, FieldCat::conserved, F)                            \
+  ENTRY(HII_density, SCALAR, FieldCat::conserved, F)                           \
+  ENTRY(HeI_density, SCALAR, FieldCat::conserved, F)                           \
+  ENTRY(HeII_density, SCALAR, FieldCat::conserved, F)                          \
+  ENTRY(HeIII_density, SCALAR, FieldCat::conserved, F)                         \
+  ENTRY(e_density, SCALAR, FieldCat::conserved, F)                             \
+  ENTRY(HM_density, SCALAR, FieldCat::conserved, F)                            \
+  ENTRY(H2I_density, SCALAR, FieldCat::conserved, F)                           \
+  ENTRY(H2II_density, SCALAR, FieldCat::conserved, F)                          \
+  ENTRY(DI_density, SCALAR, FieldCat::conserved, F)                            \
+  ENTRY(DII_density, SCALAR, FieldCat::conserved, F)                           \
+  ENTRY(HDI_density, SCALAR, FieldCat::conserved, F)                           \
+  ENTRY(metal_density, SCALAR, FieldCat::conserved, F)                         \
+  /* Field for Gravity */                                                      \
+  ENTRY(potential, SCALAR, FieldCat::specific, F)                              \
+  /* Fields for Turbulence */                                                  \
+  ENTRY(driving, VECTOR, FieldCat::specific, F)
 
 //----------------------------------------------------------------------
 
 /// @typedef ft_row
 /// @brief Holds the data associated with a single row of FIELD_TABLE
-struct ft_row{
+struct ft_row {
   bool vector_quantity;
   FieldCat category;
   bool actively_advected;
@@ -116,8 +115,7 @@ typedef std::map<std::string, ft_row> ft_map;
 
 //----------------------------------------------------------------------
 
-class EnzoCenteredFieldRegistry
-{
+class EnzoCenteredFieldRegistry {
   /// @class    EnzoCenteredFieldRegistry
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Serves as a registry for non-passively advected
@@ -132,15 +130,15 @@ class EnzoCenteredFieldRegistry
   /// To register a new field, add a new entry to FIELD_TABLE
 
 public:
-
   EnzoCenteredFieldRegistry() = delete;
 
   /// Returns a vector of passive scalar group names
   ///
   /// To register new names add entry to the static constant vector variable
   /// called passive_group_names
-  static std::vector<std::string> passive_scalar_group_names()
-  { return passive_group_names; }
+  static std::vector<std::string> passive_scalar_group_names() {
+    return passive_group_names;
+  }
 
   /// Returns a vector of registered quantities.
   ///
@@ -151,14 +149,15 @@ public:
   ///     names of all quantities listed in FIELD_TABLE.
   /// @param exclude_non_active_advection Determines whether quantities that
   ///     are bit actively advected should be excluded from the list
-  static std::vector<std::string> get_registered_quantities
-  (const bool enumerate_components, const bool exclude_non_active_advection = false);
+  static std::vector<std::string> get_registered_quantities(
+      const bool enumerate_components,
+      const bool exclude_non_active_advection = false);
 
   /// provides the quantity properties listed in FIELD_TABLE (if present)
   ///
   /// returns true when successful (i.e. quantity is actually included in the
   /// table) and false when unsuccesful
-  static bool quantity_properties(const std::string &name,
+  static bool quantity_properties(const std::string& name,
                                   bool* vector_quantity = 0,
                                   FieldCat* category = 0,
                                   bool* actively_advected = 0) noexcept;
@@ -185,13 +184,11 @@ public:
   ///     suffix is detected or ``name`` doesn't correspond to a known actively
   ///     advected VECTOR quantity, this method will write a null character,
   ///     '\0', to that location.
-  static std::string get_actively_advected_quantity_name
-  (const std::string& name, bool ijk_suffix, char* vec_component_rslt=0)
-    noexcept;
+  static std::string get_actively_advected_quantity_name(
+      const std::string& name, bool ijk_suffix,
+      char* vec_component_rslt = 0) noexcept;
 
-
-private: // attributes
-
+private:  // attributes
   /// representation of FIELD_TABLE in memory
   static const ft_map field_table_;
 };

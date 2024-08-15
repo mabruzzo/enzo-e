@@ -1,7 +1,7 @@
 // See LICENSE_CELLO file for license and copyright information
 
 /// @file     enzo_EnzoSolverMg0.hpp
-/// @author   James Bordner (jobordner@ucsd.edu) 
+/// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2015-06-02
 /// @brief    [\ref Enzo] Declaration of EnzoSolverMg0
 ///
@@ -11,7 +11,6 @@
 #define ENZO_ENZO_SOLVER_MG0_HPP
 
 class EnzoSolverMg0 : public Solver {
-
   /// @class    EnzoSolverMg0
   /// @ingroup  Enzo
   ///
@@ -19,61 +18,54 @@ class EnzoSolverMg0 : public Solver {
   /// as a Gravity solver on non-adaptive problems, or as a preconditioner
   /// for a Krylov subspace solver, as in Dan Reynold's HG solver.
 
-public: // interface
-
+public:  // interface
   /// Create a new EnzoSolverMg0 object
-  EnzoSolverMg0
-  (std::string name,
-   std::string field_x,
-   std::string field_b,
-   int monitor_iter,
-   int restart_cycle,
-   int solve_type,
-   int index_prolong,
-   int index_restrict,
-   int min_level,
-   int max_level,
-   int iter_max,
-   double res_tol,
-   int index_smooth_pre,
-   int index_solve_coarse,
-   int index_smooth_post,
-   int index_smooth_last,
-   int coarse_level);
+  EnzoSolverMg0(std::string name, std::string field_x, std::string field_b,
+                int monitor_iter, int restart_cycle, int solve_type,
+                int index_prolong, int index_restrict, int min_level,
+                int max_level, int iter_max, double res_tol,
+                int index_smooth_pre, int index_solve_coarse,
+                int index_smooth_post, int index_smooth_last, int coarse_level);
 
-  EnzoSolverMg0() {};
+  EnzoSolverMg0(){};
 
   /// Charm++ PUP::able declarations
   PUPable_decl(EnzoSolverMg0);
-  
+
   /// Charm++ PUP::able migration constructor
-  EnzoSolverMg0 (CkMigrateMessage *m)
-    :  Solver(m),
-       bs_(0), bc_(0), rr_(0), rr_local_(0), rr0_(0),
-       res_tol_(0),
-       A_(nullptr),
-       index_smooth_pre_(-1),
-       index_solve_coarse_(-1),
-       index_smooth_post_(-1),
-       index_smooth_last_(-1),
-       iter_max_(0),
-       i_sync_restrict_(-1),
-       i_sync_prolong_(-1),
-       i_msg_restrict_(),
-       i_msg_prolong_(-1),
-       i_iter_(-1),
-       ic_(-1), ir_(-1),
-       mx_(0),my_(0),mz_(0),
-       gx_(0),gy_(0),gz_(0),
-       coarse_level_(0)
-  {
-    for (int i=0; i<cello::num_children(); i++) i_msg_restrict_[i] = -1;
+  EnzoSolverMg0(CkMigrateMessage* m)
+      : Solver(m),
+        bs_(0),
+        bc_(0),
+        rr_(0),
+        rr_local_(0),
+        rr0_(0),
+        res_tol_(0),
+        A_(nullptr),
+        index_smooth_pre_(-1),
+        index_solve_coarse_(-1),
+        index_smooth_post_(-1),
+        index_smooth_last_(-1),
+        iter_max_(0),
+        i_sync_restrict_(-1),
+        i_sync_prolong_(-1),
+        i_msg_restrict_(),
+        i_msg_prolong_(-1),
+        i_iter_(-1),
+        ic_(-1),
+        ir_(-1),
+        mx_(0),
+        my_(0),
+        mz_(0),
+        gx_(0),
+        gy_(0),
+        gz_(0),
+        coarse_level_(0) {
+    for (int i = 0; i < cello::num_children(); i++) i_msg_restrict_[i] = -1;
   }
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
-
+  void pup(PUP::er& p) {
     // NOTE: change this function whenever attributes change
 
     TRACEPUP;
@@ -94,15 +86,15 @@ public: // interface
     p | index_solve_coarse_;
     p | index_smooth_post_;
     p | index_smooth_last_;
-    
+
     p | iter_max_;
 
     p | i_sync_restrict_;
     p | i_sync_prolong_;
-    PUParray(p,i_msg_restrict_,8);
+    PUParray(p, i_msg_restrict_, 8);
     p | i_msg_prolong_;
     p | i_iter_;
-    
+
     p | ic_;
     p | ir_;
 
@@ -114,55 +106,52 @@ public: // interface
     p | gz_;
 
     p | coarse_level_;
-
   }
 
-  /// Solve the linear system 
-  virtual void apply ( std::shared_ptr<Matrix> A, Block * block) throw();
+  /// Solve the linear system
+  virtual void apply(std::shared_ptr<Matrix> A, Block* block) throw();
 
   /// Type of this solver
   virtual std::string type() const { return "mg0"; }
 
-  void compute_shift_(EnzoBlock * enzo_block,long double * reduce) throw();
-  void compute_correction(EnzoBlock * enzo_block) throw();
+  void compute_shift_(EnzoBlock* enzo_block, long double* reduce) throw();
+  void compute_correction(EnzoBlock* enzo_block) throw();
 
   /// Compute the residual
-  void compute_residual_(EnzoBlock *) throw();
+  void compute_residual_(EnzoBlock*) throw();
 
   /// Pack and unpack residual for restricting to parent
-  FieldMsg * pack_residual_ (EnzoBlock *) throw();
-  void unpack_residual_(EnzoBlock *, FieldMsg *) throw();
+  FieldMsg* pack_residual_(EnzoBlock*) throw();
+  void unpack_residual_(EnzoBlock*, FieldMsg*) throw();
 
   /// Pack and unpack correction for prolonging to child
-  FieldMsg * pack_correction_(EnzoBlock * enzo_block, int ic3[3]) throw();
-  void unpack_correction_(EnzoBlock *, FieldMsg *) throw();
-  
+  FieldMsg* pack_correction_(EnzoBlock* enzo_block, int ic3[3]) throw();
+  void unpack_correction_(EnzoBlock*, FieldMsg*) throw();
+
   /// Restrict residual to coarser Block
-  void restrict(EnzoBlock * enzo_block) throw();
+  void restrict(EnzoBlock* enzo_block) throw();
 
   /// Restrict residual to parent
-  void restrict_send(EnzoBlock * enzo_block) throw();
-  void restrict_recv(EnzoBlock * enzo_block,
-		     FieldMsg * field_message) throw();
+  void restrict_send(EnzoBlock* enzo_block) throw();
+  void restrict_recv(EnzoBlock* enzo_block, FieldMsg* field_message) throw();
 
   /// Call coarse solver--must be called by all blocks
-  void call_coarse_solver(EnzoBlock * enzo_block) throw();
+  void call_coarse_solver(EnzoBlock* enzo_block) throw();
   /// Call pre-smoother--must be called by all blocks (or not at all)
-  void call_pre_smoother(EnzoBlock * enzo_block) throw();
+  void call_pre_smoother(EnzoBlock* enzo_block) throw();
   /// Call post-smoother--must be called by all blocks (or not at all)
-  void call_post_smoother(EnzoBlock * enzo_block) throw();
+  void call_post_smoother(EnzoBlock* enzo_block) throw();
   /// Call last-smoother--must be called by all blocks (or not at all)
-  void call_last_smoother(EnzoBlock * enzo_block) throw();
+  void call_last_smoother(EnzoBlock* enzo_block) throw();
 
   /// Begin the prolongation phase
-  void prolong(EnzoBlock * enzo_block) throw();
+  void prolong(EnzoBlock* enzo_block) throw();
 
   /// Prolong the correction C to the next-finer level
-  void prolong_recv(EnzoBlock * enzo_block,
-		    FieldMsg * field_message) throw();
+  void prolong_recv(EnzoBlock* enzo_block, FieldMsg* field_message) throw();
 
   /// Apply post-smoothing to the current level
-  void post_smooth(EnzoBlock * enzo_block) throw();
+  void post_smooth(EnzoBlock* enzo_block) throw();
 
   void set_bs(double bs) throw() { bs_ = bs; }
   void set_bc(double bc) throw() { bc_ = bc; }
@@ -173,123 +162,111 @@ public: // interface
   double rr_local() throw() { return rr_local_; }
   double rr() throw() { return rr_; }
 
-  void begin_solve(EnzoBlock * enzo_block,
-		   CkReductionMsg *msg) throw();
+  void begin_solve(EnzoBlock* enzo_block, CkReductionMsg* msg) throw();
 
-  void end_cycle(EnzoBlock * enzo_block) throw();
-  
-  void print()
-  {
+  void end_cycle(EnzoBlock* enzo_block) throw();
+
+  void print() {
     //    CkPrintf (" A_ = %p\n",A_);
-    CkPrintf (" index_smooth_pre_ = %d\n",index_smooth_pre_);
-    CkPrintf (" index_solve_coarse_ = %d\n",index_solve_coarse_);
-    CkPrintf (" index_smooth_post_ = %d\n",index_smooth_post_);
-    CkPrintf (" index_smooth_last_ = %d\n",index_smooth_last_);
-    CkPrintf (" iter_max_ = %d\n",iter_max_);
-    CkPrintf (" res_tol_ = %g\n",res_tol_);
-    CkPrintf (" i_sync_restrict_ = %d\n",i_sync_restrict_);
-    CkPrintf (" i_sync_prolong_ = %d\n",i_sync_prolong_);
-    CkPrintf (" i_iter_ = %d\n",i_iter_);
-    CkPrintf (" i_msg_restrict_ = %d %d %d %d %d %d %d %d\n",
-              i_msg_restrict_[0],i_msg_restrict_[1],i_msg_restrict_[2],
-              i_msg_restrict_[3],i_msg_restrict_[4],i_msg_restrict_[5],
-              i_msg_restrict_[6],i_msg_restrict_[7]);
-    CkPrintf (" i_msg_prolong_ = %d\n",i_msg_prolong_);
-    
-    CkPrintf (" ib_ = %d\n",ib_);
-    CkPrintf (" ic_ = %d\n",ic_);
-    CkPrintf (" ir_ = %d\n",ir_);
-    CkPrintf (" ix_ = %d\n",ix_);
-    CkPrintf (" mx_,my_,mz_ = %d %d %d\n",mx_,my_,mz_);
-    CkPrintf (" gx_,gy_,gz_ = %d %d %d\n",gx_,gy_,gz_);
-    CkPrintf (" coarse_level_ = %d\n",coarse_level_);
-    CkPrintf (" bs_ = %g\n",bs_);
-    CkPrintf (" bc_ = %g\n",bc_);
-    CkPrintf (" rr_ = %g\n",rr_);
-    CkPrintf (" rr_local_ = %g\n",rr_local_);
-    CkPrintf (" rr0_ = %g\n",rr0_);
+    CkPrintf(" index_smooth_pre_ = %d\n", index_smooth_pre_);
+    CkPrintf(" index_solve_coarse_ = %d\n", index_solve_coarse_);
+    CkPrintf(" index_smooth_post_ = %d\n", index_smooth_post_);
+    CkPrintf(" index_smooth_last_ = %d\n", index_smooth_last_);
+    CkPrintf(" iter_max_ = %d\n", iter_max_);
+    CkPrintf(" res_tol_ = %g\n", res_tol_);
+    CkPrintf(" i_sync_restrict_ = %d\n", i_sync_restrict_);
+    CkPrintf(" i_sync_prolong_ = %d\n", i_sync_prolong_);
+    CkPrintf(" i_iter_ = %d\n", i_iter_);
+    CkPrintf(" i_msg_restrict_ = %d %d %d %d %d %d %d %d\n", i_msg_restrict_[0],
+             i_msg_restrict_[1], i_msg_restrict_[2], i_msg_restrict_[3],
+             i_msg_restrict_[4], i_msg_restrict_[5], i_msg_restrict_[6],
+             i_msg_restrict_[7]);
+    CkPrintf(" i_msg_prolong_ = %d\n", i_msg_prolong_);
+
+    CkPrintf(" ib_ = %d\n", ib_);
+    CkPrintf(" ic_ = %d\n", ic_);
+    CkPrintf(" ir_ = %d\n", ir_);
+    CkPrintf(" ix_ = %d\n", ix_);
+    CkPrintf(" mx_,my_,mz_ = %d %d %d\n", mx_, my_, mz_);
+    CkPrintf(" gx_,gy_,gz_ = %d %d %d\n", gx_, gy_, gz_);
+    CkPrintf(" coarse_level_ = %d\n", coarse_level_);
+    CkPrintf(" bs_ = %g\n", bs_);
+    CkPrintf(" bc_ = %g\n", bc_);
+    CkPrintf(" rr_ = %g\n", rr_);
+    CkPrintf(" rr_local_ = %g\n", rr_local_);
+    CkPrintf(" rr0_ = %g\n", rr0_);
   }
 
   /// Exit the solver
-  void end(Block * block);
-
+  void end(Block* block);
 
   /// Access the prolong Sync Scalar value for the Block
-  Sync * psync_prolong(Block * block)
-  {
-    ScalarData<Sync> * scalar_data = block->data()->scalar_data_sync();
-    ScalarDescr *      scalar_descr = cello::scalar_descr_sync();
-    return scalar_data->value(scalar_descr,i_sync_prolong_);
+  Sync* psync_prolong(Block* block) {
+    ScalarData<Sync>* scalar_data = block->data()->scalar_data_sync();
+    ScalarDescr* scalar_descr = cello::scalar_descr_sync();
+    return scalar_data->value(scalar_descr, i_sync_prolong_);
   }
 
   /// Access the restrict Sync Scalar value for the Block
-  Sync * psync_restrict(Block * block)
-  {
-    ScalarData<Sync> * scalar_data = block->data()->scalar_data_sync();
-    ScalarDescr *      scalar_descr = cello::scalar_descr_sync();
-    return scalar_data->value(scalar_descr,i_sync_restrict_);
+  Sync* psync_restrict(Block* block) {
+    ScalarData<Sync>* scalar_data = block->data()->scalar_data_sync();
+    ScalarDescr* scalar_descr = cello::scalar_descr_sync();
+    return scalar_data->value(scalar_descr, i_sync_restrict_);
   }
 
   /// Access the iter Scalar value for the Block
-  int * piter(Block * block)
-  {
-    ScalarData<int> * scalar_data = block->data()->scalar_data_int();
-    ScalarDescr *      scalar_descr = cello::scalar_descr_int();
-    return scalar_data->value(scalar_descr,i_iter_);
+  int* piter(Block* block) {
+    ScalarData<int>* scalar_data = block->data()->scalar_data_int();
+    ScalarDescr* scalar_descr = cello::scalar_descr_int();
+    return scalar_data->value(scalar_descr, i_iter_);
   }
-  
+
   /// Access the Field message for buffering prolongation data
-  FieldMsg ** pmsg_prolong(Block * block)
-  {
-    ScalarData<void *> * scalar_data = block->data()->scalar_data_void();
-    ScalarDescr *        scalar_descr = cello::scalar_descr_void();
-    return (FieldMsg **)scalar_data->value(scalar_descr,i_msg_prolong_);
+  FieldMsg** pmsg_prolong(Block* block) {
+    ScalarData<void*>* scalar_data = block->data()->scalar_data_void();
+    ScalarDescr* scalar_descr = cello::scalar_descr_void();
+    return (FieldMsg**)scalar_data->value(scalar_descr, i_msg_prolong_);
   }
-  
+
   /// Access the Field message for buffering restriction data
-  FieldMsg ** pmsg_restrict(Block * block, int ic)
-  {
-    ScalarData<void *> * scalar_data = block->data()->scalar_data_void();
-    ScalarDescr *        scalar_descr = cello::scalar_descr_void();
-    return (FieldMsg **)scalar_data->value(scalar_descr,i_msg_restrict_[ic]);
+  FieldMsg** pmsg_restrict(Block* block, int ic) {
+    ScalarData<void*>* scalar_data = block->data()->scalar_data_void();
+    ScalarDescr* scalar_descr = cello::scalar_descr_void();
+    return (FieldMsg**)scalar_data->value(scalar_descr, i_msg_restrict_[ic]);
   }
-  
-protected: // methods
 
-  void enter_solver_(EnzoBlock * enzo_block) throw();
+protected:  // methods
+  void enter_solver_(EnzoBlock* enzo_block) throw();
 
-  void begin_cycle_(EnzoBlock * enzo_block) throw();
-  
+  void begin_cycle_(EnzoBlock* enzo_block) throw();
+
   /// Prolong the correction C to the next-finer level
-  void prolong_send_(EnzoBlock * enzo_block) throw();
+  void prolong_send_(EnzoBlock* enzo_block) throw();
 
-  bool is_converged_(EnzoBlock * enzo_block) const;
-  bool is_diverged_(EnzoBlock * enzo_block) const;
+  bool is_converged_(EnzoBlock* enzo_block) const;
+  bool is_diverged_(EnzoBlock* enzo_block) const;
 
   /// Shift RHS if needed for singular problems
-  void do_shift_(EnzoBlock *, CkReductionMsg *) throw();
-  
+  void do_shift_(EnzoBlock*, CkReductionMsg*) throw();
+
   /// Allocate temporary Fields
-  void allocate_temporary_(Block * block)
-  {
+  void allocate_temporary_(Block* block) {
     Field field = block->data()->field();
     field.allocate_temporary(ir_);
     field.allocate_temporary(ic_);
   }
-	      
+
   /// Dellocate temporary Fields
 
-  void deallocate_temporary_(Block * block)
-  {
+  void deallocate_temporary_(Block* block) {
     Field field = block->data()->field();
     field.deallocate_temporary(ir_);
     field.deallocate_temporary(ic_);
   }
 
-  void monitor_output_(EnzoBlock * enzo_block);
-  
-protected: // attributes
+  void monitor_output_(EnzoBlock* enzo_block);
 
+protected:  // attributes
   /// scalars used for projections of singular systems
   double bs_;
   double bc_;
@@ -332,8 +309,8 @@ protected: // attributes
   int ir_;
 
   /// Block field attributes
-  int mx_,my_,mz_;
-  int gx_,gy_,gz_;
+  int mx_, my_, mz_;
+  int gx_, gy_, gz_;
 
   /// The level of the coarse grid solve
   int coarse_level_;

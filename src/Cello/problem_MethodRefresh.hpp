@@ -1,50 +1,41 @@
 // See LICENSE_CELLO file for license and copyright information
 
-/// @file     problem_MethodRefresh.hpp 
-/// @author   James Bordner (jobordner@ucsd.edu) 
+/// @file     problem_MethodRefresh.hpp
+/// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2021-03-09
 /// @brief    [\ref Problem] Declaration for the MethodRefresh class
 
 #ifndef PROBLEM_METHOD_REFRESH_HPP
 #define PROBLEM_METHOD_REFRESH_HPP
 
-class MethodRefresh : public Method
-{
+class MethodRefresh : public Method {
   /// @class    MethodRefresh
   /// @ingroup  MethodRefresh
   /// @brief    [\ref MethodRefresh] Declaration of MethodRefresh
   ///
   /// Method for refreshing data in ghost zones
 
-public: // interface
-
+public:  // interface
   /// create a new MethodRefresh from a ParameterGroup
   MethodRefresh(ParameterGroup p) noexcept;
 
   /// Create a new MethodRefresh
-  MethodRefresh
-  (std::vector< std::string > field_list,
-   std::vector< std::string > particle_list,
-   int ghost_depth,
-   int min_face_rank,
-   bool all_fields,
-   bool all_particles) noexcept;
+  MethodRefresh(std::vector<std::string> field_list,
+                std::vector<std::string> particle_list, int ghost_depth,
+                int min_face_rank, bool all_fields,
+                bool all_particles) noexcept;
 
   /// Destructor
-  virtual ~MethodRefresh() throw()
-  {};
+  virtual ~MethodRefresh() throw(){};
 
   /// Charm++ PUP::able declarations
   PUPable_decl(MethodRefresh);
 
   /// Charm++ PUP::able migration constructor
-  MethodRefresh (CkMigrateMessage *m)
-    : Method(m)
-  { }
+  MethodRefresh(CkMigrateMessage* m) : Method(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
+  void pup(PUP::er& p) {
     TRACEPUP;
     Method::pup(p);
     p | field_list_;
@@ -53,22 +44,18 @@ public: // interface
     p | min_face_rank_;
   }
 
-public: // virtual functions
+public:  // virtual functions
+  /// Apply the method to advance a block one timestep
 
-  /// Apply the method to advance a block one timestep 
-
-  virtual void compute ( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
   /// Return the name of this MethodRefresh
-  virtual std::string name () throw ()
-  { return "refresh"; }
+  virtual std::string name() throw() { return "refresh"; }
 
-protected: // functions
+protected:  // functions
+  void refresh_(Block* block);
 
-  void refresh_ (Block * block);
-  
-protected: // attributes
-
+protected:  // attributes
   /// List of id's of fields to refresh
   std::vector<int> field_list_;
 
@@ -87,6 +74,5 @@ protected: // attributes
   /// Whether to refresh all particles, ignoring particle_list_
   bool all_particles_;
 };
-
 
 #endif /* PROBLEM_METHOD_REFRESH_HPP */

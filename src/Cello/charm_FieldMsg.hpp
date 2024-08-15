@@ -9,20 +9,17 @@
 #define CHARM_FIELD_MSG_HPP
 
 class FieldMsg : public CMessage_FieldMsg {
+public:  // attributes
+  int child_index() const { return ic3[0] + 2 * (ic3[1] + 2 * (ic3[2])); }
 
-public: // attributes
-
-  int child_index() const { return ic3[0] + 2*(ic3[1] + 2*(ic3[2])); }
-  
   /// Array length
   int n;
 
   /// Array data
-  char * a;
+  char* a;
 
   /// Child indices
   int ic3[3];
 };
 
 #endif /* CHARM_FIELD_MSG_HPP */
-

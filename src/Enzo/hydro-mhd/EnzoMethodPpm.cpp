@@ -9,50 +9,48 @@
 #include "Enzo/enzo.hpp"
 #include "Enzo/hydro-mhd/hydro-mhd.hpp"
 
-#include "Enzo/hydro-mhd/ppm_fortran/ppm_fortran.hpp" // FORTRAN_NAME(calc_dt)
+#include "Enzo/hydro-mhd/ppm_fortran/ppm_fortran.hpp"  // FORTRAN_NAME(calc_dt)
 
 // #define DEBUG_PPM
 // #define COPY_FIELDS_TO_OUTPUT
 
 #ifdef DEBUG_PPM
-#  define TRACE_PPM(MESSAGE)						\
-  CkPrintf ("%s:%d TRACE_PPM %s %s\n",					\
-	    __FILE__,__LINE__,block->name().c_str(),MESSAGE);		\
-  fflush (stdout);
+#define TRACE_PPM(MESSAGE)                                                     \
+  CkPrintf("%s:%d TRACE_PPM %s %s\n", __FILE__, __LINE__,                      \
+           block->name().c_str(), MESSAGE);                                    \
+  fflush(stdout);
 #else
-#  define TRACE_PPM(MESSAGE) /* ... */
+#define TRACE_PPM(MESSAGE) /* ... */
 #endif
 
-#define COPY_FIELD(BLOCK,FIELD,FIELD_COPY)                              \
-  {                                                                     \
-    Field field = BLOCK->data()->field();                               \
-    enzo_float * f = (enzo_float *) field.values(FIELD);                \
-    enzo_float * f_copy = (enzo_float *) field.values(FIELD_COPY);      \
-    if (f_copy) {                                                       \
-      int mx,my,mz;                                                     \
-      field.dimensions(0,&mx,&my,&mz);                                  \
-      for (int i=0; i<mx*my*mz; i++) f_copy[i]=f[i];                    \
-    }                                                                   \
+#define COPY_FIELD(BLOCK, FIELD, FIELD_COPY)                                   \
+  {                                                                            \
+    Field field = BLOCK->data()->field();                                      \
+    enzo_float* f = (enzo_float*)field.values(FIELD);                          \
+    enzo_float* f_copy = (enzo_float*)field.values(FIELD_COPY);                \
+    if (f_copy) {                                                              \
+      int mx, my, mz;                                                          \
+      field.dimensions(0, &mx, &my, &mz);                                      \
+      for (int i = 0; i < mx * my * mz; i++) f_copy[i] = f[i];                 \
+    }                                                                          \
   }
 
 //----------------------------------------------------------------------
 
-EnzoMethodPpm::EnzoMethodPpm (bool store_fluxes_for_corrections,
-                              ParameterGroup p)
-  : Method(),
-    comoving_coordinates_(enzo::cosmology() != nullptr),
-    store_fluxes_for_corrections_(store_fluxes_for_corrections),
-    diffusion_(p.value_logical("diffusion", false)),
-    flattening_(p.value_integer("flattening", 3)),
-    pressure_free_(p.value_logical("pressure_free", false)),
-    steepening_(p.value_logical("steepening", false)),
-    use_minimum_pressure_support_(p.value_logical
-                                  ("use_minimum_pressure_support",false)),
-    minimum_pressure_support_parameter_(p.value_integer
-                                        ("minimum_pressure_support_parameter",
-                                         100))
-{
-  this->set_courant(p.value_float("courant",1.0));
+EnzoMethodPpm::EnzoMethodPpm(bool store_fluxes_for_corrections,
+                             ParameterGroup p)
+    : Method(),
+      comoving_coordinates_(enzo::cosmology() != nullptr),
+      store_fluxes_for_corrections_(store_fluxes_for_corrections),
+      diffusion_(p.value_logical("diffusion", false)),
+      flattening_(p.value_integer("flattening", 3)),
+      pressure_free_(p.value_logical("pressure_free", false)),
+      steepening_(p.value_logical("steepening", false)),
+      use_minimum_pressure_support_(
+          p.value_logical("use_minimum_pressure_support", false)),
+      minimum_pressure_support_parameter_(
+          p.value_integer("minimum_pressure_support_parameter", 100)) {
+  this->set_courant(p.value_float("courant", 1.0));
 
   // check compatability with EnzoPhysicsFluidProps
   EnzoPhysicsFluidProps* fluid_props = enzo::fluid_props();
@@ -76,22 +74,22 @@ EnzoMethodPpm::EnzoMethodPpm (bool store_fluxes_for_corrections,
   cello::define_field("internal_energy");
   cello::define_field("pressure");
   if (rank >= 1) {
-      cello::define_field("velocity_x");
-      cello::define_field("acceleration_x");
+    cello::define_field("velocity_x");
+    cello::define_field("acceleration_x");
   }
   if (rank >= 2) {
-      cello::define_field("velocity_y");
-      cello::define_field("acceleration_y");
+    cello::define_field("velocity_y");
+    cello::define_field("acceleration_y");
   }
   if (rank >= 3) {
-      cello::define_field("velocity_z");
-      cello::define_field("acceleration_z");
+    cello::define_field("velocity_z");
+    cello::define_field("acceleration_z");
   }
 
   // Initialize default Refresh object
 
-  cello::simulation()->refresh_set_name(ir_post_,name());
-  Refresh * refresh = cello::refresh(ir_post_);
+  cello::simulation()->refresh_set_name(ir_post_, name());
+  Refresh* refresh = cello::refresh(ir_post_);
   refresh->add_field("density");
   refresh->add_field("velocity_x");
   refresh->add_field("velocity_y");
@@ -106,13 +104,12 @@ EnzoMethodPpm::EnzoMethodPpm (bool store_fluxes_for_corrections,
   // add all color fields to refresh
   refresh->add_all_fields("color");
 
-   // PPM parameters initialized in EnzoBlock::initialize()
+  // PPM parameters initialized in EnzoBlock::initialize()
 }
 
 //----------------------------------------------------------------------
 
-void EnzoMethodPpm::pup (PUP::er &p)
-{
+void EnzoMethodPpm::pup(PUP::er& p) {
   // NOTE: change this function whenever attributes change
 
   TRACEPUP;
@@ -131,43 +128,42 @@ void EnzoMethodPpm::pup (PUP::er &p)
 
 //----------------------------------------------------------------------
 
-void EnzoMethodPpm::compute ( Block * block) throw()
-{
+void EnzoMethodPpm::compute(Block* block) throw() {
   TRACE_PPM("BEGIN compute()");
 #ifdef COPY_FIELDS_TO_OUTPUT
   const int rank = cello::rank();
-  COPY_FIELD(block,"density","density_in");
-  COPY_FIELD(block,"velocity_x","velocity_x_in");
-  COPY_FIELD(block,"velocity_y","velocity_y_in");
-  if (rank >= 3) COPY_FIELD(block,"velocity_z","velocity_z_in");
-  COPY_FIELD(block,"total_energy","total_energy_in");
-  COPY_FIELD(block,"internal_energy","internal_energy_in");
-  COPY_FIELD(block,"pressure","pressure_in");
-  COPY_FIELD(block,"acceleration_x","acceleration_x_in");
-  COPY_FIELD(block,"acceleration_y","acceleration_y_in");
-  if (rank >= 3) COPY_FIELD(block,"acceleration_z","acceleration_z_in");
+  COPY_FIELD(block, "density", "density_in");
+  COPY_FIELD(block, "velocity_x", "velocity_x_in");
+  COPY_FIELD(block, "velocity_y", "velocity_y_in");
+  if (rank >= 3) COPY_FIELD(block, "velocity_z", "velocity_z_in");
+  COPY_FIELD(block, "total_energy", "total_energy_in");
+  COPY_FIELD(block, "internal_energy", "internal_energy_in");
+  COPY_FIELD(block, "pressure", "pressure_in");
+  COPY_FIELD(block, "acceleration_x", "acceleration_x_in");
+  COPY_FIELD(block, "acceleration_y", "acceleration_y_in");
+  if (rank >= 3) COPY_FIELD(block, "acceleration_z", "acceleration_z_in");
 #endif
 
   bool single_flux_array = true;
-  if (store_fluxes_for_corrections_){
+  if (store_fluxes_for_corrections_) {
     Field field = block->data()->field();
 
     auto field_names = field.groups()->group_list("conserved");
     const int nf = field_names.size();
     std::vector<int> field_list;
     field_list.resize(nf);
-    for (int i=0; i<nf; i++) {
+    for (int i = 0; i < nf; i++) {
       field_list[i] = field.field_id(field_names[i]);
     }
 
-    int nx,ny,nz;
-    field.size(&nx,&ny,&nz);
-    block->data()->flux_data()->allocate(nx,ny,nz,field_list,single_flux_array);
+    int nx, ny, nz;
+    field.size(&nx, &ny, &nz);
+    block->data()->flux_data()->allocate(nx, ny, nz, field_list,
+                                         single_flux_array);
   }
 
   if (block->is_leaf()) {
-
-    EnzoBlock * enzo_block = enzo::block(block);
+    EnzoBlock* enzo_block = enzo::block(block);
 
     // (this should go in interpolation / restriction not here)
     //
@@ -204,59 +200,51 @@ void EnzoMethodPpm::compute ( Block * block) throw()
     //   }
     // }
 
-    TRACE_PPM ("BEGIN SolveHydroEquations");
+    TRACE_PPM("BEGIN SolveHydroEquations");
 
-    EnzoMethodPpm::SolveHydroEquations 
-      ( *enzo_block, block->time(), block->dt(), comoving_coordinates_,
-        single_flux_array, diffusion_, flattening_, pressure_free_,
-        steepening_,
-        use_minimum_pressure_support_,
-        minimum_pressure_support_parameter_);
+    EnzoMethodPpm::SolveHydroEquations(
+        *enzo_block, block->time(), block->dt(), comoving_coordinates_,
+        single_flux_array, diffusion_, flattening_, pressure_free_, steepening_,
+        use_minimum_pressure_support_, minimum_pressure_support_parameter_);
 
-    TRACE_PPM ("END SolveHydroEquations");
-
+    TRACE_PPM("END SolveHydroEquations");
   }
 
 #ifdef COPY_FIELDS_TO_OUTPUT
-  COPY_FIELD(block,"density","density_out");
-  COPY_FIELD(block,"velocity_x","velocity_x_out");
-  COPY_FIELD(block,"velocity_y","velocity_y_out");
-  if (rank >= 3) COPY_FIELD(block,"velocity_z","velocity_z_out");
-  COPY_FIELD(block,"total_energy","total_energy_out");
-  COPY_FIELD(block,"internal_energy","internal_energy_out");
-  COPY_FIELD(block,"pressure","pressure_out");
-  COPY_FIELD(block,"acceleration_x","acceleration_x_out");
-  COPY_FIELD(block,"acceleration_y","acceleration_y_out");
-  if (rank >= 3) COPY_FIELD(block,"acceleration_z","acceleration_z_out");
+  COPY_FIELD(block, "density", "density_out");
+  COPY_FIELD(block, "velocity_x", "velocity_x_out");
+  COPY_FIELD(block, "velocity_y", "velocity_y_out");
+  if (rank >= 3) COPY_FIELD(block, "velocity_z", "velocity_z_out");
+  COPY_FIELD(block, "total_energy", "total_energy_out");
+  COPY_FIELD(block, "internal_energy", "internal_energy_out");
+  COPY_FIELD(block, "pressure", "pressure_out");
+  COPY_FIELD(block, "acceleration_x", "acceleration_x_out");
+  COPY_FIELD(block, "acceleration_y", "acceleration_y_out");
+  if (rank >= 3) COPY_FIELD(block, "acceleration_z", "acceleration_z_out");
 #endif
   TRACE_PPM("END compute()");
 
   block->compute_done();
-
 }
 
 //----------------------------------------------------------------------
 
-double EnzoMethodPpm::timestep ( Block * block ) throw()
-{
-
+double EnzoMethodPpm::timestep(Block* block) throw() {
   TRACE_PPM("timestep()");
 
-  EnzoBlock * enzo_block = enzo::block(block);
+  EnzoBlock* enzo_block = enzo::block(block);
 
-  enzo_float cosmo_a = 1.0, cosmo_dadt=0.0;
+  enzo_float cosmo_a = 1.0, cosmo_dadt = 0.0;
 
-  EnzoPhysicsCosmology * cosmology = enzo::cosmology();
+  EnzoPhysicsCosmology* cosmology = enzo::cosmology();
 
-  ASSERT ("EnzoMethodPpm::timestep()",
-	  "comoving_coordinates enabled but missing EnzoPhysicsCosmology",
-	  ! (comoving_coordinates_ && (cosmology == NULL)) );
+  ASSERT("EnzoMethodPpm::timestep()",
+         "comoving_coordinates enabled but missing EnzoPhysicsCosmology",
+         !(comoving_coordinates_ && (cosmology == NULL)));
 
   if (comoving_coordinates_) {
-
-    cosmology->compute_expansion_factor
-      (&cosmo_a, &cosmo_dadt,(enzo_float)enzo_block->time());
-
+    cosmology->compute_expansion_factor(&cosmo_a, &cosmo_dadt,
+                                        (enzo_float)enzo_block->time());
   }
 
   enzo_float dtBaryons = ENZO_HUGE_VAL;
@@ -272,40 +260,30 @@ double EnzoMethodPpm::timestep ( Block * block ) throw()
 
   int rank = cello::rank();
 
-  enzo_float * density    = (enzo_float *)field.values("density");
-  enzo_float * velocity_x = (rank >= 1) ?
-    (enzo_float *)field.values("velocity_x") : NULL;
-  enzo_float * velocity_y = (rank >= 2) ?
-    (enzo_float *)field.values("velocity_y") : NULL;
-  enzo_float * velocity_z = (rank >= 3) ?
-    (enzo_float *)field.values("velocity_z") : NULL;
-  enzo_float * pressure = (enzo_float *) field.values("pressure");
+  enzo_float* density = (enzo_float*)field.values("density");
+  enzo_float* velocity_x =
+      (rank >= 1) ? (enzo_float*)field.values("velocity_x") : NULL;
+  enzo_float* velocity_y =
+      (rank >= 2) ? (enzo_float*)field.values("velocity_y") : NULL;
+  enzo_float* velocity_z =
+      (rank >= 3) ? (enzo_float*)field.values("velocity_z") : NULL;
+  enzo_float* pressure = (enzo_float*)field.values("pressure");
 
   /* calculate minimum timestep */
 
   int pressure_free_int = pressure_free_;
 
-  FORTRAN_NAME(calc_dt)(&rank,
-			enzo_block->GridDimension,
-			enzo_block->GridDimension+1,
-			enzo_block->GridDimension+2,
-			enzo_block->GridStartIndex,
-			enzo_block->GridEndIndex,
-			enzo_block->GridStartIndex+1,
-			enzo_block->GridEndIndex+1,
-			enzo_block->GridStartIndex+2,
-			enzo_block->GridEndIndex+2,
-			&enzo_block->CellWidth[0],
-			&enzo_block->CellWidth[1],
-			&enzo_block->CellWidth[2],
-			&gamma, &pressure_free_int, &cosmo_a,
-			density, pressure,
-			velocity_x,
-			velocity_y,
-			velocity_z,
-			&dtBaryons);
+  FORTRAN_NAME(calc_dt)
+  (&rank, enzo_block->GridDimension, enzo_block->GridDimension + 1,
+   enzo_block->GridDimension + 2, enzo_block->GridStartIndex,
+   enzo_block->GridEndIndex, enzo_block->GridStartIndex + 1,
+   enzo_block->GridEndIndex + 1, enzo_block->GridStartIndex + 2,
+   enzo_block->GridEndIndex + 2, &enzo_block->CellWidth[0],
+   &enzo_block->CellWidth[1], &enzo_block->CellWidth[2], &gamma,
+   &pressure_free_int, &cosmo_a, density, pressure, velocity_x, velocity_y,
+   velocity_z, &dtBaryons);
 
-  TRACE1 ("dtBaryons: %f",dtBaryons);
+  TRACE1("dtBaryons: %f", dtBaryons);
 
   dtBaryons *= courant_;
 

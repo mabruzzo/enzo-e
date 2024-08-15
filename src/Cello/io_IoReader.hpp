@@ -9,37 +9,26 @@
 #define IO_IO_READER_HPP
 
 class IoReader : public CBase_IoReader {
-
   /// @class    IoReader
   /// @ingroup  Io
-  /// @brief    [\ref Io] 
+  /// @brief    [\ref Io]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  IoReader() throw()
-  : CBase_IoReader()
-  { }
+  IoReader() throw() : CBase_IoReader() {}
 
   /// CHARM++ migration constructor
-  IoReader (CkMigrateMessage *m) :
-    CBase_IoReader(m)
-  { }
+  IoReader(CkMigrateMessage* m) : CBase_IoReader(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p) 
-  {
+  void pup(PUP::er& p) {
     TRACEPUP;
-    CBase_IoReader::pup(p); 
+    CBase_IoReader::pup(p);
   }
 
-private: // functions
-
-private: // attributes
-
+private:  // functions
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
-
 };
 
 #endif /* IO_IO_READER_HPP */
-

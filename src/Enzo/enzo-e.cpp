@@ -41,7 +41,7 @@
 //----------------------------------------------------------------------
 
 extern CProxy_EnzoSimulation proxy_enzo_simulation;
-extern CProxy_Simulation     proxy_simulation;
+extern CProxy_Simulation proxy_simulation;
 
 //----------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ OPTIONS:
 
 //----------------------------------------------------------------------
 
-static void print_usage(const char* argv_0){
+static void print_usage(const char* argv_0) {
   const char* prog;
   if (argv_0 == nullptr) {
     prog = "enzo-e";
@@ -91,21 +91,27 @@ static void print_usage(const char* argv_0){
     prog = (start >= 0) ? argv_0 + start : argv_0;
   }
 
-  printf (help_message_, prog, prog);
+  printf(help_message_, prog, prog);
 }
 
 //----------------------------------------------------------------------
 
 struct Args {
-
-  enum class Mode {Error, Help, Run,
-                   Dryrun, GrackleVersion, Precision, Version};
+  enum class Mode {
+    Error,
+    Help,
+    Run,
+    Dryrun,
+    GrackleVersion,
+    Precision,
+    Version
+  };
 
   Mode mode;
   const char* param_fname;
 
-  static Args help() { return { Mode::Help,  nullptr }; }
-  static Args err()  { return { Mode::Error, nullptr }; }
+  static Args help() { return {Mode::Help, nullptr}; }
+  static Args err() { return {Mode::Error, nullptr}; }
 };
 
 //----------------------------------------------------------------------
@@ -118,11 +124,12 @@ struct Args {
 ///
 /// For that reason, long and short options are both prefixed by 1 hyphen.
 static Args parse_args_(int argc, char** argv) {
-
-  auto eq = [=](int i, const char* ref) {return strcmp(argv[i], ref) == 0;};
+  auto eq = [=](int i, const char* ref) { return strcmp(argv[i], ref) == 0; };
 
   // make a quick pass to scan for help command:
-  for (int i = 1; i < argc; i++) {if (eq(i, "-help")) return Args::help(); }
+  for (int i = 1; i < argc; i++) {
+    if (eq(i, "-help")) return Args::help();
+  }
 
   Args::Mode mode = Args::Mode::Run;
   const char* positional_arg_ptr = nullptr;
@@ -132,20 +139,29 @@ static Args parse_args_(int argc, char** argv) {
     if (is_positional && (positional_arg_ptr == nullptr)) {
       positional_arg_ptr = argv[i];
     } else if (is_positional) {
-      CkPrintf("ERR: Only 1 positional argument allowed."); return Args::err();
+      CkPrintf("ERR: Only 1 positional argument allowed.");
+      return Args::err();
     } else if (argv[i][1] == '\0') {
-      CkPrintf("ERR: invalid argument: \"-\"\n");           return Args::err();
+      CkPrintf("ERR: invalid argument: \"-\"\n");
+      return Args::err();
     } else if (argv[i][1] == '-') {
-      CkPrintf("ERR: invalid option: \"%s\". All options (even long options) "
-               "are prefixed by a single hyphen\n", argv[i]);
+      CkPrintf(
+          "ERR: invalid option: \"%s\". All options (even long options) "
+          "are prefixed by a single hyphen\n",
+          argv[i]);
       return Args::err();
     } else if (mode != Args::Mode::Run) {
-      CkPrintf("ERR: too many flags provided\n");           return Args::err();
+      CkPrintf("ERR: too many flags provided\n");
+      return Args::err();
     } else {
-      if      (eq(i, "-dryrun"))           mode = Args::Mode::Dryrun;
-      else if (eq(i, "-grackle-version"))  mode = Args::Mode::GrackleVersion;
-      else if (eq(i, "-precision"))        mode = Args::Mode::Precision;
-      else if (eq(i, "-version"))          mode = Args::Mode::Version;
+      if (eq(i, "-dryrun"))
+        mode = Args::Mode::Dryrun;
+      else if (eq(i, "-grackle-version"))
+        mode = Args::Mode::GrackleVersion;
+      else if (eq(i, "-precision"))
+        mode = Args::Mode::Precision;
+      else if (eq(i, "-version"))
+        mode = Args::Mode::Version;
       else {
         CkPrintf("ERR: unrecognized option: \"%s\"\n", argv[i]);
         return Args::err();
@@ -157,32 +173,32 @@ static Args parse_args_(int argc, char** argv) {
 }
 
 //----------------------------------------------------------------------
-PARALLEL_MAIN_BEGIN
-{
-
+PARALLEL_MAIN_BEGIN {
   // Initialize parallelization
 
   PARALLEL_INIT;
 
 #ifdef PNG_1_2_X
-  CkPrintf ("PNG_1_2_X\n");
+  CkPrintf("PNG_1_2_X\n");
 #endif
 #ifdef PNG_1_3_X
-  CkPrintf ("PNG_1_3_X\n");
+  CkPrintf("PNG_1_3_X\n");
 #endif
 #ifdef PNG_1_4_X
-  CkPrintf ("PNG_1_4_X\n");
+  CkPrintf("PNG_1_4_X\n");
 #endif
 #ifdef PNG_1_5_X
-  CkPrintf ("PNG_1_5_X\n");
+  CkPrintf("PNG_1_5_X\n");
 #endif
 
   Args parsed_args = parse_args_(PARALLEL_ARGC, PARALLEL_ARGV);
 
   switch (parsed_args.mode) {
-    case Args::Mode::Error: print_usage(PARALLEL_ARGV[0]); CkExit(1);
+    case Args::Mode::Error:
+      print_usage(PARALLEL_ARGV[0]);
+      CkExit(1);
 
-    // handle easy modes that don't care about the positional argument:
+      // handle easy modes that don't care about the positional argument:
 
     case Args::Mode::GrackleVersion: {
 #ifndef CONFIG_USE_GRACKLE
@@ -190,18 +206,25 @@ PARALLEL_MAIN_BEGIN
       CkExit(1);
 #else
       grackle_version gversion = get_grackle_version();
-      CkPrintf ("Grackle Version: %s\n", gversion.version);
-      CkPrintf ("Git Branch:   %s\n", gversion.branch);
-      CkPrintf ("Git Revision: %s\n", gversion.revision);
+      CkPrintf("Grackle Version: %s\n", gversion.version);
+      CkPrintf("Git Branch:   %s\n", gversion.branch);
+      CkPrintf("Git Revision: %s\n", gversion.revision);
       CkExit(0);
 #endif
     }
 
-    case Args::Mode::Help:  print_usage(PARALLEL_ARGV[0]); CkExit(0);
+    case Args::Mode::Help:
+      print_usage(PARALLEL_ARGV[0]);
+      CkExit(0);
 
     case Args::Mode::Precision:
-      if (sizeof(enzo_float) == 4)         { CkPrintf("single\n"); CkExit(0); }
-      else if (sizeof(enzo_float) == 8)    { CkPrintf("double\n"); CkExit(0); }
+      if (sizeof(enzo_float) == 4) {
+        CkPrintf("single\n");
+        CkExit(0);
+      } else if (sizeof(enzo_float) == 8) {
+        CkPrintf("double\n");
+        CkExit(0);
+      }
       ERROR("PARALLEL_MAIN_BEGIN", "error in -precision mode");
 
     case Args::Mode::Version: {
@@ -211,7 +234,7 @@ PARALLEL_MAIN_BEGIN
 #else
       const char* changeset = "?";
 #endif
-      CkPrintf ("changeset: %s\n", changeset);
+      CkPrintf("changeset: %s\n", changeset);
       CkExit(0);
     }
 
@@ -226,7 +249,8 @@ PARALLEL_MAIN_BEGIN
         CkExit(1);
       }
 
-    default: ERROR("PARALLEL_MAIN_BEGIN", "unhandled case of Args::Mode");
+    default:
+      ERROR("PARALLEL_MAIN_BEGIN", "unhandled case of Args::Mode");
   }
 
   // the program only reaches this point if parsed_args.mode is either
@@ -235,9 +259,9 @@ PARALLEL_MAIN_BEGIN
   // Read parameter file
 
   g_parameters.read(parsed_args.param_fname);
-  g_parameters.write("parameters.out",      param_write_cello);
-  g_parameters.write("parameters.libconfig",param_write_libconfig);
-  g_parameters.write(stdout,param_write_monitor);
+  g_parameters.write("parameters.out", param_write_cello);
+  g_parameters.write("parameters.libconfig", param_write_libconfig);
+  g_parameters.write(stdout, param_write_monitor);
   g_enzo_config.read(&g_parameters);
 
   // Initialize unit testing
@@ -245,48 +269,47 @@ PARALLEL_MAIN_BEGIN
   const int ip = CkMyPe();
   const int np = CkNumPes();
 
-  unit_init(ip,np);
+  unit_init(ip, np);
 
   // Initialize Monitor
 
   monitor_ = Monitor::instance();
-  monitor_->set_mode (monitor_mode_root);
+  monitor_->set_mode(monitor_mode_root);
   monitor_->header();
-  monitor_->print ("","BEGIN ENZO-E");
+  monitor_->print("", "BEGIN ENZO-E");
 
   // Exit here if -dryrun
   if (parsed_args.mode == Args::Mode::Dryrun) {
-    monitor_->print ("ENZO-E","dryrun == true; exiting.");
+    monitor_->print("ENZO-E", "dryrun == true; exiting.");
     p_exit(0);
   }
 
   // Print initial baseline memory usage
 
-  Memory * memory = Memory::instance();
-  monitor_->print("Memory","bytes %ld bytes_high %ld",
-		  memory->bytes(), memory->bytes_high());
+  Memory* memory = Memory::instance();
+  monitor_->print("Memory", "bytes %ld bytes_high %ld", memory->bytes(),
+                  memory->bytes_high());
 
 #ifdef CONFIG_USE_PAPI
   int retval = PAPI_library_init(PAPI_VER_CURRENT);
   if (retval != PAPI_VER_CURRENT && retval > 0) {
-    WARNING("Papi::init","PAPI library version mismatch!");
+    WARNING("Papi::init", "PAPI library version mismatch!");
   } else if (retval < 0) {
-    WARNING("Papi::init","PAPI initialization error!");
+    WARNING("Papi::init", "PAPI initialization error!");
   }
 #endif
 
- //--------------------------------------------------
+  //--------------------------------------------------
 
-  proxy_main     = thishandle;
+  proxy_main = thishandle;
 
   // --------------------------------------------------
   // ENTRY: #1 Main::Main() -> EnzoSimulation::EnzoSimulation()
   // ENTRY: create
   // --------------------------------------------------
-  proxy_simulation = proxy_enzo_simulation = CProxy_EnzoSimulation::ckNew
-    (parsed_args.param_fname, strlen(parsed_args.param_fname)+1);
+  proxy_simulation = proxy_enzo_simulation = CProxy_EnzoSimulation::ckNew(
+      parsed_args.param_fname, strlen(parsed_args.param_fname) + 1);
   // --------------------------------------------------
-
 }
 
 PARALLEL_MAIN_END

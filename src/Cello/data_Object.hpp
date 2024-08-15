@@ -9,56 +9,45 @@
 #define DATA_OBJECT_HPP
 
 class Object : public PUP::able {
-
   /// @class    Object
   /// @ingroup  Data
-  /// @brief    [\ref Data] 
+  /// @brief    [\ref Data]
 
-public: // interface
-
+public:  // interface
   /// Constructor
   Object() = default;
 
   /// Charm++ PUP::able declarations
   PUPable_abstract(Object);
 
-  Object (CkMigrateMessage *m)
-    : PUP::able(m)
-  { }
+  Object(CkMigrateMessage* m) : PUP::able(m) {}
 
   /// Copy constructor
-  Object(const Object & Object) = default;
+  Object(const Object& Object) = default;
 
   /// Copy assignment operator
-  Object & operator= (const Object & Object) = default;
+  Object& operator=(const Object& Object) = default;
 
   /// Destructor
   virtual ~Object() = default;
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
+  void pup(PUP::er& p) {
     TRACEPUP;
     PUP::able::pup(p);
   }
 
-public: // virtual methods
-
-  virtual void draw() { }
+public:  // virtual methods
+  virtual void draw() {}
   virtual void print(std::string) = 0;
 
-  virtual int data_size () const = 0;
-  virtual char * save_data (char * buffer) const = 0;
-  virtual char * load_data (char * buffer) = 0;
+  virtual int data_size() const = 0;
+  virtual char* save_data(char* buffer) const = 0;
+  virtual char* load_data(char* buffer) = 0;
 
-private: // functions
-
-
-private: // attributes
-
+private:  // functions
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
-
 };
 
 #endif /* DATA_OBJECT_HPP */
-

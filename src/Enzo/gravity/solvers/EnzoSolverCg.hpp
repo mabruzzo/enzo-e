@@ -9,150 +9,166 @@
 #define ENZO_ENZO_SOLVER_CG_HPP
 
 class EnzoSolverCg : public Solver {
-
   /// @class    EnzoSolverCg
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo]
 
-public: // interface
-
-  EnzoSolverCg (std::string name,
-		std::string field_x,
-		std::string field_b,
-		int monitor_iter,
-		int restart_cycle,
-		int solve_type,
-		int index_prolong,
-		int index_restrict,
-		int min_level,
-		int max_level,
-		int iter_max,
-		double res_tol,
-		int index_precon);
+public:  // interface
+  EnzoSolverCg(std::string name, std::string field_x, std::string field_b,
+               int monitor_iter, int restart_cycle, int solve_type,
+               int index_prolong, int index_restrict, int min_level,
+               int max_level, int iter_max, double res_tol, int index_precon);
 
   /// Constructor
   EnzoSolverCg() throw()
-  : Solver(),
-    A_(NULL),
-    index_precon_(-1),
-    iter_max_(0),
-    ir_(-1), id_(-1), iy_(-1), iz_(-1),
-    nx_(0),ny_(0),nz_(0),
-    mx_(0),my_(0),mz_(0),
-    gx_(0),gy_(0),gz_(0),
-    iter_(0),
-    res_tol_(0.0),
-    rr0_(0),
-    rr_min_(0),rr_max_(0),
-    rr_(0.0), rz_(0.0), rz2_(0.0), dy_(0.0), bs_(0.0), rs_(0.0), xs_(0.0),
-    bc_(0.0),
-    local_(false),
-    ir_matvec_(-1),
-    ir_loop_2_(-1)
-  {};
+      : Solver(),
+        A_(NULL),
+        index_precon_(-1),
+        iter_max_(0),
+        ir_(-1),
+        id_(-1),
+        iy_(-1),
+        iz_(-1),
+        nx_(0),
+        ny_(0),
+        nz_(0),
+        mx_(0),
+        my_(0),
+        mz_(0),
+        gx_(0),
+        gy_(0),
+        gz_(0),
+        iter_(0),
+        res_tol_(0.0),
+        rr0_(0),
+        rr_min_(0),
+        rr_max_(0),
+        rr_(0.0),
+        rz_(0.0),
+        rz2_(0.0),
+        dy_(0.0),
+        bs_(0.0),
+        rs_(0.0),
+        xs_(0.0),
+        bc_(0.0),
+        local_(false),
+        ir_matvec_(-1),
+        ir_loop_2_(-1){};
 
   /// Charm++ PUP::able declarations
   PUPable_decl(EnzoSolverCg);
 
   /// Charm++ PUP::able migration constructor
-  EnzoSolverCg (CkMigrateMessage *m)
-    : Solver(m),
-      A_(NULL),
-      index_precon_(-1),
-      iter_max_(0),
-      ir_(-1), id_(-1), iy_(-1), iz_(-1),
-      nx_(0),ny_(0),nz_(0),
-      mx_(0),my_(0),mz_(0),
-      gx_(0),gy_(0),gz_(0),
-      iter_(0),
-      res_tol_(0.0),
-      rr0_(0),
-      rr_min_(0),rr_max_(0),
-      rr_(0.0), rz_(0.0), rz2_(0.0), dy_(0.0), bs_(0.0), rs_(0.0), xs_(0.0),
-      bc_(0.0),
-      local_(false),
-      ir_matvec_(-1),
-      ir_loop_2_(-1)
+  EnzoSolverCg(CkMigrateMessage* m)
+      : Solver(m),
+        A_(NULL),
+        index_precon_(-1),
+        iter_max_(0),
+        ir_(-1),
+        id_(-1),
+        iy_(-1),
+        iz_(-1),
+        nx_(0),
+        ny_(0),
+        nz_(0),
+        mx_(0),
+        my_(0),
+        mz_(0),
+        gx_(0),
+        gy_(0),
+        gz_(0),
+        iter_(0),
+        res_tol_(0.0),
+        rr0_(0),
+        rr_min_(0),
+        rr_max_(0),
+        rr_(0.0),
+        rz_(0.0),
+        rz2_(0.0),
+        dy_(0.0),
+        bs_(0.0),
+        rs_(0.0),
+        xs_(0.0),
+        bc_(0.0),
+        local_(false),
+        ir_matvec_(-1),
+        ir_loop_2_(-1)
 
   {}
 
   /// Assignment operator
-  EnzoSolverCg & operator= (const EnzoSolverCg & EnzoSolverCg) throw();
+  EnzoSolverCg& operator=(const EnzoSolverCg& EnzoSolverCg) throw();
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   //--------------------------------------------------
 
-public: // virtual functions
-
+public:  // virtual functions
   /// Solve the linear system Ax = b
-  virtual void apply ( std::shared_ptr<Matrix> A, Block * block) throw();
+  virtual void apply(std::shared_ptr<Matrix> A, Block* block) throw();
 
   /// Type of this solver
   virtual std::string type() const { return "cg"; }
 
   //--------------------------------------------------
 
-public: // virtual functions
+public:  // virtual functions
+  /// Continuation after global reduction
+  void shift_1(EnzoBlock* enzo_block) throw();
 
   /// Continuation after global reduction
-  void shift_1(EnzoBlock * enzo_block) throw();
+  void loop_0a(EnzoBlock* enzo_block, CkReductionMsg*) throw();
 
   /// Continuation after global reduction
-  void loop_0a(EnzoBlock * enzo_block, CkReductionMsg *) throw();
-
-    /// Continuation after global reduction
-  void loop_0b(EnzoBlock * enzo_block, CkReductionMsg *) throw();
+  void loop_0b(EnzoBlock* enzo_block, CkReductionMsg*) throw();
 
   /// Continuation after global reduction
-  void loop_2a(EnzoBlock * enzo_block) throw();
-
-    /// Continuation after global reduction
-  void loop_2b(EnzoBlock * enzo_block) throw();
+  void loop_2a(EnzoBlock* enzo_block) throw();
 
   /// Continuation after global reduction
-  void loop_4(EnzoBlock * enzo_block) throw();
+  void loop_2b(EnzoBlock* enzo_block) throw();
 
   /// Continuation after global reduction
-  void loop_6(EnzoBlock * enzo_block) throw();
+  void loop_4(EnzoBlock* enzo_block) throw();
 
-  void end (EnzoBlock * enzo_block, int retval) throw();
+  /// Continuation after global reduction
+  void loop_6(EnzoBlock* enzo_block) throw();
+
+  void end(EnzoBlock* enzo_block, int retval) throw();
 
   /// Set rz_ by EnzoBlock after reduction
-  void set_rz(double rz) throw()    {  rz_ = rz; }
+  void set_rz(double rz) throw() { rz_ = rz; }
 
   /// Set rr_ by EnzoBlock after reduction
-  void set_rr(double rr) throw()    {  rr_ = rr; }
+  void set_rr(double rr) throw() { rr_ = rr; }
 
   /// Set rr_new_ by EnzoBlock after reduction
-  void set_rz2(double rz2) throw()  {  rz2_ = rz2; }
+  void set_rz2(double rz2) throw() { rz2_ = rz2; }
 
   /// Set dy_ by EnzoBlock after reduction
-  void set_dy(double dy) throw()         { dy_ = dy; }
+  void set_dy(double dy) throw() { dy_ = dy; }
 
   /// Set bs_ (B sum) by EnzoBlock after reduction
-  void set_bs(double bs) throw()    { bs_ = bs;  }
+  void set_bs(double bs) throw() { bs_ = bs; }
   /// Set rs_ (R sum) by EnzoBlock after reduction
-  void set_rs(double rs) throw()    { rs_ = rs;  }
+  void set_rs(double rs) throw() { rs_ = rs; }
   /// Set xs_ (X sum) by EnzoBlock after reduction
-  void set_xs(double xs) throw()    { xs_ = xs;  }
+  void set_xs(double xs) throw() { xs_ = xs; }
 
   /// Set bc_ (B count) by EnzoBlock after reduction
-  void set_bc(double bc) throw()    { bc_ = bc;  }
+  void set_bc(double bc) throw() { bc_ = bc; }
 
   /// Set iter_ by EnzoBlock after reduction
-  void set_iter(int iter) throw()        { iter_ = iter; }
+  void set_iter(int iter) throw() { iter_ = iter; }
 
-protected: // methods
-
-  void compute_ (EnzoBlock * enzo_block) throw();
+protected:  // methods
+  void compute_(EnzoBlock* enzo_block) throw();
 
   void begin_1_() throw();
 
   /// Allocate temporary Fields
-  void allocate_temporary_(Field field, Block * block = NULL)
-  {
+  void allocate_temporary_(Field field, Block* block = NULL) {
     field.allocate_temporary(id_);
     field.allocate_temporary(ir_);
     field.allocate_temporary(iy_);
@@ -160,8 +176,7 @@ protected: // methods
   }
 
   /// Dellocate temporary Fields
-  void deallocate_temporary_(Field field, Block * block = NULL)
-  {
+  void deallocate_temporary_(Field field, Block* block = NULL) {
     field.deallocate_temporary(id_);
     field.deallocate_temporary(ir_);
     field.deallocate_temporary(iy_);
@@ -169,18 +184,17 @@ protected: // methods
   }
 
   /// Serial CG solver if local_ == true
-  void local_cg_ (EnzoBlock * enzo_block);
+  void local_cg_(EnzoBlock* enzo_block);
 
   /// Apply boundary conditions for the Field on the local block
-  void refresh_local_(int ix, EnzoBlock * enzo_block);
+  void refresh_local_(int ix, EnzoBlock* enzo_block);
 
   /// Shift Field so that sum(x) == 0
-  void shift_local_(int ix, EnzoBlock * enzo_block);
+  void shift_local_(int ix, EnzoBlock* enzo_block);
 
-  void monitor_output_(EnzoBlock *);
+  void monitor_output_(EnzoBlock*);
 
-protected: // attributes
-
+protected:  // attributes
   // NOTE: change pup() function whenever attributes change
 
   /// Matrix
@@ -199,9 +213,9 @@ protected: // attributes
   int iz_;
 
   /// Block field attributes
-  int nx_,ny_,nz_;
-  int mx_,my_,mz_;
-  int gx_,gy_,gz_;
+  int nx_, ny_, nz_;
+  int mx_, my_, mz_;
+  int gx_, gy_, gz_;
 
   /// Current CG iteration
   int iter_;
@@ -245,8 +259,6 @@ protected: // attributes
 
   int ir_matvec_;
   int ir_loop_2_;
-
 };
 
 #endif /* ENZO_ENZO_SOLVER_CG_HPP */
-

@@ -9,7 +9,6 @@
 #define PARAMETERS_PARAMETER_ACCESSOR_HPP
 
 class ParameterGroup {
-
   /// @class    ParameterGroup
   /// @ingroup  Parameters
   /// @brief    [\ref Parameters] Acts as an interface for accessing parameters
@@ -64,12 +63,9 @@ class ParameterGroup {
   /// ``"Method:null:dt"``
 
 public:
-
   /// construct a new ParameterGroup object
-  ParameterGroup(Parameters &p, const std::string& root_parameter_path)
-    : wrapped_p_(p),
-      root_parameter_path_(root_parameter_path)
-  {
+  ParameterGroup(Parameters& p, const std::string& root_parameter_path)
+      : wrapped_p_(p), root_parameter_path_(root_parameter_path) {
     ASSERT("ParameterGroup::ParameterGroup",
            "root_parameter_path must not have a trailing colon",
            root_parameter_path.back() != ':');
@@ -96,87 +92,100 @@ public:
   /// - if ``*this`` represents the group containing the parameters with paths
   ///   "par_alpha" and "par_beta", then this method would return ``""``
   ///   (Note: by convention, parameters are never actually put in this group)
-  const std::string& get_group_path() const noexcept
-  {return root_parameter_path_;}
+  const std::string& get_group_path() const noexcept {
+    return root_parameter_path_;
+  }
 
-  int value (std::string s, int deflt) noexcept
-  { return value_integer(s,deflt); }
-  double value (std::string s, double deflt) noexcept
-  { return value_float(s,deflt); }
-  bool value (std::string s, bool deflt) noexcept
-  { return value_logical(s, deflt); }
-  std::string value (std::string s, std::string deflt) noexcept
-  { return value_string(s, deflt); }
+  int value(std::string s, int deflt) noexcept {
+    return value_integer(s, deflt);
+  }
+  double value(std::string s, double deflt) noexcept {
+    return value_float(s, deflt);
+  }
+  bool value(std::string s, bool deflt) noexcept {
+    return value_logical(s, deflt);
+  }
+  std::string value(std::string s, std::string deflt) noexcept {
+    return value_string(s, deflt);
+  }
 
-  int value (int i,std::string s, int deflt) noexcept
-  { return list_value_integer(i,s,deflt); }
-  double value (int i,std::string s, double deflt) noexcept
-  { return list_value_float(i,s,deflt); }
-  bool value (int i,std::string s, bool deflt) noexcept
-  { return list_value_logical(i,s,deflt); }
-  std::string value (int i,std::string s, const char * deflt) noexcept
-  { return list_value_string(i,s,deflt); }
-  std::string value (int i,std::string s, std::string deflt) noexcept
-  { return list_value_string(i,s,deflt); }
+  int value(int i, std::string s, int deflt) noexcept {
+    return list_value_integer(i, s, deflt);
+  }
+  double value(int i, std::string s, double deflt) noexcept {
+    return list_value_float(i, s, deflt);
+  }
+  bool value(int i, std::string s, bool deflt) noexcept {
+    return list_value_logical(i, s, deflt);
+  }
+  std::string value(int i, std::string s, const char* deflt) noexcept {
+    return list_value_string(i, s, deflt);
+  }
+  std::string value(int i, std::string s, std::string deflt) noexcept {
+    return list_value_string(i, s, deflt);
+  }
 
   /// Return the type of the given parameter
   parameter_type type(std::string param) noexcept;
 
   /// Return the Param pointer for the specified parameter
-  Param * param (std::string parameter);
+  Param* param(std::string parameter);
 
   /// Return the integer-valued parameter
-  int value_integer (std::string s, int deflt = 0) noexcept;
+  int value_integer(std::string s, int deflt = 0) noexcept;
   /// Return the floating-point valued parameter
-  double value_float (std::string s, double deflt = 0.0) noexcept;
+  double value_float(std::string s, double deflt = 0.0) noexcept;
   /// Return the logical-valued parameter
-  bool value_logical (std::string s, bool deflt = false) noexcept;
+  bool value_logical(std::string s, bool deflt = false) noexcept;
   /// Return the string-valued parameter
-  std::string value_string ( std::string s, std::string deflt = "") noexcept;
+  std::string value_string(std::string s, std::string deflt = "") noexcept;
 
   /// Return the length of the list parameter
-  int list_length (std::string parameter);
+  int list_length(std::string parameter);
   /// Access an integer list element
-  int list_value_integer (int i, std::string s, int deflt = 0) noexcept;
+  int list_value_integer(int i, std::string s, int deflt = 0) noexcept;
   /// Access a floating point list element
-  double list_value_float (int i, std::string s, double deflt = 0.0) noexcept;
+  double list_value_float(int i, std::string s, double deflt = 0.0) noexcept;
   /// Access a logical list element
-  bool list_value_logical (int i, std::string s, bool deflt = false) noexcept;
+  bool list_value_logical(int i, std::string s, bool deflt = false) noexcept;
   /// Access a string list element
-  std::string list_value_string (int, std::string, std::string d="") noexcept;
+  std::string list_value_string(int, std::string, std::string d = "") noexcept;
 
   /// Return the full name of the parameter (including the root parameter path)
-  std::string full_name(const std::string& parameter) const noexcept
-  { return root_parameter_path_ + ":" + parameter; }
+  std::string full_name(const std::string& parameter) const noexcept {
+    return root_parameter_path_ + ":" + parameter;
+  }
 
   /// Returns a vector holding the names of all leaf parameters that share the
   /// root parameter path encapsulated by this object
-  std::vector<std::string> leaf_parameter_names() const noexcept
-  { return wrapped_p_.leaf_parameter_names(root_parameter_path_); }
+  std::vector<std::string> leaf_parameter_names() const noexcept {
+    return wrapped_p_.leaf_parameter_names(root_parameter_path_);
+  }
 
 private:
-
-  std::vector<std::string> pop_wrapped_p_groups_()
-  {
+  std::vector<std::string> pop_wrapped_p_groups_() {
     const int n = wrapped_p_.group_depth();
     std::vector<std::string> grps(n);
-    for (int i = 0; i < n; i++) { grps[i] = wrapped_p_.group(i); }
+    for (int i = 0; i < n; i++) {
+      grps[i] = wrapped_p_.group(i);
+    }
     wrapped_p_.group_clear();
     return grps;
   }
 
-  void restore_wrapped_p_groups_(const std::vector<std::string>& groups)
-  {
+  void restore_wrapped_p_groups_(const std::vector<std::string>& groups) {
     wrapped_p_.group_clear();
-    for (const std::string& grp : groups) { wrapped_p_.group_push(grp); }
+    for (const std::string& grp : groups) {
+      wrapped_p_.group_push(grp);
+    }
   }
 
-private: // attributes
+private:  // attributes
   /// the wrapped Parameters object
   ///
   /// the Parameters object is implicitly assumed to outlive the instance
   /// holding this reference
-  Parameters &wrapped_p_;
+  Parameters& wrapped_p_;
 
   /// The associated root parameter path. All parameters in a given group share
   /// this path

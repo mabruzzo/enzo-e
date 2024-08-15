@@ -14,7 +14,6 @@
 ///
 
 class EnzoMethodStarMakerStochasticSF : public EnzoMethodStarMaker {
-
 public:
   // Create new EnzoStarMakerStochasticSF object
   EnzoMethodStarMakerStochasticSF(ParameterGroup p);
@@ -23,27 +22,23 @@ public:
   PUPable_decl(EnzoMethodStarMakerStochasticSF);
 
   // Charm++ PUP::able declarations
-  EnzoMethodStarMakerStochasticSF (CkMigrateMessage *m)
-   : EnzoMethodStarMaker (m)
-   {  }
+  EnzoMethodStarMakerStochasticSF(CkMigrateMessage* m)
+      : EnzoMethodStarMaker(m) {}
 
   /// Charm++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Apply method
-  virtual void compute ( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
-  virtual std::string particle_type () throw()
-  { return "star";}
+  virtual std::string particle_type() throw() { return "star"; }
 
   /// Name
-  virtual std::string name () throw()
-   { return "star_maker";}
+  virtual std::string name() throw() { return "star_maker"; }
 
-  virtual ~EnzoMethodStarMakerStochasticSF() throw() {};
+  virtual ~EnzoMethodStarMakerStochasticSF() throw(){};
 
 protected:
-
 };
 
 #endif /* EnzoMethodStarMakerStochasticSF */

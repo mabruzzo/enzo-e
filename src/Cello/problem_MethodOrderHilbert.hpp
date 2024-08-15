@@ -6,11 +6,11 @@
 /// @brief    [\ref Problem] Declaration of the MethodOrderHilbert class for
 ///           generating the Hilbert ordering of blocks in the hierarchy. This
 ///           method uses the same communication pattern as MethodOrderMorton
-///           and an iterative algorithm based on lookup tables to compute 
+///           and an iterative algorithm based on lookup tables to compute
 ///           order indices for blocks. The iterative algorithm is based on
-///           those presented in "Mengjuan Li et al 2023 (Efficient entry 
-///           point encoding and decoding algorithms on 2D Hilbert space 
-///           filling curve)" and "Lianyin Jia et al 2022 (Efficient 3D 
+///           those presented in "Mengjuan Li et al 2023 (Efficient entry
+///           point encoding and decoding algorithms on 2D Hilbert space
+///           filling curve)" and "Lianyin Jia et al 2022 (Efficient 3D
 ///           Hilbert curve encoding and decoding algorithms)".
 ///           Note: There are some typos in the lookup tables presented in
 ///           papers cited above. The tables used by this method should be
@@ -20,27 +20,22 @@
 #define PROBLEM_METHOD_ORDER_HILBERT_HPP
 
 class MethodOrderHilbert : public Method {
-
   /// @class    MethodOrderHilbert
   /// @ingroup  Problem
-  /// @brief    [\ref Problem] 
+  /// @brief    [\ref Problem]
 
-public: // interface
-
+public:  // interface
   /// Constructor
   MethodOrderHilbert(int min_level) throw();
 
   /// Charm++ PUP::able declarations
   PUPable_decl(MethodOrderHilbert);
-  
+
   /// Charm++ PUP::able migration constructor
-  MethodOrderHilbert (CkMigrateMessage *m)
-    : Method (m)
-  { }
+  MethodOrderHilbert(CkMigrateMessage* m) : Method(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
+  void pup(PUP::er& p) {
     Method::pup(p);
     p | is_index_;
     p | is_count_;
@@ -52,70 +47,69 @@ public: // interface
     p | min_level_;
   }
 
-  void compute_continue( Block * block);
-  void compute_complete( Block * block);
-  void send_weight(Block * block, int weight, bool self);
-  void recv_weight(Block * block, int ic3[3], int weight, bool self);
-  void send_index(Block * block, int index, int count, bool self);
-  void recv_index(Block * block, int index, int count, bool self);
+  void compute_continue(Block* block);
+  void compute_complete(Block* block);
+  void send_weight(Block* block, int weight, bool self);
+  void recv_weight(Block* block, int ic3[3], int weight, bool self);
+  void send_index(Block* block, int index, int count, bool self);
+  void recv_index(Block* block, int index, int count, bool self);
 
-public: // virtual methods
-  
+public:  // virtual methods
   /// Apply the method to determine the Hilbert ordering of blocks
-  virtual void compute( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
-  virtual std::string name () throw () 
-  { return "order_hilbert"; }
+  virtual std::string name() throw() { return "order_hilbert"; }
 
-private: // methods
-
-  /// Return the pointer to the Block's Hilbert ordering index 
-  long long * pindex_(Block * block);
+private:  // methods
+  /// Return the pointer to the Block's Hilbert ordering index
+  long long* pindex_(Block* block);
 
   /// Return the pointer to the number of Block indices
-  long long * pcount_(Block * block);
+  long long* pcount_(Block* block);
 
   /// Return the pointer to the Index of the "next" block
-  Index * pnext_(Block * block);
+  Index* pnext_(Block* block);
 
   /// Return the pointer to the Block's weight (including self)
-  long long * pweight_(Block * block);
+  long long* pweight_(Block* block);
 
   /// Return the pointer to the given Block's child weight
-  long long * pweight_child_(Block * block, int index);
+  long long* pweight_child_(Block* block, int index);
 
-  /// Return the pointer to the Block's Hilbert ordering index 
-  Sync * psync_index_(Block * block);
+  /// Return the pointer to the Block's Hilbert ordering index
+  Sync* psync_index_(Block* block);
 
   /// Return the pointer to the Block's weight (including self)
-  Sync * psync_weight_(Block * block);
+  Sync* psync_weight_(Block* block);
 
-  /// Write child blocks of the given block to the children array in the hilbert order.
-  void hilbert_children(Block * block, int* children);
+  /// Write child blocks of the given block to the children array in the hilbert
+  /// order.
+  void hilbert_children(Block* block, int* children);
 
   /// Return the index appearing after the given index in the hilber order.
-  Index hilbert_next (Index index, int rank, bool is_leaf, int min_level);
+  Index hilbert_next(Index index, int rank, bool is_leaf, int min_level);
 
-  /// Write, to the given states array, the recursive states of the given index up to level m. 
+  /// Write, to the given states array, the recursive states of the given index
+  /// up to level m.
   void hilbert_states(Index index, int m, int* states);
 
-  /// Check if the given coordinate is the last in the hilbert order with state T. 
+  /// Check if the given coordinate is the last in the hilbert order with state
+  /// T.
   bool is_last_child(int T, int coord);
 
-  /// Convert a zyx coordinate to the corresponding hilbert index for a given state.
+  /// Convert a zyx coordinate to the corresponding hilbert index for a given
+  /// state.
   int coord_to_hilbert_ind(int state, int coord);
 
   /// Convert a zyx coordinate to the next state for a given state.
   int coord_to_next_state(int state, int coord);
 
-  /// Convert a hilbert index to the corresponding zyx coordinate for a given state.
+  /// Convert a hilbert index to the corresponding zyx coordinate for a given
+  /// state.
   int hilbert_ind_to_coord(int state, int hilbert_ind);
 
-private: // functions
-
-
-private: // attributes
-
+private:  // functions
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
 
   /// Block Scalar<int> index
@@ -149,4 +143,3 @@ private: // attributes
 };
 
 #endif /* PROBLEM_METHOD_ORDER_HILBERT_HPP */
-

@@ -11,7 +11,6 @@
 #include "cello.hpp"
 #include "parameters_ParameterGroup.hpp"
 class EnzoPhysicsGravity : public Physics {
-
   /// @class    EnzoPhysicsGravity
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Provides a central interface for querying the
@@ -46,8 +45,7 @@ class EnzoPhysicsGravity : public Physics {
   ///    of this class (in other words, EnzoPhysicsCosmology must be
   ///    initialized first)
 
-public: // interface
-
+public:  // interface
   /// Constructor
   EnzoPhysicsGravity(ParameterGroup p);
 
@@ -55,18 +53,14 @@ public: // interface
   PUPable_decl(EnzoPhysicsGravity);
 
   /// CHARM++ migration constructor
-  EnzoPhysicsGravity(CkMigrateMessage *m)
-    : Physics (m),
-      grav_constant_codeU_(-1.0)
-  { }
+  EnzoPhysicsGravity(CkMigrateMessage* m)
+      : Physics(m), grav_constant_codeU_(-1.0) {}
 
   /// Virtual destructor
-  virtual ~EnzoPhysicsGravity()
-  { }
+  virtual ~EnzoPhysicsGravity() {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p) override
-  {
+  void pup(PUP::er& p) override {
     TRACEPUP;
     Physics::pup(p);
     p | grav_constant_codeU_;
@@ -76,11 +70,10 @@ public: // interface
   std::string type() const override { return "gravity"; }
 
   /// Return the user-configurable gravitational constant in cgs
-  double grav_constant_cgs() const noexcept
-  {
+  double grav_constant_cgs() const noexcept {
     return (grav_constant_codeU_ <= 0)
-      ? enzo_constants::standard_grav_constant
-      : grav_constant_codeU_ / cgs_div_code_units_factor_();
+               ? enzo_constants::standard_grav_constant
+               : grav_constant_codeU_ / cgs_div_code_units_factor_();
   }
 
   /// Return the user-configurable gravitational constant in code units.
@@ -96,11 +89,10 @@ public: // interface
   /// @note
   /// If the user sets this to the standard real-world value, this should
   /// correspond to 6.67384e-8 cm^3 g^-1 s^-2 when converted to cgs.
-  double grav_constant_codeU() const noexcept
-  {
+  double grav_constant_codeU() const noexcept {
     if (enzo::cosmology() != nullptr) {
-      ASSERT("EnzoPhysicsGravity::grav_constant_codeU",
-             "sanity check failed", grav_constant_codeU_ <= 0);
+      ASSERT("EnzoPhysicsGravity::grav_constant_codeU", "sanity check failed",
+             grav_constant_codeU_ <= 0);
       // we explicitly avoid using a Units* object because:
       // (i) its unnecessary (and probably marginally less precise)
       // (ii) EnzoUnits* relies on EnzoPhysicsCosmology having some state
@@ -117,10 +109,8 @@ public: // interface
   }
 
 protected:
-
   /// helper function that computes conversion between code & cgs units
-  static double cgs_div_code_units_factor_() noexcept
-  {
+  static double cgs_div_code_units_factor_() noexcept {
     // we avoid using EnzoUnits* since: (i) it's unnecessary and (ii) so we
     // don't need to ensure that it's defined before this inline function
     Units* units = cello::units();

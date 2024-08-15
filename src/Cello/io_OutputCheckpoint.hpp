@@ -1,7 +1,7 @@
 // See LICENSE_CELLO file for license and copyright information
 
-/// @file     io_OutputCheckpoint.hpp 
-/// @author   James Bordner (jobordner@ucsd.edu) 
+/// @file     io_OutputCheckpoint.hpp
+/// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2011-09-26
 /// @brief    [\ref Io] Declaration for the OutputCheckpoint class
 
@@ -9,70 +9,56 @@
 #define IO_OUTPUT_CHECKPOINT_HPP
 
 class OutputCheckpoint : public Output {
-
   /// @class    OutputCheckpoint
   /// @ingroup  Io
   /// @brief [\ref Io] class for reading and writing Checkpoint files
 
-public: // functions
-
+public:  // functions
   /// Empty constructor for Charm++ pup()
-  OutputCheckpoint() throw() { }
+  OutputCheckpoint() throw() {}
 
   /// Create an uninitialized OutputCheckpoint object
-  OutputCheckpoint(int index, 
-		   const Factory * factory, 
-		   Config * config, 
-		   int process_count) throw();
+  OutputCheckpoint(int index, const Factory* factory, Config* config,
+                   int process_count) throw();
 
   /// Destructor
-  ~OutputCheckpoint() throw()  { }
+  ~OutputCheckpoint() throw() {}
 
   /// Charm++ PUP::able declarations
   PUPable_decl(OutputCheckpoint);
 
   /// Charm++ PUP::able migration constructor
-  OutputCheckpoint (CkMigrateMessage *m) : Output (m) { }
+  OutputCheckpoint(CkMigrateMessage* m) : Output(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
-public: // virtual functions
-
+public:  // virtual functions
   /// Open (or create) a file for IO
-  virtual void open () throw()
-  { /* EMPTY */ };
+  virtual void open() throw() { /* EMPTY */ };
 
   /// Close file for IO
-  virtual void close () throw()
-  { /* EMPTY */ };
-  
+  virtual void close() throw() { /* EMPTY */ };
+
   /// Write Simulation data to disk
-  virtual void write_simulation ( const Simulation * simulation ) throw();
+  virtual void write_simulation(const Simulation* simulation) throw();
 
   /// Write local field to disk
-  virtual void write_field_data
-  ( const FieldData * field_data, 
-    int index_field) throw()
-  { /* EMPTY */ }
+  virtual void write_field_data(const FieldData* field_data,
+                                int index_field) throw() { /* EMPTY */ }
 
   /// Write local particle to disk
-  virtual void write_particle_data
-  ( const ParticleData * particle_data, 
-    int index_particle) throw()
-  { /* EMPTY */ }
+  virtual void write_particle_data(const ParticleData* particle_data,
+                                   int index_particle) throw() { /* EMPTY */ }
 
-private: // private functions
-
+private:  // private functions
   /// Read the checkpoint_file_ and update Simulation::config() with
   /// updated values
   void update_config_();
 
-  private: // attributes
-
+private:  // attributes
   /// Name of parameter file to read on restart for updated parameters
   std::string checkpoint_file_;
-
 };
 
 #endif /* IO_OUTPUT_CHECKPOINT_HPP */

@@ -13,7 +13,7 @@
 /// @typedef lutarray
 /// @brief   Specialization of std::array to be used to hold enzo_floats
 ///          associated with lookup tables (used with Riemann solvers)
-template<class LUT>
+template <class LUT>
 using lutarray = std::array<enzo_float, LUT::num_entries>;
 
 //----------------------------------------------------------------------
@@ -22,7 +22,7 @@ using lutarray = std::array<enzo_float, LUT::num_entries>;
 #define COMBINE(prefix, suffix) prefix##suffix
 #define COMBINE3(first, second, third) first##second##third
 // Yields a stringized version of the combined token
-#define STRINGIZE_COMBINE(prefix,suffix) STR_C_1(COMBINE(prefix,suffix))
+#define STRINGIZE_COMBINE(prefix, suffix) STR_C_1(COMBINE(prefix, suffix))
 #define STR_C_1(s) STR_C_2(s)
 #define STR_C_2(s) #s
 
@@ -35,16 +35,18 @@ using lutarray = std::array<enzo_float, LUT::num_entries>;
 ///           present, indicates a value of minus 1. This implementation is
 ///           loosely inspired by https://stackoverflow.com/a/16000226
 
-#define CREATE_ENUM_VALUE_FORWARDER(name)                                     \
-  /* Default case: target template doesn't have a member named {name}. */     \
-  template <typename T, typename = int>                                       \
-  struct COMBINE(forward_, name)                                              \
-  {static constexpr int value = -1; };                                        \
-                                                                              \
-  /* Specialized case: */                                                     \
-  template <typename T>                                                       \
-  struct COMBINE(forward_, name) <T, decltype((void) T::name, 0)>             \
-  { static constexpr int value = T::name; }
+#define CREATE_ENUM_VALUE_FORWARDER(name)                                      \
+  /* Default case: target template doesn't have a member named {name}. */      \
+  template <typename T, typename = int>                                        \
+  struct COMBINE(forward_, name) {                                             \
+    static constexpr int value = -1;                                           \
+  };                                                                           \
+                                                                               \
+  /* Specialized case: */                                                      \
+  template <typename T>                                                        \
+  struct COMBINE(forward_, name)<T, decltype((void)T::name, 0)> {              \
+    static constexpr int value = T::name;                                      \
+  }
 // omit trailing semicolon to avoid -Wpedantic warning
 
 //----------------------------------------------------------------------
@@ -54,25 +56,25 @@ using lutarray = std::array<enzo_float, LUT::num_entries>;
 ///           struct/class named for actively advected quantities from
 ///           FIELD_TABLE
 #define LUT_INDEX_FORWARDER_T_SCALAR(name) CREATE_ENUM_VALUE_FORWARDER(name);
-#define LUT_INDEX_FORWARDER_T_VECTOR(name)                                    \
-  CREATE_ENUM_VALUE_FORWARDER(COMBINE(name, _i));                             \
-  CREATE_ENUM_VALUE_FORWARDER(COMBINE(name, _j));                             \
+#define LUT_INDEX_FORWARDER_T_VECTOR(name)                                     \
+  CREATE_ENUM_VALUE_FORWARDER(COMBINE(name, _i));                              \
+  CREATE_ENUM_VALUE_FORWARDER(COMBINE(name, _j));                              \
   CREATE_ENUM_VALUE_FORWARDER(COMBINE(name, _k));
 #define LUT_INDEX_FORWARDER_F_SCALAR(name) /* ... */
 #define LUT_INDEX_FORWARDER_F_VECTOR(name) /* ... */
 
 namespace LUTIndexForward_ {
-  #define ENTRY(name, math_type, category, if_advection)                      \
-    LUT_INDEX_FORWARDER_##if_advection ## _ ## math_type (name)
-  FIELD_TABLE
-  #undef ENTRY
+#define ENTRY(name, math_type, category, if_advection)                         \
+  LUT_INDEX_FORWARDER_##if_advection##_##math_type(name)
+FIELD_TABLE
+#undef ENTRY
 
-  // forward number of equations
-  CREATE_ENUM_VALUE_FORWARDER(num_entries);
+// forward number of equations
+CREATE_ENUM_VALUE_FORWARDER(num_entries);
 
-  // forward the first index holding specific quantities
-  CREATE_ENUM_VALUE_FORWARDER(specific_start);
-}
+// forward the first index holding specific quantities
+CREATE_ENUM_VALUE_FORWARDER(specific_start);
+}  // namespace LUTIndexForward_
 
 //----------------------------------------------------------------------
 
@@ -82,19 +84,22 @@ namespace LUTIndexForward_ {
 ///           `EnzoRiemannLUTWrapper` by forwarding the enum member values from
 ///           a separate LUT for each of the actively advected quantities from
 ///           FIELD_TABLE
-#define WRAPPED_LUT_INDEX_VALUE_T_SCALAR(name, LUT)                           \
+#define WRAPPED_LUT_INDEX_VALUE_T_SCALAR(name, LUT)                            \
   name = LUTIndexForward_::COMBINE(forward_, name)<LUT>::value,
-#define WRAPPED_LUT_INDEX_VALUE_T_VECTOR(name, LUT)                           \
-  COMBINE(name,_i) = LUTIndexForward_::COMBINE3(forward_,name,_i)<LUT>::value,\
-  COMBINE(name,_j) = LUTIndexForward_::COMBINE3(forward_,name,_j)<LUT>::value,\
-  COMBINE(name,_k) = LUTIndexForward_::COMBINE3(forward_,name,_k)<LUT>::value,
+#define WRAPPED_LUT_INDEX_VALUE_T_VECTOR(name, LUT)                            \
+  COMBINE(name,                                                                \
+          _i) = LUTIndexForward_::COMBINE3(forward_, name, _i)<LUT>::value,    \
+          COMBINE(name, _j) =                                                  \
+              LUTIndexForward_::COMBINE3(forward_, name, _j)<LUT>::value,      \
+          COMBINE(name, _k) =                                                  \
+              LUTIndexForward_::COMBINE3(forward_, name, _k)<LUT>::value,
 #define WRAPPED_LUT_INDEX_VALUE_F_SCALAR(name, LUT) /* ... */
 #define WRAPPED_LUT_INDEX_VALUE_F_VECTOR(name, LUT) /* ... */
 
 //----------------------------------------------------------------------
 
 template <typename InputLUT>
-struct EnzoRiemannLUT{
+struct EnzoRiemannLUT {
   /// @class    EnzoRiemannLUT
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Provides a compile-time lookup table that maps the
@@ -244,10 +249,10 @@ public:
   /// quantity and component of a vector quantity in FIELD_TABLE by forwarding
   /// values from InputLUT (entries not included in InputLUT default to -1)
   enum qkey {
-    #define ENTRY(name, math_type, category, if_advection)                 \
-      WRAPPED_LUT_INDEX_VALUE_##if_advection##_##math_type (name, InputLUT)
+#define ENTRY(name, math_type, category, if_advection)                         \
+  WRAPPED_LUT_INDEX_VALUE_##if_advection##_##math_type(name, InputLUT)
     FIELD_TABLE
-    #undef ENTRY
+#undef ENTRY
   };
 
   /// The entry with the minimum (non-negative) index corresponding to a
@@ -255,18 +260,17 @@ public:
   /// must have smaller indices (defaults to -1 if not explicitly specified in
   /// InputLUT)
   static constexpr std::size_t specific_start =
-    LUTIndexForward_::forward_specific_start<InputLUT>::value;
+      LUTIndexForward_::forward_specific_start<InputLUT>::value;
 
   /// The total number of entries in the InputLUT (with non-negative indices).
   /// (defaults to -1 if not explicitly set in InputLUT)
   static constexpr std::size_t num_entries =
-    LUTIndexForward_::forward_num_entries<InputLUT>::value;
+      LUTIndexForward_::forward_num_entries<InputLUT>::value;
 
   // perform some sanity checks:
   static_assert(qkey::density >= 0,
                 "InputLUT must have an entry corresponding to density");
-  static_assert((qkey::velocity_i >= 0 &&
-                 qkey::velocity_j >= 0 &&
+  static_assert((qkey::velocity_i >= 0 && qkey::velocity_j >= 0 &&
                  qkey::velocity_k >= 0),
                 "InputLUT must have entries for each velocity component.");
   static_assert(specific_start > 0,
@@ -282,13 +286,12 @@ private:
   /// there is no harm in doing so
   EnzoRiemannLUT() {}
 
-public: //associated static functions
-
+public:  // associated static functions
   /// indicates whether the LUT has any bfields
   static constexpr bool has_bfields =
-    std::integral_constant<bool, ((qkey::bfield_i>=0) ||
-                                  (qkey::bfield_j>=0) ||
-                                  (qkey::bfield_k>=0))>::value;
+      std::integral_constant<bool,
+                             ((qkey::bfield_i >= 0) || (qkey::bfield_j >= 0) ||
+                              (qkey::bfield_k >= 0))>::value;
 
   /// for each actively advected scalar integration quantity and component of
   /// an actively advected vector integration quantity in FIELD_TABLE, this
@@ -298,7 +301,7 @@ public: //associated static functions
   /// The function should expect (std::string name, int index). In cases where
   /// quantites in FIELD_TABLE do not appear in the wrapped InputLUT, an index
   /// of -1 is passed.
-  template<class Function>
+  template <class Function>
   static void for_each_entry(Function fn) noexcept;
 
   /// a function that performs a check to make sure that the InputLUT satisfies
@@ -313,10 +316,10 @@ public: //associated static functions
 ///           unary function to the entries of named for advection related
 ///           quantities in FIELD_TABLE
 #define LUT_UNARY_FUNC_T_SCALAR(func, LUT, name) func(#name, LUT::name)
-#define LUT_UNARY_FUNC_T_VECTOR(func, LUT, name)                              \
-  func(STRINGIZE_COMBINE(name,_i), LUT::COMBINE(name,_i));                    \
-  func(STRINGIZE_COMBINE(name,_j), LUT::COMBINE(name,_j));                    \
-  func(STRINGIZE_COMBINE(name,_k), LUT::COMBINE(name,_k))
+#define LUT_UNARY_FUNC_T_VECTOR(func, LUT, name)                               \
+  func(STRINGIZE_COMBINE(name, _i), LUT::COMBINE(name, _i));                   \
+  func(STRINGIZE_COMBINE(name, _j), LUT::COMBINE(name, _j));                   \
+  func(STRINGIZE_COMBINE(name, _k), LUT::COMBINE(name, _k))
 #define LUT_UNARY_FUNC_F_SCALAR(func, LUT, name) /* ... */
 #define LUT_UNARY_FUNC_F_VECTOR(func, LUT, name) /* ... */
 
@@ -327,53 +330,47 @@ public: //associated static functions
 /// @param fn Unary function or that accepts the name of the  member and the
 /// value of the member as arguments
 
-template<class LUT>
-template<class Function>
-void EnzoRiemannLUT<LUT>::for_each_entry(Function fn) noexcept{
-  #define ENTRY(name, math_type, category, if_advection)                      \
-    LUT_UNARY_FUNC_##if_advection##_##math_type (fn,                          \
-                                                 EnzoRiemannLUT<LUT>,  \
-                                                 name);
+template <class LUT>
+template <class Function>
+void EnzoRiemannLUT<LUT>::for_each_entry(Function fn) noexcept {
+#define ENTRY(name, math_type, category, if_advection)                         \
+  LUT_UNARY_FUNC_##if_advection##_##math_type(fn, EnzoRiemannLUT<LUT>, name);
   FIELD_TABLE
-  #undef ENTRY
+#undef ENTRY
 }
 
 //----------------------------------------------------------------------
 
 template <class InputLUT>
-void EnzoRiemannLUT<InputLUT>::validate()
-  noexcept
-{ 
+void EnzoRiemannLUT<InputLUT>::validate() noexcept {
   // the elements in the array are default-initialized (they are each "")
   std::array<std::string, EnzoRiemannLUT<InputLUT>::num_entries> entry_names;
 
   // define a lambda function to execute for every member of lut
-  auto fn = [&](std::string name, int index)
-    {
-      if ((index >= 0) && (index >= EnzoRiemannLUT<InputLUT>::num_entries)) {
+  auto fn = [&](std::string name, int index) {
+    if ((index >= 0) && (index >= EnzoRiemannLUT<InputLUT>::num_entries)) {
+      ERROR3("EnzoRiemannLUT<InputLUT>::validate",
+             ("The value of %s, %d, is greater than or equal to "
+              "InputLUT::num_entries, %d"),
+             name.c_str(), index, EnzoRiemannLUT<InputLUT>::num_entries);
+    } else if (index >= 0) {
+      if (entry_names[index] != "") {
         ERROR3("EnzoRiemannLUT<InputLUT>::validate",
-               ("The value of %s, %d, is greater than or equal to "
-                "InputLUT::num_entries, %d"),
-               name.c_str(), index, EnzoRiemannLUT<InputLUT>::num_entries);
-      } else if (index >= 0) {
-        if (entry_names[index] != ""){
-          ERROR3("EnzoRiemannLUT<InputLUT>::validate",
-                 "%s and %s both have values of %d",
-                 name.c_str(), entry_names[index], index);
-        }
-        entry_names[index] = name;
+               "%s and %s both have values of %d", name.c_str(),
+               entry_names[index], index);
       }
-    };
-  
+      entry_names[index] = name;
+    }
+  };
 
   EnzoRiemannLUT<InputLUT>::for_each_entry(fn);
 
-  std::size_t max_conserved =  0;
-  std::size_t min_specific =  EnzoRiemannLUT<InputLUT>::num_entries;
+  std::size_t max_conserved = 0;
+  std::size_t min_specific = EnzoRiemannLUT<InputLUT>::num_entries;
 
-  for (std::size_t i = 0; i < entry_names.size(); i++){
+  for (std::size_t i = 0; i < entry_names.size(); i++) {
     std::string name = entry_names[i];
-    if (name == ""){
+    if (name == "") {
       ERROR2("EnzoRiemannLUT<InputLUT>::validate",
              "The value of num_entries, %d, is wrong. There is no entry for "
              "index %d",
@@ -381,9 +378,9 @@ void EnzoRiemannLUT<InputLUT>::validate()
     }
 
     std::string quantity =
-      EnzoCenteredFieldRegistry::get_actively_advected_quantity_name(name,
-                                                                     true);
-    if (quantity == ""){
+        EnzoCenteredFieldRegistry::get_actively_advected_quantity_name(name,
+                                                                       true);
+    if (quantity == "") {
       ERROR2("EnzoRiemannLUT<InputLUT>::validate",
              "\"%s\" (at index %d) isn't an actively advected scalar quantity"
              "or a component of an actively advected vector quantity",
@@ -397,21 +394,23 @@ void EnzoRiemannLUT<InputLUT>::validate()
       ERROR("EnzoRiemannLUT<InputLUT>::validate",
             ("the lookup table's entry for index 0 should correspond to a "
              "conserved quantity"));
-    } else if (((i+1) == entry_names.size()) &&
+    } else if (((i + 1) == entry_names.size()) &&
                (category != FieldCat::specific)) {
       ERROR("EnzoRiemannLUT<InputLUT>::validate",
             ("the lookup table's entry for the index InputLUT::num_entries-1 "
              "should correspond to a specific quantity"));
     }
 
-    switch(category){
-      case FieldCat::conserved : { max_conserved = std::max(max_conserved, i);
-                                   break;
+    switch (category) {
+      case FieldCat::conserved: {
+        max_conserved = std::max(max_conserved, i);
+        break;
       }
-      case FieldCat::specific  : { min_specific  = std::min(min_specific,  i);
-                                   break;
+      case FieldCat::specific: {
+        min_specific = std::min(min_specific, i);
+        break;
       }
-      case FieldCat::other : {
+      case FieldCat::other: {
         ERROR1("EnzoRiemannLUT<InputLUT>::validate",
                ("%s corresponds to a quantity with FieldCat::other. Quantities "
                 "of this category should not be included in a lookup table."),
@@ -419,11 +418,10 @@ void EnzoRiemannLUT<InputLUT>::validate()
       }
     }
   }
-   
 
   // The assumption is that all LUTs contain at least 1 conserved quantity
   // (nominally density) and at least 1 specific quantity (nominally velocity)
-  if ((max_conserved+1) != min_specific){
+  if ((max_conserved + 1) != min_specific) {
     ERROR("EnzoRiemannLUT<InputLUT>::validate",
           ("InputLUT's entries corresponding to conserved quantities are not "
            "all grouped together at indices smaller than those corresponding "
@@ -433,7 +431,6 @@ void EnzoRiemannLUT<InputLUT>::validate()
            "InputLUT's specfic_start value should be set to %d, not %d.",
            (int)min_specific, (int)EnzoRiemannLUT<InputLUT>::specific_start);
   }
-
 
   // (It would be faster to include this within the above loop, but this is]
   // more readable)
@@ -446,24 +443,24 @@ void EnzoRiemannLUT<InputLUT>::validate()
   char prev_entry_vector_ax = '\0';
   std::string prev_quantity = "";
 
-  for (const auto& name : entry_names){
+  for (const auto& name : entry_names) {
     char component;
     const std::string cur_quantity =
-      EnzoCenteredFieldRegistry::get_actively_advected_quantity_name
-      (name, true, &component);
+        EnzoCenteredFieldRegistry::get_actively_advected_quantity_name(
+            name, true, &component);
 
-    if (component == '\0'){ // name isn't a component of a vector
+    if (component == '\0') {  // name isn't a component of a vector
       prev_entry_vector_ax = '\0';
-      prev_quantity = ""; // we intentionally use an empty string
+      prev_quantity = "";  // we intentionally use an empty string
     } else {
-      if ( (component == 'j') && ((cur_quantity != prev_quantity) ||
-                                  (prev_entry_vector_ax != 'i')) ){
+      if ((component == 'j') &&
+          ((cur_quantity != prev_quantity) || (prev_entry_vector_ax != 'i'))) {
         ERROR2("EnzoRiemannLUT<InputLUT>::validate",
                "\"%s_j\" is expected to have an index that is 1 greater than "
                "the index of \"%s_i\".",
                cur_quantity.c_str(), cur_quantity.c_str());
-      } else if ( (component == 'k') && ((cur_quantity != prev_quantity) ||
-                                         (prev_entry_vector_ax != 'j')) ){
+      } else if ((component == 'k') && ((cur_quantity != prev_quantity) ||
+                                        (prev_entry_vector_ax != 'j'))) {
         ERROR2("EnzoRiemannLUT<InputLUT>::validate",
                "\"%s_k\" is expected to have an index that is 1 greater than "
                "the index of \"%s_j\".",

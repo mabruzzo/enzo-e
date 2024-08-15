@@ -19,10 +19,7 @@
 // Typedefs
 //----------------------------------------------------------------------
 
-enum meta_type {
-  meta_type_file,
-  meta_type_group
-};
+enum meta_type { meta_type_file, meta_type_group };
 
 //----------------------------------------------------------------------
 // Global functions
@@ -30,29 +27,28 @@ enum meta_type {
 
 /// Namespace for global constants and functions
 namespace cello {
-  namespace io {
+namespace io {
 
-    /// Writes the version string to an output file
-    inline void write_version_metadata(File* file)
-    {
-      ASSERT("cello::write_version_metadata()", "File object must not be null",
-             file != nullptr);
+/// Writes the version string to an output file
+inline void write_version_metadata(File* file) {
+  ASSERT("cello::write_version_metadata()", "File object must not be null",
+         file != nullptr);
 
-      // define a variable to ensure CELLO_VERSION is actually defined and that
-      // it is replaced with a string
-      const char* version_str = CELLO_VERSION;
+  // define a variable to ensure CELLO_VERSION is actually defined and that
+  // it is replaced with a string
+  const char* version_str = CELLO_VERSION;
 
-      // length intentionally excludes the terminating null character
-      // (note: this is the default behvaior of strlen).
-      int length = static_cast<int>(std::strlen(version_str));
+  // length intentionally excludes the terminating null character
+  // (note: this is the default behvaior of strlen).
+  int length = static_cast<int>(std::strlen(version_str));
 
-      ASSERT("cello::write_version_metadata()", // sanity check!
-             "version string must have at least 1 character", length > 0);
-      file->file_write_meta(version_str, "version", type_char, length);
-    }
-  }
-
+  ASSERT("cello::write_version_metadata()",  // sanity check!
+         "version string must have at least 1 character", length > 0);
+  file->file_write_meta(version_str, "version", type_char, length);
 }
+}  // namespace io
+
+}  // namespace cello
 //----------------------------------------------------------------------
 // Component class includes
 //----------------------------------------------------------------------
@@ -82,6 +78,4 @@ namespace cello {
 #include "io_ScheduleInterval.hpp"
 #include "io_ScheduleList.hpp"
 
-
 #endif /* _IO_HPP */
-

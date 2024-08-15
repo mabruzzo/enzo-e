@@ -8,15 +8,13 @@
 #ifndef ENZO_ENZO_RECONSTRUCTOR_HPP
 #define ENZO_ENZO_RECONSTRUCTOR_HPP
 
-class EnzoReconstructor
-{
+class EnzoReconstructor {
   /// @class    EnzoReconstructor
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates reconstruction of primitives at
   ///           cell interfaces
 
-public: // interface
-
+public:  // interface
   /// Factory method for constructing EnzoReconstructor
   /// (The signature of this method may need to be modified)
   ///
@@ -27,18 +25,16 @@ public: // interface
   ///     include "nn" and "plm"
   /// @param[in] theta_limiter An argument that is optionally used to tune
   ///     certain types of limiters
-  static EnzoReconstructor* construct_reconstructor
-    (const std::vector<std::string> &active_primitive_keys,
-     std::string name, enzo_float theta_limiter);
+  static EnzoReconstructor* construct_reconstructor(
+      const std::vector<std::string>& active_primitive_keys, std::string name,
+      enzo_float theta_limiter);
 
   /// Create a new EnzoReconstructor
   EnzoReconstructor(std::vector<std::string> active_key_names) throw()
-    : active_key_names_(active_key_names)
-  { }
+      : active_key_names_(active_key_names) {}
 
   /// Virtual destructor
-  virtual ~EnzoReconstructor()
-  {  }
+  virtual ~EnzoReconstructor() {}
 
   /// Reconstructs the interface values
   ///
@@ -58,10 +54,11 @@ public: // interface
   /// @param[in]  stale_depth indicates the current stale_depth for the
   ///     supplied cell-centered quantities
   /// @param[in]  passive_list A list of keys for passive scalars.
-  virtual void reconstruct_interface
-  (const EnzoEFltArrayMap &prim_map, EnzoEFltArrayMap &priml_map,
-   EnzoEFltArrayMap &primr_map, const int dim, const int stale_depth,
-   const str_vec_t& passive_list)=0;
+  virtual void reconstruct_interface(const EnzoEFltArrayMap& prim_map,
+                                     EnzoEFltArrayMap& priml_map,
+                                     EnzoEFltArrayMap& primr_map, const int dim,
+                                     const int stale_depth,
+                                     const str_vec_t& passive_list) = 0;
 
   /// The rate amount by which the stale_depth increases after the current
   /// reconstructor is used to update the fluid over a (partial or full)
@@ -76,14 +73,14 @@ public: // interface
   /// with/without values on the exterior of the grid, will ALWAYS contain 1
   /// more/less valid field entry than the region of valid entries for a
   /// cell-centered field
-  /// 
+  ///
   /// the staling_rate can be decomposed into 2 parts: immediate and delayed
   /// - immediate staling rate is the amount by which stale_depth increases
   ///   immediately after performing reconstruction.
   /// - delayed staling rate is the amount by which stale_depth increases
   ///   after the fluid is updated over a (partial or full) time-step using the
   ///   fluxes computed from the reconstructed values.
-  virtual int total_staling_rate()=0;
+  virtual int total_staling_rate() = 0;
 
   /// immediate staling rate is the amount by which stale_depth increases
   /// immediately after performing reconstruction. This is equal to the number
@@ -91,13 +88,14 @@ public: // interface
   /// left AND right reconstructed values from the edge of the grid. For
   /// interpolation like nearest neighbor, this is 0, while for interpolation
   /// like piecewise linear, this is 1.
-  virtual int immediate_staling_rate()=0;
+  virtual int immediate_staling_rate() = 0;
 
   /// delayed staling rate is the amount by which stale_depth increases after
   /// the fluid is updated over a (partial or full) time-step using the fluxes
   /// computed from the reconstructed values.
-  int delayed_staling_rate()
-  { return total_staling_rate() - immediate_staling_rate(); }
+  int delayed_staling_rate() {
+    return total_staling_rate() - immediate_staling_rate();
+  }
 
 protected:
   /// list of the key names for all components of (non-passively advected)

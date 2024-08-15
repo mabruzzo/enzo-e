@@ -9,114 +9,87 @@
 #define PROBLEM_UNITS_HPP
 
 class Units : public PUP::able {
-
   /// @class    Units
   /// @ingroup  Problem
   /// @brief    [\ref Problem]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  Units() throw()
-  : time_(1.0),
-    mass_(1.0),
-    length_(1.0)
-  {
-  }
+  Units() throw() : time_(1.0), mass_(1.0), length_(1.0) {}
 
   /// Virtual destructor
-  virtual ~Units ()
-  { }
+  virtual ~Units() {}
 
   /// CHARM++ PUP::able declaration
   PUPable_decl(Units);
 
   /// CHARM++ migration constructor for PUP::able
-  Units (CkMigrateMessage *m)
-    : PUP::able(m),
-      time_(1.0),
-      mass_(1.0),
-      length_(1.0)
-  {  }
+  Units(CkMigrateMessage* m)
+      : PUP::able(m), time_(1.0), mass_(1.0), length_(1.0) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p) {
-
+  void pup(PUP::er& p) {
     PUP::able::pup(p);
 
     TRACEPUP;
     p | time_;
     p | mass_;
     p | length_;
-
   }
 
   /// Set units using mass
-  void set_using_mass (double length, double mass, double time)
-  {
+  void set_using_mass(double length, double mass, double time) {
     length_ = length;
-    mass_   = mass;
-    time_   = time;
+    mass_ = mass;
+    time_ = time;
   }
 
   /// Set units using density
-  void set_using_density (double length, double density, double time)
-  {
-    length_  = length;
-    mass_    = density * length * length * length;
-    time_    = time;
+  void set_using_density(double length, double density, double time) {
+    length_ = length;
+    mass_ = density * length * length * length;
+    time_ = time;
   }
 
   /// Return volume units scaling factor (derived)
-  inline double volume() const
-  { return length()*length()*length(); }
+  inline double volume() const { return length() * length() * length(); }
 
   /// Return acceleration units scaling factor (derived)
-  inline double acceleration() const
-  { return length() / time() / time(); }
+  inline double acceleration() const { return length() / time() / time(); }
 
   /// Return pressure units scaling factor (derived)
-  inline double pressure() const
-  { return density() * velocity() * velocity(); }
+  inline double pressure() const { return density() * velocity() * velocity(); }
 
-public: // virtual methods
-
+public:  // virtual methods
   /// Return time units scaling factor (virtual)
-  virtual double time() const
-  { return time_; }
+  virtual double time() const { return time_; }
 
   /// Return mass units scaling factor (virtual)
-  virtual double mass() const
-  { return mass_; }
+  virtual double mass() const { return mass_; }
 
   /// Return length units scaling factor (virtual)
-  virtual double length() const
-  { return length_; }
+  virtual double length() const { return length_; }
 
   /// Return velocity units scaling factor (derived)
   ///
   /// @note
   /// If a subclass overrides this method, it is the subclass's responsibility
   /// to ensure it is consistent with the `mass` and `volume` methods
-  virtual double velocity() const
-  { return length() / time(); }
+  virtual double velocity() const { return length() / time(); }
 
   /// Return density units scaling factor (derived)
   ///
   /// @note
   /// If a subclass overrides this method, it is the subclass's responsibility
   /// to ensure it is consistent with the `mass` and `volume` methods
-  virtual double density() const
-  { return mass() / volume(); }
+  virtual double density() const { return mass() / volume(); }
 
-private: // attributes
-
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
 
   double time_;
   double mass_;
   double length_;
-
 };
 
 #endif /* PROBLEM_UNITS_HPP */

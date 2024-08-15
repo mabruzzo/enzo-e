@@ -10,27 +10,22 @@
 
 #include "simulation.decl.h"
 
-class MappingIo: public CkArrayMap {
-
+class MappingIo : public CkArrayMap {
   /// @class    MappingIo
   /// @ingroup  Charm
-  /// @brief    [\ref Parallel] Class for mapping IoWriter and IoReader elements to processors
+  /// @brief    [\ref Parallel] Class for mapping IoWriter and IoReader elements
+  /// to processors
 
 public:
-
   MappingIo(int count);
 
-  int procNum(int, const CkArrayIndex &idx);
+  int procNum(int, const CkArrayIndex& idx);
 
   /// CHARM++ migration constructor for PUP::able
-  MappingIo (CkMigrateMessage *m)
-    : CkArrayMap(m),
-      count_(0)
-  { }
+  MappingIo(CkMigrateMessage* m) : CkArrayMap(m), count_(0) {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
     CkArrayMap::pup(p);
     // NOTE: change this function whenever attributes change
@@ -38,10 +33,7 @@ public:
   }
 
 private:
-
   int count_;
-
 };
 
 #endif /* CHARM_MAPPING_IO_HPP */
-

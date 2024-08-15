@@ -5,42 +5,41 @@
 /// @date     Fri June 14 2019
 /// @brief    [\ref Enzo] Implementation of the EnzoMethodMHDVlct class
 
-#include <algorithm>    // std::copy
+#include <algorithm>  // std::copy
 
 #include "Cello/cello.hpp"
-#include "Enzo/enzo.hpp" // EnzoBlock,
+#include "Enzo/enzo.hpp"  // EnzoBlock,
 #include "Enzo/hydro-mhd/hydro-mhd.hpp"
 #include "Enzo/hydro-mhd/EnzoMHDIntegratorStageCommands.hpp"
 
 //----------------------------------------------------------------------
 
-static void check_field_l_(std::vector<std::string> &field_l)
-{
-  FieldDescr * field_descr = cello::field_descr();
-  for (const std::string& field : field_l){
+static void check_field_l_(std::vector<std::string>& field_l) {
+  FieldDescr* field_descr = cello::field_descr();
+  for (const std::string& field : field_l) {
     ASSERT1("EnzoMethodMHDVlct", "\"%s\" must be a permanent field",
-	    field.c_str(), field_descr->is_field(field));
+            field.c_str(), field_descr->is_field(field));
   }
 }
 
 //----------------------------------------------------------------------
 
 // concatenate 2 vectors of strings
-static str_vec_t concat_str_vec_(const str_vec_t& vec1, const str_vec_t& vec2){
+static str_vec_t concat_str_vec_(const str_vec_t& vec1, const str_vec_t& vec2) {
   str_vec_t out(vec2);
   out.reserve(vec1.size() + vec2.size());
-  out.insert(out.begin(),vec1.begin(), vec1.end());
+  out.insert(out.begin(), vec1.begin(), vec1.end());
   return out;
 }
 
 //----------------------------------------------------------------------
 
 static std::pair<std::string, EnzoMHDIntegratorStageArgPack*>
-parse_mhdchoice_pack_pair_(ParameterGroup p)
-{
+parse_mhdchoice_pack_pair_(ParameterGroup p) {
   // is_defined is a function that indicates if a user defined a parameter
-  auto is_defined = [&](const std::string& param_name) -> bool
-  { return p.param(param_name) != nullptr; };
+  auto is_defined = [&](const std::string& param_name) -> bool {
+    return p.param(param_name) != nullptr;
+  };
 
   // parse time-scheme & reconstruct-method (they affect backwards compat.)
   const std::string time_scheme = p.value_string("time_scheme", "vl");
@@ -76,29 +75,27 @@ parse_mhdchoice_pack_pair_(ParameterGroup p)
     ERROR1("parse_mhdchoice_pack_pair_", "%s wasn't specified", name.c_str());
   }
 
-  EnzoMHDIntegratorStageArgPack *argpack_ptr =
-    new EnzoMHDIntegratorStageArgPack {p.value_string("riemann_solver","hlld"),
-                                       recon_names,
-                                       p.value_float("theta_limiter", 1.5),
-                                       p.value_string("mhd_choice", "")};
+  EnzoMHDIntegratorStageArgPack* argpack_ptr =
+      new EnzoMHDIntegratorStageArgPack{
+          p.value_string("riemann_solver", "hlld"), recon_names,
+          p.value_float("theta_limiter", 1.5),
+          p.value_string("mhd_choice", "")};
 
   return {time_scheme, argpack_ptr};
 }
 
 //----------------------------------------------------------------------
 
-EnzoMethodMHDVlct::EnzoMethodMHDVlct (ParameterGroup p,
-                                      bool store_fluxes_for_corrections)
-  : Method()
-{
-
-  std::pair<std::string, EnzoMHDIntegratorStageArgPack*> pair
-    = parse_mhdchoice_pack_pair_(p);
+EnzoMethodMHDVlct::EnzoMethodMHDVlct(ParameterGroup p,
+                                     bool store_fluxes_for_corrections)
+    : Method() {
+  std::pair<std::string, EnzoMHDIntegratorStageArgPack*> pair =
+      parse_mhdchoice_pack_pair_(p);
 
   time_scheme_ = pair.first;
   integrator_arg_pack_ = pair.second;
   const double dflt_courant = (time_scheme_ == "vl") ? 0.3 : 1.0;
-  this->set_courant(p.value_float("courant",dflt_courant));
+  this->set_courant(p.value_float("courant", dflt_courant));
 
   int nstages = static_cast<int>(integrator_arg_pack_->recon_names.size());
 
@@ -114,12 +111,14 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (ParameterGroup p,
   check_field_l_(primitive_field_list_);
 
   // make sure "pressure" is defined (it's needed to compute the timestep)
-  FieldDescr * field_descr = cello::field_descr();
+  FieldDescr* field_descr = cello::field_descr();
   ASSERT("EnzoMethodMHDVlct", "\"pressure\" must be a permanent field",
-	 field_descr->is_field("pressure"));
+         field_descr->is_field("pressure"));
 
   bfield_method_ = integrator_->construct_bfield_method(nstages);
-  if (bfield_method_ != nullptr) { bfield_method_->check_required_fields(); }
+  if (bfield_method_ != nullptr) {
+    bfield_method_->check_required_fields();
+  }
 
   // Check that the (cell-centered) ghost depth is large enough
   // Face-centered ghost depth could in principle be 1 smaller
@@ -127,14 +126,14 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (ParameterGroup p,
   for (int stage_index = 0; stage_index < nstages; stage_index++) {
     min_gdepth_req += integrator_->staling_from_stage(stage_index);
   }
-  int gx,gy,gz;
+  int gx, gy, gz;
   field_descr->ghost_depth(field_descr->field_id("density"), &gx, &gy, &gz);
   ASSERT1("EnzoMethodMHDVlct::compute", "ghost depth must be at least %d.",
-	  min_gdepth_req, std::min(gx, std::min(gy, gz)) >= min_gdepth_req);
+          min_gdepth_req, std::min(gx, std::min(gy, gz)) >= min_gdepth_req);
 
   // initialize other attributes
   store_fluxes_for_corrections_ = store_fluxes_for_corrections;
-  if (store_fluxes_for_corrections){
+  if (store_fluxes_for_corrections) {
     ASSERT("EnzoMethodMHDVlct::EnzoMethodMHDVlct",
            "Flux corrections are currently only supported in hydro-mode",
            integrator_->is_pure_hydro());
@@ -143,8 +142,8 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (ParameterGroup p,
   scratch_space_ = nullptr;
 
   // Finally, initialize the default Refresh object
-  cello::simulation()->refresh_set_name(ir_post_,name());
-  Refresh * refresh = cello::refresh(ir_post_);
+  cello::simulation()->refresh_set_name(ir_post_, name());
+  Refresh* refresh = cello::refresh(ir_post_);
   // Need to refresh all fields because the fields holding passively advected
   // scalars won't necessarily be known until after all Methods have been
   // constructed and all intializers have been executed
@@ -153,22 +152,20 @@ EnzoMethodMHDVlct::EnzoMethodMHDVlct (ParameterGroup p,
 
 //----------------------------------------------------------------------
 
-EnzoMethodMHDVlct::~EnzoMethodMHDVlct()
-{
+EnzoMethodMHDVlct::~EnzoMethodMHDVlct() {
   delete integrator_arg_pack_;
   delete integrator_;
-  if (scratch_space_ != nullptr){
+  if (scratch_space_ != nullptr) {
     delete scratch_space_;
   }
-  if (bfield_method_ != nullptr){
+  if (bfield_method_ != nullptr) {
     delete bfield_method_;
   }
 }
 
 //----------------------------------------------------------------------
 
-void EnzoMethodMHDVlct::pup (PUP::er &p)
-{
+void EnzoMethodMHDVlct::pup(PUP::er& p) {
   // NOTE: change this function whenever attributes change
 
   TRACEPUP;
@@ -186,84 +183,81 @@ void EnzoMethodMHDVlct::pup (PUP::er &p)
     bfield_method_ = integrator_->construct_bfield_method(2);
   }
 
-
   // skip scratch_space_. This will be freshly constructed the first time that
   // the compute method is called.
 
-  p|integration_field_list_;
-  p|primitive_field_list_;
-  p|lazy_passive_list_;
-  p|store_fluxes_for_corrections_;
+  p | integration_field_list_;
+  p | primitive_field_list_;
+  p | lazy_passive_list_;
+  p | store_fluxes_for_corrections_;
 }
 
 //----------------------------------------------------------------------
 
-EnzoEFltArrayMap EnzoMethodMHDVlct::get_integration_map_
-(Block * block,  const str_vec_t *passive_list) const noexcept
-{
-  str_vec_t field_list = (passive_list == nullptr) ? integration_field_list_ :
-    concat_str_vec_(integration_field_list_, *passive_list);
+EnzoEFltArrayMap EnzoMethodMHDVlct::get_integration_map_(
+    Block* block, const str_vec_t* passive_list) const noexcept {
+  str_vec_t field_list =
+      (passive_list == nullptr)
+          ? integration_field_list_
+          : concat_str_vec_(integration_field_list_, *passive_list);
 
   Field field = block->data()->field();
   std::vector<EFlt3DArray> arrays;
   arrays.reserve(field_list.size());
-  for (const std::string& field_name : field_list){
-    arrays.push_back( field.view<enzo_float>(field_name) );
+  for (const std::string& field_name : field_list) {
+    arrays.push_back(field.view<enzo_float>(field_name));
   }
 
-  return EnzoEFltArrayMap("integration",field_list,arrays);
+  return EnzoEFltArrayMap("integration", field_list, arrays);
 }
 
 //----------------------------------------------------------------------
 
-static EnzoEFltArrayMap get_accel_map_(Block* block) noexcept
-{
+static EnzoEFltArrayMap get_accel_map_(Block* block) noexcept {
   Field field = block->data()->field();
-  if (field.field_id("acceleration_x") < 0){
+  if (field.field_id("acceleration_x") < 0) {
     return EnzoEFltArrayMap();
   }
 
   str_vec_t field_list = {"acceleration_x", "acceleration_y", "acceleration_z"};
-  std::vector<CelloView<enzo_float,3>> arrays
-    = {field.view<enzo_float>("acceleration_x"),
-       field.view<enzo_float>("acceleration_y"),
-       field.view<enzo_float>("acceleration_z")};
+  std::vector<CelloView<enzo_float, 3>> arrays = {
+      field.view<enzo_float>("acceleration_x"),
+      field.view<enzo_float>("acceleration_y"),
+      field.view<enzo_float>("acceleration_z")};
   return EnzoEFltArrayMap("accel", field_list, arrays);
 }
 
 //----------------------------------------------------------------------
 
-EnzoVlctScratchSpace* EnzoMethodMHDVlct::get_scratch_ptr_
-(const std::array<int,3>& field_shape, const str_vec_t& passive_list) noexcept
-{
-  if (scratch_space_ == nullptr){
-    scratch_space_ = new EnzoVlctScratchSpace
-      (field_shape, integration_field_list_, primitive_field_list_,
-       integrator_->dUcons_map_keys(), passive_list,
-       enzo::fluid_props()->dual_energy_config().any_enabled());
+EnzoVlctScratchSpace* EnzoMethodMHDVlct::get_scratch_ptr_(
+    const std::array<int, 3>& field_shape,
+    const str_vec_t& passive_list) noexcept {
+  if (scratch_space_ == nullptr) {
+    scratch_space_ = new EnzoVlctScratchSpace(
+        field_shape, integration_field_list_, primitive_field_list_,
+        integrator_->dUcons_map_keys(), passive_list,
+        enzo::fluid_props()->dual_energy_config().any_enabled());
   }
   return scratch_space_;
 }
 
 //----------------------------------------------------------------------
 
-void EnzoMethodMHDVlct::save_fluxes_for_corrections_
-(Block * block, const EnzoEFltArrayMap &flux_map, int dim, double cell_width,
- double dt) const noexcept
-{
-
+void EnzoMethodMHDVlct::save_fluxes_for_corrections_(
+    Block* block, const EnzoEFltArrayMap& flux_map, int dim, double cell_width,
+    double dt) const noexcept {
   Field field = block->data()->field();
 
   // load the cell-centered shape and the ghost depth
   int density_field_id = field.field_id("density");
-  int cc_mx, cc_my, cc_mz; // the values are ordered as x,y,z
+  int cc_mx, cc_my, cc_mz;  // the values are ordered as x,y,z
   field.dimensions(density_field_id, &cc_mx, &cc_my, &cc_mz);
   int gx, gy, gz;
   field.ghost_depth(density_field_id, &gx, &gy, &gz);
 
-  double dt_dxi = dt/cell_width;
+  double dt_dxi = dt / cell_width;
 
-  FluxData * flux_data = block->data()->flux_data();
+  FluxData* flux_data = block->data()->flux_data();
   const int nf = flux_data->num_fields();
 
   for (int i_f = 0; i_f < nf; i_f++) {
@@ -273,93 +267,92 @@ void EnzoMethodMHDVlct::save_fluxes_for_corrections_
     // note the field_name is the same as the key
     CelloView<const enzo_float, 3> flux_arr = flux_map.at(field_name);
 
-    FaceFluxes * left_ff = flux_data->block_fluxes(dim,0,i_f);
-    FaceFluxes * right_ff = flux_data->block_fluxes(dim,1,i_f);
+    FaceFluxes* left_ff = flux_data->block_fluxes(dim, 0, i_f);
+    FaceFluxes* right_ff = flux_data->block_fluxes(dim, 1, i_f);
 
     int mx, my, mz;
-    left_ff->get_size(&mx,&my,&mz);
+    left_ff->get_size(&mx, &my, &mz);
 
-    int dx_l,dy_l,dz_l,    dx_r,dy_r,dz_r;
-    enzo_float* left_dest = left_ff->flux_array(&dx_l,&dy_l,&dz_l);
-    enzo_float* right_dest = right_ff->flux_array(&dx_r,&dy_r,&dz_r);
+    int dx_l, dy_l, dz_l, dx_r, dy_r, dz_r;
+    enzo_float* left_dest = left_ff->flux_array(&dx_l, &dy_l, &dz_l);
+    enzo_float* right_dest = right_ff->flux_array(&dx_r, &dy_r, &dz_r);
 
     // NOTE: dx_l/dx_r, dy_l/dy_r, dz_l/dz_r have the wrong value when
     // dim is 0, 1, or 2 respectively. In each case the variables are equal to
     // 1 when they should be 0.
 
-    if (dim == 0){
-      int left_ix = gx-1;
-      int right_ix = cc_mx-gx-1;
+    if (dim == 0) {
+      int left_ix = gx - 1;
+      int right_ix = cc_mx - gx - 1;
 
-      for (int iz = 0; iz < mz; iz++){
-        for (int iy = 0; iy < my; iy++){
-          left_dest[dz_l*iz + dy_l*iy]
-            = dt_dxi* flux_arr(gz+iz, gy+iy, left_ix);
-          right_dest[dz_r*iz + dy_r*iy]
-            = dt_dxi* flux_arr(gz+iz, gy+iy, right_ix);
+      for (int iz = 0; iz < mz; iz++) {
+        for (int iy = 0; iy < my; iy++) {
+          left_dest[dz_l * iz + dy_l * iy] =
+              dt_dxi * flux_arr(gz + iz, gy + iy, left_ix);
+          right_dest[dz_r * iz + dy_r * iy] =
+              dt_dxi * flux_arr(gz + iz, gy + iy, right_ix);
         }
       }
 
     } else if (dim == 1) {
-      int left_iy = gy-1;
-      int right_iy = cc_my-gy-1;
+      int left_iy = gy - 1;
+      int right_iy = cc_my - gy - 1;
 
-      for (int iz = 0; iz < mz; iz++){
-        for (int ix = 0; ix < mx; ix++){
-          left_dest[dz_l*iz + dx_l*ix]
-            = dt_dxi* flux_arr(gz+iz, left_iy, gx+ix);
-          right_dest[dz_l*iz + dx_l*ix]
-            = dt_dxi* flux_arr(gz+iz, right_iy, gx+ix);
+      for (int iz = 0; iz < mz; iz++) {
+        for (int ix = 0; ix < mx; ix++) {
+          left_dest[dz_l * iz + dx_l * ix] =
+              dt_dxi * flux_arr(gz + iz, left_iy, gx + ix);
+          right_dest[dz_l * iz + dx_l * ix] =
+              dt_dxi * flux_arr(gz + iz, right_iy, gx + ix);
         }
       }
     } else {
-      int left_iz = gz-1;
-      int right_iz = cc_mz-gz-1;
+      int left_iz = gz - 1;
+      int right_iz = cc_mz - gz - 1;
 
-      for (int iy = 0; iy < my; iy++){
-        for (int ix = 0; ix < mx; ix++){
-          left_dest[dy_l*iy + dx_l*ix]
-            = dt_dxi* flux_arr(left_iz, gy + iy, gx+ix);
-          right_dest[dy_l*iy + dx_l*ix]
-            = dt_dxi* flux_arr(right_iz, gy + iy, gx+ix);
+      for (int iy = 0; iy < my; iy++) {
+        for (int ix = 0; ix < mx; ix++) {
+          left_dest[dy_l * iy + dx_l * ix] =
+              dt_dxi * flux_arr(left_iz, gy + iy, gx + ix);
+          right_dest[dy_l * iy + dx_l * ix] =
+              dt_dxi * flux_arr(right_iz, gy + iy, gx + ix);
         }
       }
-
     }
   }
 }
 
 //----------------------------------------------------------------------
 
-static void allocate_FC_flux_buffer_(Block * block) throw()
-{
+static void allocate_FC_flux_buffer_(Block* block) throw() {
   Field field = block->data()->field();
   // this could be better integrated with fields required by the solver
   auto field_names = field.groups()->group_list("conserved");
   const int nf = field_names.size();
   std::vector<int> field_list;
   field_list.resize(nf);
-  for (int i=0; i<nf; i++) {
+  for (int i = 0; i < nf; i++) {
     field_list[i] = field.field_id(field_names[i]);
   }
 
-  int nx,ny,nz;
-  field.size(&nx,&ny,&nz);
+  int nx, ny, nz;
+  field.size(&nx, &ny, &nz);
 
   // this needs to be allocated every cycle
-  block->data()->flux_data()->allocate (nx,ny,nz,field_list,
-                                        true /* = single_flux_array */ );
+  block->data()->flux_data()->allocate(nx, ny, nz, field_list,
+                                       true /* = single_flux_array */);
 }
 
 //----------------------------------------------------------------------
 
-void EnzoMethodMHDVlct::compute ( Block * block) throw()
-{
+void EnzoMethodMHDVlct::compute(Block* block) throw() {
   if (cello::is_initial_cycle(InitCycleKind::fresh_or_noncharm_restart)) {
     post_init_checks_();
   }
 
-  if (store_fluxes_for_corrections_){ allocate_FC_flux_buffer_(block); }
+  if (store_fluxes_for_corrections_) {
+    allocate_FC_flux_buffer_(block);
+  }
 
   if (block->is_leaf()) {
     // load the list of keys for the passively advected scalars
@@ -371,14 +364,14 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
     //
     // by the very end of EnzoMethodMHDVlct::compute, the arrays in this map
     // will be updated with their new values
-    EnzoEFltArrayMap external_integration_map = get_integration_map_
-      (block, &passive_list);
+    EnzoEFltArrayMap external_integration_map =
+        get_integration_map_(block, &passive_list);
 
     // get maps of arrays and stand-alone arrays that serve as scratch space.
     // (first, retrieve the pointer to the scratch space struct)
-    const std::array<int,3> shape = {external_integration_map.array_shape(0),
-                                     external_integration_map.array_shape(1),
-                                     external_integration_map.array_shape(2)};
+    const std::array<int, 3> shape = {external_integration_map.array_shape(0),
+                                      external_integration_map.array_shape(1),
+                                      external_integration_map.array_shape(2)};
     EnzoVlctScratchSpace* const scratch = get_scratch_ptr_(shape, passive_list);
 
     // map used for storing integration values at the half time-step. This
@@ -396,9 +389,8 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
     EnzoEFltArrayMap primr_map = scratch->primr_map;
 
     // maps used to store fluxes
-    std::array<EnzoEFltArrayMap, 3> flux_maps_xyz = {scratch->xflux_map,
-                                                     scratch->yflux_map,
-                                                     scratch->zflux_map};
+    std::array<EnzoEFltArrayMap, 3> flux_maps_xyz = {
+        scratch->xflux_map, scratch->yflux_map, scratch->zflux_map};
 
     // map of arrays used to accumulate the changes to the conserved forms of
     // the integration quantities and passively advected scalars. In other
@@ -422,11 +414,11 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
       bfield_method_->register_target_block(block);
     }
 
-    const std::array<enzo_float,3> cell_widths_xyz =
-      { enzo::block(block)->CellWidth[0],
+    const std::array<enzo_float, 3> cell_widths_xyz = {
+        enzo::block(block)->CellWidth[0],
         enzo::block(block)->CellWidth[1],
         enzo::block(block)->CellWidth[2],
-      };
+    };
 
     double dt = block->dt();
 
@@ -456,23 +448,22 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
     }
 
     // repeat the following loop twice (for half time-step and full time-step)
-    for (unsigned short stage_index = 0; stage_index < nstages; stage_index++){
-
+    for (unsigned short stage_index = 0; stage_index < nstages; stage_index++) {
       const bool is_final_stage = (stage_index + 1) == nstages;
-      const double cur_dt = (!is_final_stage) ? dt/2. : dt;
+      const double cur_dt = (!is_final_stage) ? dt / 2. : dt;
       EnzoEFltArrayMap cur_stage_integration_map =
-        (stage_index == 0) ? external_integration_map : temp_integration_map;
+          (stage_index == 0) ? external_integration_map : temp_integration_map;
       EnzoEFltArrayMap out_integration_map =
-        (is_final_stage) ? external_integration_map : temp_integration_map;
+          (is_final_stage) ? external_integration_map : temp_integration_map;
 
-      integrator_->compute_update_stage
-        (external_integration_map,  // holds values from start of the timestep
-         cur_stage_integration_map, // holds values from start of current stage
-         out_integration_map,       // where to write results of current stage
-         primitive_map, priml_map, primr_map,
-         flux_maps_xyz, dUcons_map, accel_map, interface_vel_arr,
-         passive_list, this->bfield_method_, stage_index,
-         cur_dt, stale_depth, cell_widths_xyz);
+      integrator_->compute_update_stage(
+          external_integration_map,   // holds values from start of the timestep
+          cur_stage_integration_map,  // holds values from start of current
+                                      // stage
+          out_integration_map,        // where to write results of current stage
+          primitive_map, priml_map, primr_map, flux_maps_xyz, dUcons_map,
+          accel_map, interface_vel_arr, passive_list, this->bfield_method_,
+          stage_index, cur_dt, stale_depth, cell_widths_xyz);
 
       // update the stale_depth from the current stage
       stale_depth += integrator_->staling_from_stage((int)stage_index);
@@ -492,7 +483,6 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
       if (bfield_method_ != nullptr) {
         bfield_method_->increment_partial_timestep();
       }
-
     }
   }
 
@@ -501,9 +491,8 @@ void EnzoMethodMHDVlct::compute ( Block * block) throw()
 
 //----------------------------------------------------------------------
 
-void EnzoMethodMHDVlct::post_init_checks_() const noexcept
-{
-  if (enzo::grackle_chemistry() != nullptr){
+void EnzoMethodMHDVlct::post_init_checks_() const noexcept {
+  if (enzo::grackle_chemistry() != nullptr) {
     // we can remove this check if:
     // - EnzoMethodGrackle is modified to no longer require internal_energy to
     //   be a permanent field
@@ -527,7 +516,7 @@ void EnzoMethodMHDVlct::post_init_checks_() const noexcept
   ASSERT("EnzoMethodMHDVlct::post_init_checks_",
          "when the gravity method exists, it must precede this method.",
          problem->method_precedes("gravity", "mhd_vlct") |
-         (!problem->method_exists("gravity")) );
+             (!problem->method_exists("gravity")));
 
   // the following checks address some problems I've encountered in the past
   // (they probably need to be revisited when we add Bfield flux corrections)
@@ -548,19 +537,18 @@ void EnzoMethodMHDVlct::post_init_checks_() const noexcept
 
 //----------------------------------------------------------------------
 
-double EnzoMethodMHDVlct::timestep ( Block * block ) throw()
-{
+double EnzoMethodMHDVlct::timestep(Block* block) throw() {
   // analogous to ppm timestep calulation, probably want to require that cfast
   // is no smaller than some tiny positive number.
 
   // Constructs a map containing the field data for each integration quantity
   // This includes each passively advected scalar (as densities)
-  EnzoEFltArrayMap integration_map = get_integration_map_
-    (block, (lazy_passive_list_.get_list()).get());
+  EnzoEFltArrayMap integration_map =
+      get_integration_map_(block, (lazy_passive_list_.get_list()).get());
 
   EnzoPhysicsFluidProps* fluid_props = enzo::fluid_props();
 
-  if (fluid_props->dual_energy_config().any_enabled()){
+  if (fluid_props->dual_energy_config().any_enabled()) {
     // synchronize eint and etot.
     // This is only strictly necessary after problem initialization and when
     // there is an inflow boundary condition
@@ -573,14 +561,14 @@ double EnzoMethodMHDVlct::timestep ( Block * block ) throw()
   fluid_props->pressure_from_integration(integration_map, pressure, 0);
 
   // widths of cells
-  EnzoBlock * enzo_block = enzo::block(block);
+  EnzoBlock* enzo_block = enzo::block(block);
   const double dx = enzo_block->CellWidth[0];
   const double dy = enzo_block->CellWidth[1];
   const double dz = enzo_block->CellWidth[2];
 
   // compute the actual timestep
-  double dtBaryons = integrator_->timestep(integration_map, pressure,
-                                           dx, dy, dz);
+  double dtBaryons =
+      integrator_->timestep(integration_map, pressure, dx, dy, dz);
 
   // Multiply resulting dt by CourantSafetyNumber (for extra safety!).
   // This should be less than 0.5 for standard algorithm

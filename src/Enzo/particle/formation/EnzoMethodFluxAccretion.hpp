@@ -3,17 +3,16 @@
 /// @file	enzo_EnzoMethodFluxAccretion.hpp
 /// @author     Stefan Arridge (stefan.arridge@gmail.com)
 /// @date       26 May 2022
-/// @brief      Computes accretion rates according to "Flux Accretion" method, as
-///             described in Section 5.3 of Bleuler, A & Teyssier, R 2004; MNRAS, 445, 4015-4036
-
+/// @brief      Computes accretion rates according to "Flux Accretion" method,
+/// as
+///             described in Section 5.3 of Bleuler, A & Teyssier, R 2004;
+///             MNRAS, 445, 4015-4036
 
 #ifndef ENZO_ENZO_METHOD_FLUX_ACCRETION
 #define ENZO_ENZO_METHOD_FLUX_ACCRETION
 
 class EnzoMethodFluxAccretion : public EnzoMethodAccretion {
-
 public:
-
   // Constructor
   EnzoMethodFluxAccretion(ParameterGroup p);
 
@@ -21,27 +20,21 @@ public:
   PUPable_decl(EnzoMethodFluxAccretion);
 
   // Charm++ PUP::able declarations
-  EnzoMethodFluxAccretion (CkMigrateMessage *m)
-   : EnzoMethodAccretion (m)
-   {  }
+  EnzoMethodFluxAccretion(CkMigrateMessage* m) : EnzoMethodAccretion(m) {}
 
   /// Charm++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Apply method
-  virtual void compute ( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
   /// Name
-  virtual std::string name () throw()
-   { return "accretion";}
+  virtual std::string name() throw() { return "accretion"; }
 
 private:
-
   // methods
 
-  void compute_(Block * block);
-
+  void compute_(Block* block);
 };
 
-
-#endif // ENZO_ENZO_METHOD_FLUX_ACCRETION
+#endif  // ENZO_ENZO_METHOD_FLUX_ACCRETION

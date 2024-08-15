@@ -9,7 +9,6 @@
 #define ENZO_ENZO_PHYSICS_FLUID_PROPS_HPP
 
 class EnzoPhysicsFluidProps : public Physics {
-
   /// @class    EnzoPhysicsFluidProps
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Provides a central interface for querying the
@@ -17,54 +16,49 @@ class EnzoPhysicsFluidProps : public Physics {
   ///
   /// The data stored in the class is meant to be considered immutable.
 
-public: // interface
-
+public:  // interface
   /// Constructor
   EnzoPhysicsFluidProps(const EnzoDualEnergyConfig& de_config,
                         const EnzoFluidFloorConfig& fluid_floor_config,
                         const EnzoEOSVariant& eos_variant,
                         enzo_float mol_weight) noexcept
-  : Physics(),
-    de_config_(de_config),
-    fluid_floor_config_(fluid_floor_config),
-    eos_variant_(eos_variant),
-    mol_weight_(mol_weight)
-  { }
+      : Physics(),
+        de_config_(de_config),
+        fluid_floor_config_(fluid_floor_config),
+        eos_variant_(eos_variant),
+        mol_weight_(mol_weight) {}
 
   /// CHARM++ PUP::able declaration
   PUPable_decl(EnzoPhysicsFluidProps);
 
   /// CHARM++ migration constructor
-  EnzoPhysicsFluidProps(CkMigrateMessage *m)
-    : Physics (m)
-  { }
+  EnzoPhysicsFluidProps(CkMigrateMessage* m) : Physics(m) {}
 
   /// Virtual destructor
-  virtual ~EnzoPhysicsFluidProps()
-  { }
+  virtual ~EnzoPhysicsFluidProps() {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
+  void pup(PUP::er& p) {
     TRACEPUP;
 
-    p|de_config_;
-    p|fluid_floor_config_;
-    ::pup(p,eos_variant_);
-    p|mol_weight_;
+    p | de_config_;
+    p | fluid_floor_config_;
+    ::pup(p, eos_variant_);
+    p | mol_weight_;
   }
 
   /// Access the dual energy configuration
-  const EnzoDualEnergyConfig& dual_energy_config() const noexcept
-  { return de_config_; }
+  const EnzoDualEnergyConfig& dual_energy_config() const noexcept {
+    return de_config_;
+  }
 
   /// Access the fluid-floor properties
-  const EnzoFluidFloorConfig& fluid_floor_config() const noexcept
-  { return fluid_floor_config_; }
+  const EnzoFluidFloorConfig& fluid_floor_config() const noexcept {
+    return fluid_floor_config_;
+  }
 
   /// Access the EOS
-  const EnzoEOSVariant& eos_variant() const noexcept
-  { return eos_variant_; }
+  const EnzoEOSVariant& eos_variant() const noexcept { return eos_variant_; }
 
   /// Utility method that tries to retrieve gamma from the stored eos_variant.
   /// When the stored EOS variant doesn't contain a value of gamma, the program
@@ -77,8 +71,7 @@ public: // interface
   /// Utility method that retrieves whether the stored eos is barotropic
   bool has_barotropic_eos() const noexcept;
 
-  enzo_float mol_weight() const noexcept
-  { return mol_weight_; }
+  enzo_float mol_weight() const noexcept { return mol_weight_; }
 
   // the following methods are mostly just methods of this class because it
   // isn't obvious where else to put them
@@ -108,13 +101,13 @@ public: // interface
   ///
   /// @note
   /// It's unclear if this really belongs as a method of EnzoPhysicsFluidProps
-  virtual void primitive_from_integration
-  (const EnzoEFltArrayMap &integration_map, EnzoEFltArrayMap &primitive_map,
-   const int stale_depth, const str_vec_t &passive_list,
-   const bool ignore_grackle = false) const;
+  virtual void primitive_from_integration(
+      const EnzoEFltArrayMap& integration_map, EnzoEFltArrayMap& primitive_map,
+      const int stale_depth, const str_vec_t& passive_list,
+      const bool ignore_grackle = false) const;
 
   /// Computes thermal pressure from integration quantities
-  /// 
+  ///
   /// @param[in]  integration_map Map holding integration quantities that are
   ///     used to compute the pressure. This should include all necessary
   ///     passively advected quantities in conserved form.
@@ -130,10 +123,10 @@ public: // interface
   ///
   /// @note
   /// It's unclear if this really belongs as a method of EnzoPhysicsFluidProps
-  virtual void pressure_from_integration
-  (const EnzoEFltArrayMap &integration_map,
-   const CelloView<enzo_float, 3> &pressure,
-   const int stale_depth, const bool ignore_grackle = false) const;
+  virtual void pressure_from_integration(
+      const EnzoEFltArrayMap& integration_map,
+      const CelloView<enzo_float, 3>& pressure, const int stale_depth,
+      const bool ignore_grackle = false) const;
 
   /// applies the pressure floor to the specific total energy field. If using
   /// the dual-energy formalism, it is also applied to the internal energy
@@ -155,14 +148,13 @@ public: // interface
   ///
   /// @note
   /// It's unclear if this really belongs as a method of EnzoPhysicsFluidProps
-  void apply_floor_to_energy_and_sync(EnzoEFltArrayMap &integration_map,
+  void apply_floor_to_energy_and_sync(EnzoEFltArrayMap& integration_map,
                                       const int stale_depth) const;
 
-public: // virtual methods
+public:  // virtual methods
   virtual std::string type() const { return "fluid_props"; }
 
-private: // attributes
-
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
   EnzoDualEnergyConfig de_config_;
   EnzoFluidFloorConfig fluid_floor_config_;

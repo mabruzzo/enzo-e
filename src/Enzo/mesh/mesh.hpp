@@ -21,10 +21,10 @@
 #include "Cello/cello.hpp"
 #include "Cello/charm.hpp"
 
-#include "Cello/mesh.hpp"    // Block, Refine
-#include "Cello/problem.hpp" // Prolong, Restrict
+#include "Cello/mesh.hpp"     // Block, Refine
+#include "Cello/problem.hpp"  // Prolong, Restrict
 
-#include "Enzo/enzo.hpp" // enzo_float
+#include "Enzo/enzo.hpp"  // enzo_float
 
 //----------------------------------------------------------------------
 // Assorted Public Functions
@@ -32,12 +32,12 @@
 
 // TODO: this could probably be put into a separate header (and probably
 // doesn't need to be publicly exposed)
-extern "C" void FORTRAN_NAME(interpolate)
-  (int *rank, enzo_float *pfield, int pdim[],
-   int pis[], int pie[], int r[],
-   enzo_float *field, int dim[], int is[], enzo_float *work,
-   int *imethod, int *posflag,
-   int *ierror);
+extern "C" void FORTRAN_NAME(interpolate)(int* rank, enzo_float* pfield,
+                                          int pdim[], int pis[], int pie[],
+                                          int r[], enzo_float* field, int dim[],
+                                          int is[], enzo_float* work,
+                                          int* imethod, int* posflag,
+                                          int* ierror);
 
 //----------------------------------------------------------------------
 // Component dependencies
@@ -51,6 +51,5 @@ extern "C" void FORTRAN_NAME(interpolate)
 #include "Enzo/mesh/EnzoProlongMC1.hpp"
 #include "Enzo/mesh/EnzoProlongPoisson.hpp"
 #include "Enzo/mesh/EnzoRestrict.hpp"
-
 
 #endif /* ENZO_MESH_MESH_HPP */

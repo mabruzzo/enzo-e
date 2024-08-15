@@ -7,12 +7,10 @@
 /// computes the momentum and energy source terms from gravity (or any other
 /// contributors to the acceleration field).
 
-
 #ifndef ENZO_ENZO_SOURCE_GRAVITY_HPP
 #define ENZO_ENZO_SOURCE_GRAVITY_HPP
 
-class EnzoSourceGravity
-{
+class EnzoSourceGravity {
   /// @class    EnzoSourceGravity
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates the calculation of the gravity source
@@ -25,7 +23,6 @@ class EnzoSourceGravity
   /// make this a configurable parameter that is passed to the constructor.
 
 public:
-
   /// Computes the internal energy density source term contributed by the
   /// derivative of the velocity along dimension `dim` and add it to the array
   /// tracking the total change in internal_energy density.
@@ -55,11 +52,10 @@ public:
   ///     supplied cell-centered quantities. The update using the
   ///     reconstructor's delayed_staling_rate should be applied at some
   ///     time after this function call.
-  void calculate_source(const double dt,
-                        const EnzoEFltArrayMap &prim_map,
-                        EnzoEFltArrayMap &dUcons_map,
-                        const EnzoEFltArrayMap &accel_map,
-			const int stale_depth) const noexcept;
+  void calculate_source(const double dt, const EnzoEFltArrayMap& prim_map,
+                        EnzoEFltArrayMap& dUcons_map,
+                        const EnzoEFltArrayMap& accel_map,
+                        const int stale_depth) const noexcept;
 };
 
 #endif /* ENZO_ENZO_SOURCE_GRAVITY_HPP */

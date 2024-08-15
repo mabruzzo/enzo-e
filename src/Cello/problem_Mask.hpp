@@ -13,64 +13,53 @@ class Param;
 class Parameters;
 
 class Mask : public PUP::able {
-
   /// @class    Mask
   /// @ingroup  Problem
-  /// @brief    [\ref Problem] 
+  /// @brief    [\ref Problem]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  Mask() throw() {};
+  Mask() throw(){};
 
   /// Destructor
-  virtual ~Mask() throw() {};
+  virtual ~Mask() throw(){};
 
   /// Copy constructor
-  Mask(const Mask & Mask) throw() {};
+  Mask(const Mask& Mask) throw(){};
 
   /// Assignment operator
-  Mask & operator= (const Mask & Mask) throw() {return *this; }
+  Mask& operator=(const Mask& Mask) throw() { return *this; }
 
   /// Clone the object
   virtual std::shared_ptr<Mask> make_clone() const = 0;
 
   /// Create a new object of the appropriate subclass
-  static std::shared_ptr<Mask> create(Param * param, Parameters * parameters);
+  static std::shared_ptr<Mask> create(Param* param, Parameters* parameters);
 
   /// CHARM++ PUP::able declaration
   PUPable_abstract(Mask);
 
   /// CHARM++ migration constructor for PUP::able
-  Mask (CkMigrateMessage *m) : PUP::able(m)
-  {  }
+  Mask(CkMigrateMessage* m) : PUP::able(m) {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
-    PUP::able::pup(p); 
+    PUP::able::pup(p);
     // NOTE: change this function whenever attributes change
   }
 
   /// Evaluate mask at a point
-  virtual bool evaluate (double t, double x, double y, double z) const = 0;
+  virtual bool evaluate(double t, double x, double y, double z) const = 0;
 
   /// Return mask values in an array
-  virtual void evaluate (bool * mask, double t,
-			 int ndx, int nx, double * x,
-			 int ndy, int ny, double * y,
-			 int ndz, int nz, double * z) const = 0;
+  virtual void evaluate(bool* mask, double t, int ndx, int nx, double* x,
+                        int ndy, int ny, double* y, int ndz, int nz,
+                        double* z) const = 0;
 
-  
-private: // functions
-
-
-private: // attributes
-
+private:  // functions
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
-
 };
 
 #endif /* PROBLEM_MASK_HPP */
-

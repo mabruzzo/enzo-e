@@ -9,16 +9,14 @@
 #define ENZO_ENZO_INITIAL_IMPLOSION2_HPP
 
 class EnzoInitialImplosion2 : public Initial {
-
   /// @class    EnzoInitialImplosion2
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Initialization routine for 2D implosion problem
 
-public: // interface
-
+public:  // interface
   /// CHARM++ constructor
-  EnzoInitialImplosion2() throw() : Initial() { }
-  
+  EnzoInitialImplosion2() throw() : Initial() {}
+
   /// Constructor
   EnzoInitialImplosion2(int cycle, double time) throw();
 
@@ -26,17 +24,14 @@ public: // interface
   PUPable_decl(EnzoInitialImplosion2);
 
   /// CHARM++ migration constructor
-  EnzoInitialImplosion2(CkMigrateMessage *m) : Initial (m) {}
+  EnzoInitialImplosion2(CkMigrateMessage* m) : Initial(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Initialize the block
 
-  virtual void enforce_block
-  ( Block * block, const Hierarchy * hierarchy ) throw();
-
+  virtual void enforce_block(Block* block, const Hierarchy* hierarchy) throw();
 };
 
 #endif /* ENZO_ENZO_INITIAL_IMPLOSION2_HPP */
-

@@ -11,71 +11,71 @@
 /// Namespace for global constants and functions
 namespace enzo_constants {
 
-  // ergs per eV
-  const double erg_eV = 1.60217653E-12;
+// ergs per eV
+const double erg_eV = 1.60217653E-12;
 
-  // eV per erg
-  const double eV_erg = 6.24150948E11;
+// eV per erg
+const double eV_erg = 6.24150948E11;
 
-  // Boltzman constant in CGS
-  const double kboltz = 1.3806504e-16;
+// Boltzman constant in CGS
+const double kboltz = 1.3806504e-16;
 
-  // Planck function in CGS
-  const double hplanck = 6.626196e-27;
+// Planck function in CGS
+const double hplanck = 6.626196e-27;
 
-  // Solar mass in CGS
-  const double mass_solar = 1.98841586e33;
+// Solar mass in CGS
+const double mass_solar = 1.98841586e33;
 
-  // Solar luminosity in erg/s
-  const double luminosity_solar = 3.839e33;
+// Solar luminosity in erg/s
+const double luminosity_solar = 3.839e33;
 
-  // Solar metallicity
-  const double metallicity_solar = 0.012;
+// Solar metallicity
+const double metallicity_solar = 0.012;
 
-  // Hydrogen mass in CGS
-  const double mass_hydrogen = 1.67262171e-24;
+// Hydrogen mass in CGS
+const double mass_hydrogen = 1.67262171e-24;
 
-  // Electron mass in CGS
-  const double mass_electron = 9.10938291E-28;
+// Electron mass in CGS
+const double mass_electron = 9.10938291E-28;
 
-  // parsec in CGS
-  const double pc_cm  = 3.0856775809623245E18;
+// parsec in CGS
+const double pc_cm = 3.0856775809623245E18;
 
-  // Kiloparsec in CGS
-  const double kpc_cm = 3.0856775809623245E21;
+// Kiloparsec in CGS
+const double kpc_cm = 3.0856775809623245E21;
 
-  // Megaparsec in CGS
-  const double Mpc_cm = 3.0856775809623245E24;
+// Megaparsec in CGS
+const double Mpc_cm = 3.0856775809623245E24;
 
-  // speed of light in CGS
-  const double clight = 29979245800.0;
+// speed of light in CGS
+const double clight = 29979245800.0;
 
-  /// standard real-world value of the Gravitational constant in CGS
-  ///
-  /// @note
-  /// This does not necessarily correspond to the value of the gravitational
-  /// constant that is used in a simulation; users are allowed to specify an
-  /// arbitrary value in non-cosmological sims. The actual value is accessed by
-  /// calling enzo::grav_constant_cgs() or enzo::grav_constant_codeU().
-  /// For that reason, developers should generally prefer to call those
-  /// functions instead of using this function.
-  const double standard_grav_constant = 6.67384E-8;
+/// standard real-world value of the Gravitational constant in CGS
+///
+/// @note
+/// This does not necessarily correspond to the value of the gravitational
+/// constant that is used in a simulation; users are allowed to specify an
+/// arbitrary value in non-cosmological sims. The actual value is accessed by
+/// calling enzo::grav_constant_cgs() or enzo::grav_constant_codeU().
+/// For that reason, developers should generally prefer to call those
+/// functions instead of using this function.
+const double standard_grav_constant = 6.67384E-8;
 
-  // year in seconds
-  const double yr_s = 3.1556952E7;
+// year in seconds
+const double yr_s = 3.1556952E7;
 
-  // kyr in seconds
-  const double kyr_s = 3.1556952E10;
+// kyr in seconds
+const double kyr_s = 3.1556952E10;
 
-  // Myr in seconds
-  const double Myr_s = 3.1556952E13;
+// Myr in seconds
+const double Myr_s = 3.1556952E13;
 
-  // Approximate mean molecular weight of metals
-  const double mu_metal = 16.0;
+// Approximate mean molecular weight of metals
+const double mu_metal = 16.0;
 
-  // 100 (km / s) / Mpc in inverse seconds
-  const double H0_over_h = 1.0e7 / Mpc_cm;
+// 100 (km / s) / Mpc in inverse seconds
+const double H0_over_h = 1.0e7 / Mpc_cm;
 
-};
+};  // namespace enzo_constants
 
 #endif /* ENZO_CONSTANTS_HPP */

@@ -20,87 +20,75 @@
 #define DATA_GROUPING_HPP
 
 class Grouping {
-
   /// @class    Grouping
   /// @ingroup  Data
-  /// @brief    [\ref Data] 
+  /// @brief    [\ref Data]
 
-public: // interface
-
+public:  // interface
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  { p | groups_; }
+  void pup(PUP::er& p) { p | groups_; }
 
   //----------------------------------------------------------------------
 
   /// Add an item to a group
-  void add(std::string item, std::string group) 
-    throw()
-  {
-    std::pair<std::string,std::string> value(item,group);
+  void add(std::string item, std::string group) throw() {
+    std::pair<std::string, std::string> value(item, group);
     groups_.insert(value);
   }
 
   /// Return whether the item is in the given group
-  bool is_in(std::string item, std::string group) const
-    throw()
-  {
-    std::pair<std::string,std::string> value(item,group);
+  bool is_in(std::string item, std::string group) const throw() {
+    std::pair<std::string, std::string> value(item, group);
     return groups_.find(value) != groups_.end();
   }
 
   /// Return the number of items in the group
-  int size(std::string item) const
-  {
+  int size(std::string item) const {
     int count = 0;
-    for (auto it=groups_.begin(); it != groups_.end(); it++) {
+    for (auto it = groups_.begin(); it != groups_.end(); it++) {
       if (it->second == item) ++count;
     }
     return count;
   }
 
   /// Return the nth item in the group
-  std::string item (std::string group, int index)
-  {
+  std::string item(std::string group, int index) {
     int count = 0;
 
-    for (auto it=groups_.begin(); it != groups_.end(); it++) {
+    for (auto it = groups_.begin(); it != groups_.end(); it++) {
       if (it->second == group) {
-	if (count == index) return it->first;
-	++count;
+        if (count == index) return it->first;
+        ++count;
       }
     }
     return "";
   }
 
   /// Return a vector of all elements of a group
-  std::vector<std::string> group_list (std::string group)
-  {
+  std::vector<std::string> group_list(std::string group) {
     int count = 0;
 
-    for (auto it=groups_.begin(); it != groups_.end(); it++) {
+    for (auto it = groups_.begin(); it != groups_.end(); it++) {
       if (it->second == group) {
-	++count;
+        ++count;
       }
     }
     std::vector<std::string> list;
     list.resize(count);
     count = 0;
-    for (auto it=groups_.begin(); it != groups_.end(); it++) {
+    for (auto it = groups_.begin(); it != groups_.end(); it++) {
       if (it->second == group) {
         list[count] = it->first;
-	++count;
+        ++count;
       }
     }
     return list;
   }
-protected: // functions
 
+protected:  // functions
   // NOTE: change pup() function whenever attributes change
 
-  std::set<std::pair<std::string,std::string> > groups_;
-
+  std::set<std::pair<std::string, std::string> > groups_;
 };
 
 #endif /* DATA_GROUPING_HPP */
-

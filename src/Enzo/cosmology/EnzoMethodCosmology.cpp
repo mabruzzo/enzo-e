@@ -12,28 +12,23 @@
 
 //----------------------------------------------------------------------
 
-EnzoMethodCosmology::EnzoMethodCosmology() throw()
-: Method ()
-{
-}
+EnzoMethodCosmology::EnzoMethodCosmology() throw() : Method() {}
 
 //----------------------------------------------------------------------
 
-void EnzoMethodCosmology::compute(Block * block) throw()
-{
+void EnzoMethodCosmology::compute(Block* block) throw() {
   auto cosmology = enzo::cosmology();
 
-#ifdef DEBUG_COSMO  
+#ifdef DEBUG_COSMO
   cosmology->print();
-#endif  
+#endif
 
   // Monitor current redshift
-  Monitor * monitor = cello::monitor();
+  Monitor* monitor = cello::monitor();
   if (block->index().is_root()) {
-    monitor->print("Method", "%s redshift %.8f",
-		   this->name().c_str(),
-		   cosmology->current_redshift());
+    monitor->print("Method", "%s redshift %.8f", this->name().c_str(),
+                   cosmology->current_redshift());
   }
-  
-  block->compute_done(); 
+
+  block->compute_done();
 }

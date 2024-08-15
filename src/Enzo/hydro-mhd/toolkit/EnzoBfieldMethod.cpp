@@ -13,14 +13,13 @@
 //----------------------------------------------------------------------
 
 EnzoBfieldMethod::EnzoBfieldMethod(int num_partial_timesteps)
-  : num_partial_timesteps_(num_partial_timesteps),
-    partial_timestep_index_(-1),
-    target_block_(nullptr)
-{
+    : num_partial_timesteps_(num_partial_timesteps),
+      partial_timestep_index_(-1),
+      target_block_(nullptr) {
   ASSERT("EnzoConstrainedTransport", "num_partial_timesteps must be positive",
          num_partial_timesteps_ > 0);
 
-  if (num_partial_timesteps_ != 2){
+  if (num_partial_timesteps_ != 2) {
     ERROR("EnzoConstrainedTransport",
           "This machinery hasn't been tested for cases when "
           "num_partial_timesteps!=2.");
@@ -29,9 +28,8 @@ EnzoBfieldMethod::EnzoBfieldMethod(int num_partial_timesteps)
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethod::register_target_block(Block *block) noexcept
-{
-  if (target_block_ != nullptr){
+void EnzoBfieldMethod::register_target_block(Block* block) noexcept {
+  if (target_block_ != nullptr) {
     ERROR("EnzoConstrainedTransport::register_target_block",
           "A target block is already specified");
   }
@@ -50,11 +48,10 @@ void EnzoBfieldMethod::register_target_block(Block *block) noexcept
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethod::increment_partial_timestep() noexcept
-{
-  require_registered_block_(); // confirm that target_block_ is valid
+void EnzoBfieldMethod::increment_partial_timestep() noexcept {
+  require_registered_block_();  // confirm that target_block_ is valid
 
-  if ((partial_timestep_index_ + 1) == num_partial_timesteps_){
+  if ((partial_timestep_index_ + 1) == num_partial_timesteps_) {
     partial_timestep_index_ = 0;
     target_block_ = nullptr;
   } else {

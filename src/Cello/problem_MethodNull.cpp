@@ -6,18 +6,14 @@
 
 #include "problem.hpp"
 
-void MethodNull::compute( Block * block) throw()
-{
-  block->compute_done();
-}
+void MethodNull::compute(Block* block) throw() { block->compute_done(); }
 
 //======================================================================
 
-void MethodNull::init_refresh_()
-{
-  cello::simulation()->refresh_set_name(ir_post_,name());
+void MethodNull::init_refresh_() {
+  cello::simulation()->refresh_set_name(ir_post_, name());
 
-  Refresh * refresh = cello::refresh(ir_post_);
+  Refresh* refresh = cello::refresh(ir_post_);
   refresh->add_all_fields();
   refresh->add_all_particles();
 }

@@ -12,27 +12,23 @@
 #define ENZO_ENZO_SINK_PARTICLE
 
 class EnzoSinkParticle {
-
   /// @class   EnzoSinkParticle
   /// @ingroup Enzo
-  /// @brief   [\ref Enzo] Encapsulates data associated with a sink particle and its
-  ///          accretion zone, as well as methods for computing accretion rates and
-  ///          reading and writing to / from the particle attribute arrays.
+  /// @brief   [\ref Enzo] Encapsulates data associated with a sink particle and
+  /// its
+  ///          accretion zone, as well as methods for computing accretion rates
+  ///          and reading and writing to / from the particle attribute arrays.
 
 public:
-
   /// Constructor
   /// Arguments: `block`                     - valid pointer to a block
   ///            `ib`                        - batch index
   ///            `ip`                        - index of particle within batch
   ///            `accretion_radius`          - radius of accretion zone
-  EnzoSinkParticle(Block * block,
-		   int ib,
-		   int ip,
-		   double accretion_radius);
+  EnzoSinkParticle(Block* block, int ib, int ip, double accretion_radius);
 
   /// Destructor
-  virtual ~EnzoSinkParticle() throw() {};
+  virtual ~EnzoSinkParticle() throw(){};
 
   /// `i`,`j`,`k` are the (3D) indices of a cell.
   ///
@@ -46,32 +42,31 @@ public:
   /// center of the cell from the sink particle.
   bool cell_in_accretion_zone(int i, int j, int k, double* r2) throw();
 
-  /// `density_change` is the change in density in given cell (specified by `index`)
-  /// due to accretion.
+  /// `density_change` is the change in density in given cell (specified by
+  /// `index`) due to accretion.
   ///
   /// `index` is the (1D) index of the cell.
   ///
-  /// This function updates the sink particle date and computes values for the source fields
-  /// in the given cell (specified by `index`).
+  /// This function updates the sink particle date and computes values for the
+  /// source fields in the given cell (specified by `index`).
   void update(enzo_float density_change, int index) throw();
 
   /// Writes particle data to the attribute arrays
   void write_particle_data() throw();
 
   /// Getter methods for the bounding indices
-  inline int min_ind_x() {return min_ind_x_;}
-  inline int min_ind_y() {return min_ind_y_;}
-  inline int min_ind_z() {return min_ind_z_;}
-  inline int max_ind_x() {return max_ind_x_;}
-  inline int max_ind_y() {return max_ind_y_;}
-  inline int max_ind_z() {return max_ind_z_;}
+  inline int min_ind_x() { return min_ind_x_; }
+  inline int min_ind_y() { return min_ind_y_; }
+  inline int min_ind_z() { return min_ind_z_; }
+  inline int max_ind_x() { return max_ind_x_; }
+  inline int max_ind_y() { return max_ind_y_; }
+  inline int max_ind_z() { return max_ind_z_; }
 
 protected:
-
   /// Attributes
 
   /// Pointer to the block containing this particle
-  Block * block_;
+  Block* block_;
 
   /// The index of the batch containing this particle
   const int batch_index_;
@@ -103,4 +98,4 @@ protected:
   enzo_float total_pmetal_mass_change_;
 };
 
-#endif // ENZO_ENZO_SINK_PARTICLE
+#endif  // ENZO_ENZO_SINK_PARTICLE

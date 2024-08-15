@@ -19,7 +19,7 @@ enum solve_enum {
   solve_block   // Solve in a block (e.g. MG coarse solve on a single block)
 };
 
-extern const char * solve_string[];
+extern const char* solve_string[];
 
 //----------------------------------------------------------------------
 // System includes
@@ -42,4 +42,3 @@ extern const char * solve_string[];
 #include "compute_SolverNull.hpp"
 
 #endif /* _FIELD_HPP */
-

@@ -20,10 +20,10 @@
 
 #include "Cello/cello.hpp"
 
-#include "Cello/mesh.hpp"    // Block
-#include "Cello/problem.hpp" // Method, Physics
+#include "Cello/mesh.hpp"     // Block
+#include "Cello/problem.hpp"  // Method, Physics
 
-#include "Enzo/enzo.hpp" // enzo_float, EnzoBlock, EnzoEFltArrayMap
+#include "Enzo/enzo.hpp"  // enzo_float, EnzoBlock, EnzoEFltArrayMap
 
 //----------------------------------------------------------------------
 // Assorted Public Functions
@@ -32,13 +32,12 @@
 // TODO: potentially move this into its own private header file (or just
 //       declare it in the source file where its used)
 extern "C" void FORTRAN_NAME(expand_terms)(
-   int *rank, int *isize, int *idual, enzo_float *coef,
-   int *imethod, enzo_float *gamma,
-   enzo_float *p,  enzo_float *d, enzo_float *e, enzo_float *ge,
-   enzo_float *u, enzo_float *v, enzo_float *w,
-   enzo_float *dold, enzo_float *eold, enzo_float *geold,
-   enzo_float *uold, enzo_float *vold, enzo_float *wold,
-   int *icr, enzo_float *ecr, enzo_float *ecrold);
+    int* rank, int* isize, int* idual, enzo_float* coef, int* imethod,
+    enzo_float* gamma, enzo_float* p, enzo_float* d, enzo_float* e,
+    enzo_float* ge, enzo_float* u, enzo_float* v, enzo_float* w,
+    enzo_float* dold, enzo_float* eold, enzo_float* geold, enzo_float* uold,
+    enzo_float* vold, enzo_float* wold, int* icr, enzo_float* ecr,
+    enzo_float* ecrold);
 
 //----------------------------------------------------------------------
 // Component headers

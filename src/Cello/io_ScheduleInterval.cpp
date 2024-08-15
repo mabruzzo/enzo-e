@@ -13,85 +13,73 @@
 
 //----------------------------------------------------------------------
 
-ScheduleInterval::ScheduleInterval () throw()
-  : Schedule(),
-    cycle_start_(0),
-    cycle_step_(0),
-    cycle_stop_(0),
-    time_start_(0.0),
-    time_step_(0.0),
-    time_stop_(0.0),
-    seconds_start_(0.0),
-    seconds_step_(0.0),
-    seconds_stop_(0.0)
-{
-}
+ScheduleInterval::ScheduleInterval() throw()
+    : Schedule(),
+      cycle_start_(0),
+      cycle_step_(0),
+      cycle_stop_(0),
+      time_start_(0.0),
+      time_step_(0.0),
+      time_stop_(0.0),
+      seconds_start_(0.0),
+      seconds_step_(0.0),
+      seconds_stop_(0.0) {}
 
 //----------------------------------------------------------------------
 
-void ScheduleInterval::set_cycle_interval
-(
- int cycle_start,
- int cycle_step,
- int cycle_stop
-) throw()
-{
+void ScheduleInterval::set_cycle_interval(int cycle_start, int cycle_step,
+                                          int cycle_stop) throw() {
   active_ = true;
   type_ = schedule_type_cycle;
 
   cycle_start_ = cycle_start;
-  cycle_step_  = cycle_step;
-  cycle_stop_  = cycle_stop;
+  cycle_step_ = cycle_step;
+  cycle_stop_ = cycle_stop;
 }
 
 //----------------------------------------------------------------------
 
-void ScheduleInterval::set_time_interval
-  (double time_start, double time_step, double time_stop) throw()
-{
+void ScheduleInterval::set_time_interval(double time_start, double time_step,
+                                         double time_stop) throw() {
   active_ = true;
   type_ = schedule_type_time;
 
   time_start_ = time_start;
-  time_step_  = time_step;
-  time_stop_  = time_stop;
+  time_step_ = time_step;
+  time_stop_ = time_stop;
 }
 
 //----------------------------------------------------------------------
 
-void ScheduleInterval::set_seconds_interval
-  (double seconds_start, double seconds_step, double seconds_stop) throw()
-{
+void ScheduleInterval::set_seconds_interval(double seconds_start,
+                                            double seconds_step,
+                                            double seconds_stop) throw() {
   active_ = true;
   type_ = schedule_type_seconds;
 
   seconds_start_ = seconds_start;
-  seconds_step_  = seconds_step;
-  seconds_stop_  = seconds_stop;
+  seconds_step_ = seconds_step;
+  seconds_stop_ = seconds_stop;
 }
 
 //----------------------------------------------------------------------
 
-bool ScheduleInterval::write_this_cycle ( int cycle, double time) throw()
-{
+bool ScheduleInterval::write_this_cycle(int cycle, double time) throw() {
 #ifdef DEBUG_SCHEDULE
-  CkPrintf ("ScheduleInterval::write_this_cycle cycle %d time %g",
-	    cycle,time);
+  CkPrintf("ScheduleInterval::write_this_cycle cycle %d time %g", cycle, time);
   this->print();
 #endif
   double seconds = timer_.value();
 
   bool result = false;
 
-  if (! active_) return false;
+  if (!active_) return false;
 
-  const double tol = 2*cello::machine_epsilon(precision_single);
+  const double tol = 2 * cello::machine_epsilon(precision_single);
 
   switch (type_) {
-
-  case schedule_type_time:
-    {
-      const bool in_range  = (time_start_ <= time && time <= time_stop_);
+    case schedule_type_time: {
+      const bool in_range = (time_start_ <= time && time <= time_stop_);
       const bool below_tol = (cello::err_abs(time_next(), time) < tol);
 
       result = in_range && below_tol;
@@ -100,9 +88,9 @@ bool ScheduleInterval::write_this_cycle ( int cycle, double time) throw()
 
     break;
 
-  case schedule_type_seconds:
-    {
-      const bool in_range  = (seconds_start_ <= seconds && seconds <= seconds_stop_);
+    case schedule_type_seconds: {
+      const bool in_range =
+          (seconds_start_ <= seconds && seconds <= seconds_stop_);
       const bool past_next = (seconds > seconds_next());
 
       result = in_range && past_next;
@@ -111,57 +99,49 @@ bool ScheduleInterval::write_this_cycle ( int cycle, double time) throw()
 
     break;
 
-  case schedule_type_cycle:
-    {
+    case schedule_type_cycle: {
       const bool in_range = (cycle_start_ <= cycle && cycle <= cycle_stop_);
-      const bool write_cycle = cycle_step_ ?
-	( ((cycle-cycle_start_) % cycle_step_) == 0) : false;
+      const bool write_cycle =
+          cycle_step_ ? (((cycle - cycle_start_) % cycle_step_) == 0) : false;
 
       result = in_range && write_cycle;
 
-    }
-    break;
-  default:
-    WARNING("ScheduleInterval::write_next_cycle",
-	    "Unknown schedule type for active ScheduleInterval object");
+    } break;
+    default:
+      WARNING("ScheduleInterval::write_next_cycle",
+              "Unknown schedule type for active ScheduleInterval object");
   }
 
 #ifdef DEBUG_SCHEDULE
-  CkPrintf ("ScheduleInterval::write_this_cycle result = %d\n",result);
+  CkPrintf("ScheduleInterval::write_this_cycle result = %d\n", result);
 #endif
   return result;
 }
 
 //----------------------------------------------------------------------
 
-double ScheduleInterval::update_timestep ( double time, double dt)
-  const throw()
-{
-  if (! active_) return dt;
+double ScheduleInterval::update_timestep(double time, double dt) const throw() {
+  if (!active_) return dt;
 
   double new_dt = dt;
 
   switch (type_) {
+    case schedule_type_time:
+      // time_interval_
+      {
+        bool in_range = (time_start_ <= time && time < time_stop_);
 
-  case schedule_type_time:
-    // time_interval_
-    {
+        if (in_range) {
+          double time_next = this->time_next();
 
-      bool in_range = (time_start_ <= time && time < time_stop_);
-
-      if (in_range) {
-
-	double time_next = this->time_next();
-
-	if (time < time_next && time_next < time + dt) {
-	  new_dt = time_next - time;
-	}
+          if (time < time_next && time_next < time + dt) {
+            new_dt = time_next - time;
+          }
+        }
       }
-    }
-    break;
-  default:
-    break;
+      break;
+    default:
+      break;
   }
   return new_dt;
 }
-

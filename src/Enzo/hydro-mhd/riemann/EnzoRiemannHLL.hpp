@@ -11,7 +11,6 @@
 #include <cfloat>
 #include <cmath>
 
-
 // Implementation Notes:
 //   - Based off of the HLLE Riemann Solver described in Stone+08
 //   - Currently only supports adiabatic fluids
@@ -21,9 +20,8 @@
 //   - Stone+ (08) has a typo in eqn 52: (q_i-q_{i-1}) should be (q_R-q_L)
 //     The modified formula is actually used in Athena++
 
-template<class inputLUT>
-struct EinfeldtWavespeed
-{
+template <class inputLUT>
+struct EinfeldtWavespeed {
   /// @class    EinfeldtWavespeed
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates the wavespeed calculation described by
@@ -44,9 +42,8 @@ struct EinfeldtWavespeed
   FORCE_INLINE void operator()(const lutarray<LUT> wl, const lutarray<LUT> wr,
                                const lutarray<LUT> Ul, const lutarray<LUT> Ur,
                                enzo_float pressure_l, enzo_float pressure_r,
-                               const EOSStructT& eos,
-                               enzo_float *bp, enzo_float *bm) const noexcept
-  {
+                               const EOSStructT& eos, enzo_float* bp,
+                               enzo_float* bm) const noexcept {
     // Calculate wavespeeds as specified by S4.3.1 of Stone+08
     // if LM and L0 are max/min eigenvalues of Roe's matrix:
     //       bp = max(LM, vi_r + c_r, 0) (eqn 53)
@@ -72,22 +69,25 @@ struct EinfeldtWavespeed
     // and fast magnetosonic speed for MHD)
     enzo_float sqrtrho_l = std::sqrt(wl[LUT::density]);
     enzo_float sqrtrho_r = std::sqrt(wr[LUT::density]);
-    enzo_float inv_sqrtrho_tot = 1.0/(sqrtrho_l + sqrtrho_r);
+    enzo_float inv_sqrtrho_tot = 1.0 / (sqrtrho_l + sqrtrho_r);
 
     // Compute Roe-averaged velocity:
-    enzo_float vi_roe = (sqrtrho_l * wl[LUT::velocity_i] +
-                         sqrtrho_r * wr[LUT::velocity_i]) * inv_sqrtrho_tot;
-    enzo_float vj_roe = (sqrtrho_l * wl[LUT::velocity_j] +
-                         sqrtrho_r * wr[LUT::velocity_j]) * inv_sqrtrho_tot;
-    enzo_float vk_roe = (sqrtrho_l * wl[LUT::velocity_k] +
-                         sqrtrho_r * wr[LUT::velocity_k]) * inv_sqrtrho_tot;
-    enzo_float v_roe2 = vi_roe*vi_roe + vj_roe*vj_roe + vk_roe*vk_roe;
+    enzo_float vi_roe =
+        (sqrtrho_l * wl[LUT::velocity_i] + sqrtrho_r * wr[LUT::velocity_i]) *
+        inv_sqrtrho_tot;
+    enzo_float vj_roe =
+        (sqrtrho_l * wl[LUT::velocity_j] + sqrtrho_r * wr[LUT::velocity_j]) *
+        inv_sqrtrho_tot;
+    enzo_float vk_roe =
+        (sqrtrho_l * wl[LUT::velocity_k] + sqrtrho_r * wr[LUT::velocity_k]) *
+        inv_sqrtrho_tot;
+    enzo_float v_roe2 = vi_roe * vi_roe + vj_roe * vj_roe + vk_roe * vk_roe;
 
     // Compute Roe-averaged specific enthalpy
     enzo_float ptot_l = pressure_l;
     enzo_float ptot_r = pressure_r;
 
-    if (LUT::has_bfields){
+    if (LUT::has_bfields) {
       ptot_l += enzo_riemann_utils::mag_pressure<LUT>(wl);
       ptot_r += enzo_riemann_utils::mag_pressure<LUT>(wr);
     }
@@ -102,7 +102,7 @@ struct EinfeldtWavespeed
 
     const enzo_float gamma = eos.get_gamma();
     enzo_float c_roe;
-    if (LUT::has_bfields){
+    if (LUT::has_bfields) {
       // I've confirmed that the unused branch is thrown away at compile time
       c_roe = roe_cfast_(wl, wr, sqrtrho_l, sqrtrho_r, inv_sqrtrho_tot, v_roe2,
                          h_roe, gamma);
@@ -122,8 +122,7 @@ struct EinfeldtWavespeed
   /// @param gamma The adiabatic index
   FORCE_INLINE enzo_float roe_cs_(const enzo_float v_roe2,
                                   const enzo_float h_roe,
-                                  const enzo_float gamma) const throw()
-  {
+                                  const enzo_float gamma) const throw() {
     enzo_float tiny2 = 0.;
     enzo_float temp = h_roe - 0.5 * v_roe2;
     return std::sqrt((gamma - 1) * std::max(temp, tiny2));
@@ -131,40 +130,40 @@ struct EinfeldtWavespeed
 
   /// Return the fast magnetosonic speed needed to get the max and min
   /// eigenvalues for Roe's matrix for adiabatic Magnetohydrodynamics
-  FORCE_INLINE enzo_float roe_cfast_(const lutarray<LUT> wl,
-                                     const lutarray<LUT> wr,
-                                     const enzo_float sqrtrho_l,
-                                     const enzo_float sqrtrho_r,
-                                     const enzo_float inv_sqrtrho_tot,
-                                     const enzo_float v_roe2,
-                                     const enzo_float h_roe,
-                                     const enzo_float gamma) const throw()
-  {
+  FORCE_INLINE enzo_float
+  roe_cfast_(const lutarray<LUT> wl, const lutarray<LUT> wr,
+             const enzo_float sqrtrho_l, const enzo_float sqrtrho_r,
+             const enzo_float inv_sqrtrho_tot, const enzo_float v_roe2,
+             const enzo_float h_roe, const enzo_float gamma) const throw() {
     // Roe-averaged density & B-field (formulas different velocity & enthalpy)
-    enzo_float rho_roe = sqrtrho_l*sqrtrho_r;
-    enzo_float bi_roe = wl[LUT::bfield_i]; // equal to wr["bfield_i"]
-    enzo_float bj_roe = (sqrtrho_l * wr[LUT::bfield_j] +
-                         sqrtrho_r * wl[LUT::bfield_j]) * inv_sqrtrho_tot;
-    enzo_float bk_roe = (sqrtrho_l * wr[LUT::bfield_k] +
-                         sqrtrho_r * wl[LUT::bfield_k]) * inv_sqrtrho_tot;
-    enzo_float b_roe2 = bi_roe*bi_roe + bj_roe*bj_roe + bk_roe*bk_roe;
+    enzo_float rho_roe = sqrtrho_l * sqrtrho_r;
+    enzo_float bi_roe = wl[LUT::bfield_i];  // equal to wr["bfield_i"]
+    enzo_float bj_roe =
+        (sqrtrho_l * wr[LUT::bfield_j] + sqrtrho_r * wl[LUT::bfield_j]) *
+        inv_sqrtrho_tot;
+    enzo_float bk_roe =
+        (sqrtrho_l * wr[LUT::bfield_k] + sqrtrho_r * wl[LUT::bfield_k]) *
+        inv_sqrtrho_tot;
+    enzo_float b_roe2 = bi_roe * bi_roe + bj_roe * bj_roe + bk_roe * bk_roe;
 
     // Calculate fast magnetosonic speed for Roe-averaged quantities (eqn B18)
     enzo_float gamma_prime = gamma - 1.;
-    enzo_float x_prime = ((std::pow(wl[LUT::bfield_j]-wr[LUT::bfield_j],2) +
-                           std::pow(wl[LUT::bfield_k]-wr[LUT::bfield_k],2) )
-                          * 0.5 * (gamma_prime-1) * inv_sqrtrho_tot);
-    enzo_float y_prime = ((gamma_prime-1)*(wl[LUT::density]+wr[LUT::density])
-                          *0.5/rho_roe);
+    enzo_float x_prime = ((std::pow(wl[LUT::bfield_j] - wr[LUT::bfield_j], 2) +
+                           std::pow(wl[LUT::bfield_k] - wr[LUT::bfield_k], 2)) *
+                          0.5 * (gamma_prime - 1) * inv_sqrtrho_tot);
+    enzo_float y_prime =
+        ((gamma_prime - 1) * (wl[LUT::density] + wr[LUT::density]) * 0.5 /
+         rho_roe);
 
     // Need tidle_a^2
-    enzo_float tilde_a2 = (gamma_prime * (h_roe - 0.5* v_roe2 - b_roe2/rho_roe)
-                           - x_prime);
+    enzo_float tilde_a2 =
+        (gamma_prime * (h_roe - 0.5 * v_roe2 - b_roe2 / rho_roe) - x_prime);
 
     // Need Roe averaged square Alfven speed (along ith dim and total magnitude)
     enzo_float tilde_vai2 = bi_roe * bi_roe / rho_roe;
-    enzo_float tilde_va2 = (tilde_vai2 + (gamma_prime - y_prime) *
-                            (bj_roe * bj_roe + bk_roe * bk_roe) / rho_roe);
+    enzo_float tilde_va2 =
+        (tilde_vai2 + (gamma_prime - y_prime) *
+                          (bj_roe * bj_roe + bk_roe * bk_roe) / rho_roe);
 
     return std::sqrt(0.5 * (tilde_a2 + tilde_va2 +
                             std::sqrt(std::pow(tilde_a2 + tilde_va2, 2) -
@@ -172,9 +171,8 @@ struct EinfeldtWavespeed
   }
 };
 
-template<class inputLUT>
-struct DavisWavespeed
-{
+template <class inputLUT>
+struct DavisWavespeed {
   /// @class    DavisWavespeed
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates one of the wavespeed estimators
@@ -186,19 +184,17 @@ struct DavisWavespeed
   /// on to describe it as "exceedling simple" and not recommended for
   /// practical calculations. He attributes this to the scheme from Davis 1988
 public:
-
   using LUT = EnzoRiemannLUT<inputLUT>;
   using EOSStructT = EnzoEOSIdeal;
 
   void operator()(const lutarray<LUT> wl, const lutarray<LUT> wr,
                   const lutarray<LUT> Ul, const lutarray<LUT> Ur,
                   enzo_float pressure_l, enzo_float pressure_r,
-                  const EOSStructT& eos,
-                  enzo_float *bp, enzo_float *bm) const noexcept
-  {
+                  const EOSStructT& eos, enzo_float* bp,
+                  enzo_float* bm) const noexcept {
     // Should be relatively easy to adapt and make compatible with barotropic
     // eos
-    ERROR("EnzoHLLEWavespeed","This hasn't been tested yet");
+    ERROR("EnzoHLLEWavespeed", "This hasn't been tested yet");
 
     // compute left and right fast magnetosonic speed assuming that cos2 = 1
     // not sure why cos2 = 1 was chosen, (cos2 = 0, would yield faster speeds)
@@ -219,75 +215,79 @@ public:
 };
 
 template <class WaveSpeedFunctor>
-struct HLLKernel
-{
+struct HLLKernel {
   /// @class    HLLImpl
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates operations of HLL approximate Riemann
   /// Solver.
 
-public: // typedefs
+public:  // typedefs
   using LUT = typename WaveSpeedFunctor::LUT;
   using EOSStructT = typename WaveSpeedFunctor::EOSStructT;
 
-public: // fields
+public:  // fields
   const KernelConfig<EOSStructT> config;
 
-public: // methods
-
-  FORCE_INLINE void operator()(const int iz,
-                               const int iy,
-                               const int ix) const noexcept
-  {
+public:  // methods
+  FORCE_INLINE void operator()(const int iz, const int iy,
+                               const int ix) const noexcept {
     const int external_velocity_i = config.dim + LUT::velocity_i;
-    const int external_velocity_j = ((config.dim+1)%3) + LUT::velocity_i;
-    const int external_velocity_k = ((config.dim+2)%3) + LUT::velocity_i;
+    const int external_velocity_j = ((config.dim + 1) % 3) + LUT::velocity_i;
+    const int external_velocity_k = ((config.dim + 2) % 3) + LUT::velocity_i;
     const int external_bfield_i = config.dim + LUT::bfield_i;
-    const int external_bfield_j = ((config.dim+1)%3) + LUT::bfield_i;
-    const int external_bfield_k = ((config.dim+2)%3) + LUT::bfield_i;
+    const int external_bfield_j = ((config.dim + 1) % 3) + LUT::bfield_i;
+    const int external_bfield_k = ((config.dim + 2) % 3) + LUT::bfield_i;
 
     // load primitives into local variables
     lutarray<LUT> prim_l;
-    prim_l[LUT::density]     = config.prim_arr_l(LUT::density,iz,iy,ix);
-    prim_l[LUT::velocity_i]  = config.prim_arr_l(external_velocity_i,iz,iy,ix);
-    prim_l[LUT::velocity_j]  = config.prim_arr_l(external_velocity_j,iz,iy,ix);
-    prim_l[LUT::velocity_k]  = config.prim_arr_l(external_velocity_k,iz,iy,ix);
-    if (LUT::has_bfields){
-      prim_l[LUT::bfield_i]  = config.prim_arr_l(external_bfield_i,iz,iy,ix);
-      prim_l[LUT::bfield_j]  = config.prim_arr_l(external_bfield_j,iz,iy,ix);
-      prim_l[LUT::bfield_k]  = config.prim_arr_l(external_bfield_k,iz,iy,ix);
+    prim_l[LUT::density] = config.prim_arr_l(LUT::density, iz, iy, ix);
+    prim_l[LUT::velocity_i] =
+        config.prim_arr_l(external_velocity_i, iz, iy, ix);
+    prim_l[LUT::velocity_j] =
+        config.prim_arr_l(external_velocity_j, iz, iy, ix);
+    prim_l[LUT::velocity_k] =
+        config.prim_arr_l(external_velocity_k, iz, iy, ix);
+    if (LUT::has_bfields) {
+      prim_l[LUT::bfield_i] = config.prim_arr_l(external_bfield_i, iz, iy, ix);
+      prim_l[LUT::bfield_j] = config.prim_arr_l(external_bfield_j, iz, iy, ix);
+      prim_l[LUT::bfield_k] = config.prim_arr_l(external_bfield_k, iz, iy, ix);
     }
     // this actually stores pressure:
-    prim_l[LUT::total_energy]= config.prim_arr_l(LUT::total_energy,iz,iy,ix);
+    prim_l[LUT::total_energy] =
+        config.prim_arr_l(LUT::total_energy, iz, iy, ix);
 
     lutarray<LUT> prim_r;
-    prim_r[LUT::density]     = config.prim_arr_r(LUT::density,iz,iy,ix);
-    prim_r[LUT::velocity_i]  = config.prim_arr_r(external_velocity_i,iz,iy,ix);
-    prim_r[LUT::velocity_j]  = config.prim_arr_r(external_velocity_j,iz,iy,ix);
-    prim_r[LUT::velocity_k]  = config.prim_arr_r(external_velocity_k,iz,iy,ix);
-    if (LUT::has_bfields){
-      prim_r[LUT::bfield_i]  = config.prim_arr_r(external_bfield_i,iz,iy,ix);
-      prim_r[LUT::bfield_j]  = config.prim_arr_r(external_bfield_j,iz,iy,ix);
-      prim_r[LUT::bfield_k]  = config.prim_arr_r(external_bfield_k,iz,iy,ix);
+    prim_r[LUT::density] = config.prim_arr_r(LUT::density, iz, iy, ix);
+    prim_r[LUT::velocity_i] =
+        config.prim_arr_r(external_velocity_i, iz, iy, ix);
+    prim_r[LUT::velocity_j] =
+        config.prim_arr_r(external_velocity_j, iz, iy, ix);
+    prim_r[LUT::velocity_k] =
+        config.prim_arr_r(external_velocity_k, iz, iy, ix);
+    if (LUT::has_bfields) {
+      prim_r[LUT::bfield_i] = config.prim_arr_r(external_bfield_i, iz, iy, ix);
+      prim_r[LUT::bfield_j] = config.prim_arr_r(external_bfield_j, iz, iy, ix);
+      prim_r[LUT::bfield_k] = config.prim_arr_r(external_bfield_k, iz, iy, ix);
     }
     // this actually stores pressure:
-    prim_r[LUT::total_energy]= config.prim_arr_r(LUT::total_energy,iz,iy,ix);
+    prim_r[LUT::total_energy] =
+        config.prim_arr_r(LUT::total_energy, iz, iy, ix);
 
     // load left and right pressure values
     const enzo_float pressure_l = prim_l[LUT::total_energy];
     const enzo_float pressure_r = prim_r[LUT::total_energy];
 
     // get the conserved quantities
-    const lutarray<LUT> cons_l
-      = enzo_riemann_utils::compute_conserved<LUT>(prim_l, config.eos);
-    const lutarray<LUT> cons_r
-      = enzo_riemann_utils::compute_conserved<LUT>(prim_r, config.eos);
+    const lutarray<LUT> cons_l =
+        enzo_riemann_utils::compute_conserved<LUT>(prim_l, config.eos);
+    const lutarray<LUT> cons_r =
+        enzo_riemann_utils::compute_conserved<LUT>(prim_r, config.eos);
 
     // compute the interface fluxes
-    const lutarray<LUT> flux_l
-      = enzo_riemann_utils::active_fluxes<LUT>(prim_l, cons_l, pressure_l);
-    const lutarray<LUT> flux_r
-      = enzo_riemann_utils::active_fluxes<LUT>(prim_r, cons_r, pressure_r);
+    const lutarray<LUT> flux_l =
+        enzo_riemann_utils::active_fluxes<LUT>(prim_l, cons_l, pressure_l);
+    const lutarray<LUT> flux_r =
+        enzo_riemann_utils::active_fluxes<LUT>(prim_r, cons_r, pressure_r);
 
     // there is no scratch_space
     WaveSpeedFunctor wave_speeds;
@@ -296,36 +296,37 @@ public: // methods
     // Compute wave speeds
     wave_speeds(prim_l, prim_r, cons_l, cons_r, pressure_l, pressure_r,
                 config.eos, &bp, &bm);
-    bp = std::fmax(bp,0.0);
-    bm = std::fmin(bm,0.0);
-    enzo_float inv_speed_diff = 1./(bp - bm);
+    bp = std::fmax(bp, 0.0);
+    bm = std::fmin(bm, 0.0);
+    enzo_float inv_speed_diff = 1. / (bp - bm);
 
     // Compute the actual riemann fluxes
     // (we'll address dual energy considerations, afterwards)
     lutarray<LUT> flux;
-    for (std::size_t field = 0; field < LUT::num_entries; field++){
-      flux[field] = ((bp*flux_l[field] - bm*flux_r[field] +
-                      (cons_r[field] - cons_l[field])*bp*bm) * inv_speed_diff);
+    for (std::size_t field = 0; field < LUT::num_entries; field++) {
+      flux[field] = ((bp * flux_l[field] - bm * flux_r[field] +
+                      (cons_r[field] - cons_l[field]) * bp * bm) *
+                     inv_speed_diff);
     }
 
-    config.flux_arr(LUT::density,iz,iy,ix) = flux[LUT::density];
-    config.flux_arr(external_velocity_i,iz,iy,ix) = flux[LUT::velocity_i];
-    config.flux_arr(external_velocity_j,iz,iy,ix) = flux[LUT::velocity_j];
-    config.flux_arr(external_velocity_k,iz,iy,ix) = flux[LUT::velocity_k];
-    if (LUT::has_bfields){
-      config.flux_arr(external_bfield_i,iz,iy,ix) = flux[LUT::bfield_i];
-      config.flux_arr(external_bfield_j,iz,iy,ix) = flux[LUT::bfield_j];
-      config.flux_arr(external_bfield_k,iz,iy,ix) = flux[LUT::bfield_k];
+    config.flux_arr(LUT::density, iz, iy, ix) = flux[LUT::density];
+    config.flux_arr(external_velocity_i, iz, iy, ix) = flux[LUT::velocity_i];
+    config.flux_arr(external_velocity_j, iz, iy, ix) = flux[LUT::velocity_j];
+    config.flux_arr(external_velocity_k, iz, iy, ix) = flux[LUT::velocity_k];
+    if (LUT::has_bfields) {
+      config.flux_arr(external_bfield_i, iz, iy, ix) = flux[LUT::bfield_i];
+      config.flux_arr(external_bfield_j, iz, iy, ix) = flux[LUT::bfield_j];
+      config.flux_arr(external_bfield_k, iz, iy, ix) = flux[LUT::bfield_k];
     }
-    config.flux_arr(LUT::total_energy,iz,iy,ix) = flux[LUT::total_energy];
+    config.flux_arr(LUT::total_energy, iz, iy, ix) = flux[LUT::total_energy];
 
     // finally, deal with dual energy stuff.
     // compute internal energy flux, assuming passive advection
     // (this was not handled with the rest of the fluxes)
-    config.internal_energy_flux_arr(iz,iy,ix) =
-      enzo_riemann_utils::passive_eint_flux
-      (prim_l[LUT::density], pressure_l, prim_r[LUT::density], pressure_r,
-       config.eos, config.flux_arr(LUT::density,iz,iy,ix));
+    config.internal_energy_flux_arr(iz, iy, ix) =
+        enzo_riemann_utils::passive_eint_flux(
+            prim_l[LUT::density], pressure_l, prim_r[LUT::density], pressure_r,
+            config.eos, config.flux_arr(LUT::density, iz, iy, ix));
 
     // Estimate the value of the vi (ith component of velocity) which is used
     // to compute the internal energy source term. The following is adopted
@@ -335,9 +336,9 @@ public: // methods
     //   - otherwise linearly interpolate between vi_L and vi_R. Let the cell
     //     interface be at x=0. At some time t, the velocity is vi_L at x=t*bm
     //     and vi_R at x=t*bp. The factors of t cancel.
-    config.velocity_i_bar_arr(iz,iy,ix) =
-      (bp*prim_l[LUT::velocity_i]
-       - bm*prim_r[LUT::velocity_i]) * inv_speed_diff;
+    config.velocity_i_bar_arr(iz, iy, ix) =
+        (bp * prim_l[LUT::velocity_i] - bm * prim_r[LUT::velocity_i]) *
+        inv_speed_diff;
     // Alternatively, if vi is assumed to be constant in the intermediate zone
     // (which is an underlying assumption of HLLC & HLLD), it can be estimated
     // using equations for the values of rho and rho*vi in the intermediate
@@ -351,15 +352,14 @@ public: // methods
 ///           solver using Einfeldt's wavespeed estimator) for MHD. The same
 ///           wavespeed estimator is used in Athena's MHD HLLE Riemann Solver
 using EnzoRiemannHLLEMHD =
-  EnzoRiemannImpl<HLLKernel<EinfeldtWavespeed<MHDLUT>>>;
+    EnzoRiemannImpl<HLLKernel<EinfeldtWavespeed<MHDLUT>>>;
 
 // @class    EnzoRiemannHLLE
 /// @ingroup  Enzo
 /// @brief    [\ref Enzo] Encapsulates HLLE approximate Riemann Solver (the HLL
 ///           solver using Einfeldt's wavespeed estimator). The same wavespeed
 ///           estimator is used in Athena's MHD HLLE Riemann Solver
-using EnzoRiemannHLLE =
-  EnzoRiemannImpl<HLLKernel<EinfeldtWavespeed<HydroLUT>>>;
+using EnzoRiemannHLLE = EnzoRiemannImpl<HLLKernel<EinfeldtWavespeed<HydroLUT>>>;
 
 /// @class    EnzoRiemannHLLMHD
 /// @ingroup  Enzo

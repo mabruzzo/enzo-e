@@ -10,12 +10,10 @@
 
 #include "mesh.hpp"
 
-PARALLEL_MAIN_BEGIN
-{
-
+PARALLEL_MAIN_BEGIN {
   PARALLEL_INIT;
 
-  unit_init(0,1);
+  unit_init(0, 1);
 
   unit_class("Sync");
 
@@ -34,26 +32,26 @@ PARALLEL_MAIN_BEGIN
   unit_func("set_stop");
   sync_1.set_stop(5);
   unit_assert(sync_1.stop() == 5);
-  
+
   unit_func("next");
-  unit_assert( ! sync_1.next());
+  unit_assert(!sync_1.next());
   unit_assert(sync_1.value() == 1);
-  unit_assert( ! sync_1.is_done());
-  unit_assert( ! sync_1.next());
+  unit_assert(!sync_1.is_done());
+  unit_assert(!sync_1.next());
   unit_assert(sync_1.value() == 2);
-  unit_assert( ! sync_1.is_done());
-  unit_assert( ! sync_1.next());
+  unit_assert(!sync_1.is_done());
+  unit_assert(!sync_1.next());
   unit_assert(sync_1.value() == 3);
-  unit_assert( ! sync_1.is_done());
-  unit_assert( ! sync_1.next());
+  unit_assert(!sync_1.is_done());
+  unit_assert(!sync_1.next());
   unit_assert(sync_1.value() == 4);
-  unit_assert( ! sync_1.is_done());
+  unit_assert(!sync_1.is_done());
   unit_assert(sync_1.next());
   unit_assert(sync_1.value() == 0);
   unit_assert(sync_1.is_done());
 
   sync_1.reset();
-  unit_assert( ! sync_1.is_done());
+  unit_assert(!sync_1.is_done());
   unit_assert(sync_1.value() == 0);
   unit_assert(sync_1.stop() == 0);
 
@@ -63,4 +61,3 @@ PARALLEL_MAIN_BEGIN
 }
 
 PARALLEL_MAIN_END
-

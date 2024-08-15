@@ -11,7 +11,7 @@
 /// @enum     sync_enum
 /// @brief    synchronization type for refresh
 enum sync_enum {
-  sync_unknown,   // Unknown synchronization
+  sync_unknown,  // Unknown synchronization
   sync_none,
   sync_barrier,
   sync_quiescence,
@@ -22,12 +22,12 @@ enum sync_enum {
 /// @enum     neighbor_enum
 /// @brief    neighbor block type
 enum neighbor_enum {
-  neighbor_unknown, // Unknown neighbor type
-  neighbor_leaf,    // neighbors that are leaves, maybe different level
-  neighbor_level,   // neighbors is in same level, maybe not leaves
-  neighbor_tree     // neighbors that are leaves, but only if in same octree
+  neighbor_unknown,  // Unknown neighbor type
+  neighbor_leaf,     // neighbors that are leaves, maybe different level
+  neighbor_level,    // neighbors is in same level, maybe not leaves
+  neighbor_tree      // neighbors that are leaves, but only if in same octree
 };
-  
+
 //----------------------------------------------------------------------
 
 extern void method_close_files_mutex_init();
@@ -51,8 +51,8 @@ extern void method_close_files_mutex_init();
 #include "problem_MaskPng.hpp"
 #include "problem_ScalarExpr.hpp"
 #include "problem_Value.hpp"
-//#include "problem_MaskPng.hpp"
-//#include "problem_ExprValue.hpp"
+// #include "problem_MaskPng.hpp"
+// #include "problem_ExprValue.hpp"
 #include "problem_Problem.hpp"
 #include "problem_Stopping.hpp"
 #include "problem_Initial.hpp"

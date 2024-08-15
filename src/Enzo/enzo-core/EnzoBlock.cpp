@@ -16,25 +16,25 @@
 
 //----------------------------------------------------------------------
 
-EnzoBlock::EnzoBlock (CkMigrateMessage *m)
-  : CBase_EnzoBlock (m)
-    // dt(0.0),
-    // redshift(0.0)
+EnzoBlock::EnzoBlock(CkMigrateMessage* m)
+    : CBase_EnzoBlock(m)
+// dt(0.0),
+// redshift(0.0)
 {
   TRACE("CkMigrateMessage");
   // EnzoSimulation[0] counts migrated Blocks
   proxy_enzo_simulation[0].p_method_balance_check();
 }
 
-EnzoBlock::EnzoBlock( process_type ip_source,  MsgType msg_type)
-  : CBase_EnzoBlock (ip_source, msg_type),
-    redshift(0.0)
+EnzoBlock::EnzoBlock(process_type ip_source, MsgType msg_type)
+    : CBase_EnzoBlock(ip_source, msg_type),
+      redshift(0.0)
 
 {
 #ifdef TRACE_BLOCK
 
-  CkPrintf ("%d %p TRACE_BLOCK %s EnzoBlock(ip) msg_type %d\n",
-            CkMyPe(),(void *)this,name(thisIndex).c_str(),int(msg_type));
+  CkPrintf("%d %p TRACE_BLOCK %s EnzoBlock(ip) msg_type %d\n", CkMyPe(),
+           (void*)this, name(thisIndex).c_str(), int(msg_type));
   fflush(stdout);
 #endif
 
@@ -47,8 +47,7 @@ EnzoBlock::EnzoBlock( process_type ip_source,  MsgType msg_type)
 
 //----------------------------------------------------------------------
 
-void EnzoBlock::set_msg_check(EnzoMsgCheck * msg)
-{
+void EnzoBlock::set_msg_check(EnzoMsgCheck* msg) {
   performance_start_(perf_block);
 
   restart_set_data_(msg);
@@ -59,11 +58,10 @@ void EnzoBlock::set_msg_check(EnzoMsgCheck * msg)
 
 //----------------------------------------------------------------------
 
-void EnzoBlock::set_msg_refine(MsgRefine * msg)
-{
+void EnzoBlock::set_msg_refine(MsgRefine* msg) {
 #ifdef TRACE_BLOCK
-  CkPrintf ("%d %p :%d TRACE_BLOCK %s EnzoBlock p_set_msg_refine()\n",
-            CkMyPe(),(void *)this,__LINE__,name(thisIndex).c_str());
+  CkPrintf("%d %p :%d TRACE_BLOCK %s EnzoBlock p_set_msg_refine()\n", CkMyPe(),
+           (void*)this, __LINE__, name(thisIndex).c_str());
   fflush(stdout);
 #endif
   int io_reader = msg->restart_io_reader_;
@@ -78,21 +76,18 @@ void EnzoBlock::set_msg_refine(MsgRefine * msg)
 
 //======================================================================
 
-EnzoBlock::~EnzoBlock()
-{
+EnzoBlock::~EnzoBlock() {
 #ifdef TRACE_BLOCK
-  CkPrintf ("%d %p TRACE_BLOCK %s ~EnzoBlock(...)\n",
-            CkMyPe(),(void *)this,name(thisIndex).c_str());
+  CkPrintf("%d %p TRACE_BLOCK %s ~EnzoBlock(...)\n", CkMyPe(), (void*)this,
+           name(thisIndex).c_str());
 #endif
 }
 
 //----------------------------------------------------------------------
 
-void EnzoBlock::pup(PUP::er &p)
-{
-
+void EnzoBlock::pup(PUP::er& p) {
   TRACEPUP;
-  TRACE ("BEGIN EnzoBlock::pup()");
+  TRACE("BEGIN EnzoBlock::pup()");
 
   CBase_EnzoBlock::pup(p);
 
@@ -106,59 +101,55 @@ void EnzoBlock::pup(PUP::er &p)
     WARNING("EnzoBlock::pup()", "skipping SubgridFluxes (not used)");
   }
 
-  PUParray(p,GridLeftEdge,MAX_DIMENSION);
-  PUParray(p,GridDimension,MAX_DIMENSION);
-  PUParray(p,GridStartIndex,MAX_DIMENSION);
-  PUParray(p,GridEndIndex,MAX_DIMENSION);
-  PUParray(p,CellWidth,MAX_DIMENSION);
+  PUParray(p, GridLeftEdge, MAX_DIMENSION);
+  PUParray(p, GridDimension, MAX_DIMENSION);
+  PUParray(p, GridStartIndex, MAX_DIMENSION);
+  PUParray(p, GridEndIndex, MAX_DIMENSION);
+  PUParray(p, CellWidth, MAX_DIMENSION);
 
   p | redshift;
 }
 
 //======================================================================
 
-void EnzoBlock::write(FILE * fp) throw ()
-{
+void EnzoBlock::write(FILE* fp) throw() {
   const int in = cello::index_static();
 
   // Grid
 
-  fprintf (fp,"EnzoBlock: GridDimension %d %d %d\n",
-	   GridDimension[0],GridDimension[1],GridDimension[2]);
-  fprintf (fp,"EnzoBlock: GridStartIndex %d %d %d\n",
-	   GridStartIndex[0],GridStartIndex[1],GridStartIndex[2]);
-  fprintf (fp,"EnzoBlock: GridEndIndex %d %d %d\n",
-	   GridEndIndex[0],GridEndIndex[1],GridEndIndex[2]);
-  fprintf (fp,"EnzoBlock: GridLeftEdge %g %g %g\n",
-	   GridLeftEdge[0],GridLeftEdge[1],GridLeftEdge[2]);
+  fprintf(fp, "EnzoBlock: GridDimension %d %d %d\n", GridDimension[0],
+          GridDimension[1], GridDimension[2]);
+  fprintf(fp, "EnzoBlock: GridStartIndex %d %d %d\n", GridStartIndex[0],
+          GridStartIndex[1], GridStartIndex[2]);
+  fprintf(fp, "EnzoBlock: GridEndIndex %d %d %d\n", GridEndIndex[0],
+          GridEndIndex[1], GridEndIndex[2]);
+  fprintf(fp, "EnzoBlock: GridLeftEdge %g %g %g\n", GridLeftEdge[0],
+          GridLeftEdge[1], GridLeftEdge[2]);
 
-  fprintf (fp,"EnzoBlock: CellWidth %g %g %g\n",
-	   CellWidth[0], CellWidth[1], CellWidth[2] );
+  fprintf(fp, "EnzoBlock: CellWidth %g %g %g\n", CellWidth[0], CellWidth[1],
+          CellWidth[2]);
 
   // problem
 
-  fprintf (fp,"EnzoBlock: dt %g\n", dt);
-
+  fprintf(fp, "EnzoBlock: dt %g\n", dt);
 }
 
 //----------------------------------------------------------------------
 
-void EnzoBlock::set_dt (double dt_param) throw ()
-{
-  Block::set_dt (dt_param);
+void EnzoBlock::set_dt(double dt_param) throw() {
+  Block::set_dt(dt_param);
 
   dt = dt_param;
 }
 
 //----------------------------------------------------------------------
 
-void EnzoBlock::set_time (double time) throw ()
-{
-  Block::set_time (time);
+void EnzoBlock::set_time(double time) throw() {
+  Block::set_time(time);
 
-  Simulation * simulation = cello::simulation();
-  EnzoUnits * units = (EnzoUnits * )simulation->problem()->units();
-  EnzoPhysicsCosmology * cosmology = units->cosmology();
+  Simulation* simulation = cello::simulation();
+  EnzoUnits* units = (EnzoUnits*)simulation->problem()->units();
+  EnzoPhysicsCosmology* cosmology = units->cosmology();
 
   if (cosmology) {
     cosmology->set_current_time(time);
@@ -168,15 +159,14 @@ void EnzoBlock::set_time (double time) throw ()
 
 //----------------------------------------------------------------------
 
-void EnzoBlock::initialize () throw()
-{
-  double xm,ym,zm;
+void EnzoBlock::initialize() throw() {
+  double xm, ym, zm;
 
-  data()->lower(&xm,&ym,&zm);
+  data()->lower(&xm, &ym, &zm);
 
-  GridLeftEdge[0]  = xm;
-  GridLeftEdge[1]  = ym;
-  GridLeftEdge[2]  = zm;
+  GridLeftEdge[0] = xm;
+  GridLeftEdge[1] = ym;
+  GridLeftEdge[2] = zm;
 
   // Grid dimensions
 
@@ -190,13 +180,13 @@ void EnzoBlock::initialize () throw()
   // different count of fields. In any case, this is improvement over the count
   // that was used previously in this check
   if (field.num_permanent() > MAX_NUMBER_OF_BARYON_FIELDS) {
-    ERROR2 ("EnzoBlock::initialize",
-            "MAX_NUMBER_OF_BARYON_FIELDS = %d is too small for %d fields",
-            MAX_NUMBER_OF_BARYON_FIELDS, field.num_permanent() );
+    ERROR2("EnzoBlock::initialize",
+           "MAX_NUMBER_OF_BARYON_FIELDS = %d is too small for %d fields",
+           MAX_NUMBER_OF_BARYON_FIELDS, field.num_permanent());
   }
 
-  int nx,ny,nz;
-  field.size (&nx,&ny,&nz);
+  int nx, ny, nz;
+  field.size(&nx, &ny, &nz);
 
   // query the ghost depth.
   //
@@ -219,9 +209,9 @@ void EnzoBlock::initialize () throw()
   int gy = (rank < 2) ? 0 : cello::config()->field_ghost_depth[1];
   int gz = (rank < 3) ? 0 : cello::config()->field_ghost_depth[2];
 
-  GridDimension[0]  = nx + 2*gx;
-  GridDimension[1]  = ny + 2*gy;
-  GridDimension[2]  = nz + 2*gz;
+  GridDimension[0] = nx + 2 * gx;
+  GridDimension[1] = ny + 2 * gy;
+  GridDimension[2] = nz + 2 * gz;
 
   TRACE("Initializing GridStartIndex");
 
@@ -235,25 +225,22 @@ void EnzoBlock::initialize () throw()
 
   // Initialize CellWidth
 
-  double xp,yp,zp;
-  data()->upper(&xp,&yp,&zp);
-  double hx,hy,hz;
-  field.cell_width(xm,xp,&hx,ym,yp,&hy,zm,zp,&hz);
+  double xp, yp, zp;
+  data()->upper(&xp, &yp, &zp);
+  double hx, hy, hz;
+  field.cell_width(xm, xp, &hx, ym, yp, &hy, zm, zp, &hz);
 
   CellWidth[0] = hx;
   CellWidth[1] = hy;
   CellWidth[2] = hz;
 
-  TRACE ("Exit  EnzoBlock::initialize()\n");
+  TRACE("Exit  EnzoBlock::initialize()\n");
 }
 
-bool EnzoBlock::spawn_child_blocks() throw()
-{
+bool EnzoBlock::spawn_child_blocks() throw() {
   int level = index_.level();
   if (level >= 0) {
-    
     if (level + 1 <= enzo::config()->refined_regions_lower.size()) {
-
       std::vector<int> lower = enzo::config()->refined_regions_lower.at(level);
       std::vector<int> upper = enzo::config()->refined_regions_upper.at(level);
 
@@ -272,15 +259,15 @@ bool EnzoBlock::spawn_child_blocks() throw()
   return false;
 }
 
-void EnzoBlock::create_initial_child_blocks()
-{
+void EnzoBlock::create_initial_child_blocks() {
   bool spawn_children = spawn_child_blocks();
-  if (spawn_children) {instantiate_children();}
+  if (spawn_children) {
+    instantiate_children();
+  }
 }
 
-void EnzoBlock::instantiate_children() throw()
-{
-  child_face_level_curr_.resize(cello::num_children()*27);
+void EnzoBlock::instantiate_children() throw() {
+  child_face_level_curr_.resize(cello::num_children() * 27);
   int num_field_blocks = 1;
 
   int nx, ny, nz;
@@ -291,27 +278,22 @@ void EnzoBlock::instantiate_children() throw()
   int ic3[3];
   while (it_child.next(ic3)) {
     Index index_child = index_.index_child(ic3);
-    DataMsg * data_msg = NULL;
+    DataMsg* data_msg = NULL;
 
-    MsgRefine * msg = new MsgRefine
-      (index_child,
-      nx,ny,nz,
-      num_field_blocks,
-      adapt_step_,
-      cycle_,time_,dt_,
-      refresh_fine,
-      27, 
-      &child_face_level_curr_.data()[27*IC3(ic3)], 
-      &adapt_);
+    MsgRefine* msg =
+        new MsgRefine(index_child, nx, ny, nz, num_field_blocks, adapt_step_,
+                      cycle_, time_, dt_, refresh_fine, 27,
+                      &child_face_level_curr_.data()[27 * IC3(ic3)], &adapt_);
 
     msg->set_data_msg(data_msg);
     // #ifdef BYPASS_CHARM_MEM_LEAK
     //   enzo::simulation()->set_msg_refine (index_child, msg);
-    //   thisProxy[index_child].insert (process_type(CkMyPe()), MsgType::msg_refine);
+    //   thisProxy[index_child].insert (process_type(CkMyPe()),
+    //   MsgType::msg_refine);
     // #else
     //   thisProxy[index_child].insert (msg);
     // #endif
-    cello::simulation()->p_refine_create_block (msg);
+    cello::simulation()->p_refine_create_block(msg);
 
     children_.push_back(index_child);
   }

@@ -11,18 +11,20 @@
 
 //----------------------------------------------------------------------
 
-namespace { // stuff within anonymous namespace only visible in local file
+namespace {  // stuff within anonymous namespace only visible in local file
 
-struct NameVisitor{
-  template<typename T> std::string operator()(T obj) { return T::name(); }
+struct NameVisitor {
+  template <typename T>
+  std::string operator()(T obj) {
+    return T::name();
+  }
 };
 
-}
+}  // namespace
 
 //----------------------------------------------------------------------
 
-void pup(PUP::er &p, EnzoEOSVariant& variant) noexcept {
-
+void pup(PUP::er& p, EnzoEOSVariant& variant) noexcept {
   // to make a hypothetical migration to std::variant as simple as possible, we
   // are explicitly avoiding the usage of macros
 
@@ -30,7 +32,7 @@ void pup(PUP::er &p, EnzoEOSVariant& variant) noexcept {
 
   // in C++ 14, we could write:
   // std::string eos_name = variant.visit( [](auto eos){return eos::name();} );
-  std::string eos_name = variant.visit( NameVisitor() );
+  std::string eos_name = variant.visit(NameVisitor());
 
   p | eos_name;
 
@@ -38,11 +40,15 @@ void pup(PUP::er &p, EnzoEOSVariant& variant) noexcept {
   // return unique names
 
   if (EnzoEOSIdeal::name() == eos_name) {
-    if (up) { variant = EnzoEOSVariant(EnzoEOSIdeal()); }
+    if (up) {
+      variant = EnzoEOSVariant(EnzoEOSIdeal());
+    }
     pup(p, variant.get<EnzoEOSIdeal>());
 
   } else if (EnzoEOSIsothermal::name() == eos_name) {
-    if (up) { variant = EnzoEOSVariant(EnzoEOSIsothermal()); }
+    if (up) {
+      variant = EnzoEOSVariant(EnzoEOSIsothermal());
+    }
     pup(p, variant.get<EnzoEOSIsothermal>());
 
   } else {

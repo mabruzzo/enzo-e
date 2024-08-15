@@ -11,66 +11,58 @@
 #define ENZO_ENZO_METHOD_MERGESINKS
 
 class EnzoMethodMergeSinks : public Method {
-
   /// @class   EnzoMethodMergeSinks
   /// @ingroup Enzo
   /// @brief   [\ref Enzo] Encapsulate Merge Sink Routines
 
 public:
-
   // Create a new MergeSinks object
   EnzoMethodMergeSinks(ParameterGroup p);
 
   /// Destructor
-  virtual ~EnzoMethodMergeSinks() throw() {};
+  virtual ~EnzoMethodMergeSinks() throw(){};
 
   /// Charm++ Pup::able declarations
   PUPable_decl(EnzoMethodMergeSinks);
 
   /// Charm++ PUP::able migration constructor
-  EnzoMethodMergeSinks (CkMigrateMessage *m)
-    : Method (m)
-    {  }
+  EnzoMethodMergeSinks(CkMigrateMessage* m) : Method(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Apply the method
-  virtual void compute( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
   /// Name
-  virtual std::string name () throw()
-  { return "merge_sinks"; }
+  virtual std::string name() throw() { return "merge_sinks"; }
 
   /// Not sure if this is needed
-  virtual std::string particle_type () throw()
-  { return "sink";}
+  virtual std::string particle_type() throw() { return "sink"; }
 
   // Compute the maximum timestep for this method
-  virtual double timestep ( Block * block) const throw();
+  virtual double timestep(Block* block) const throw();
 
   // allow other Method objects to query this information
-  enzo_float merging_radius_cells() const throw()
-  { return merging_radius_cells_; }
+  enzo_float merging_radius_cells() const throw() {
+    return merging_radius_cells_;
+  }
 
-protected: // methods
+protected:  // methods
+  void compute_(Block* block);
 
-  void compute_(Block * block);
+  void get_particle_coordinates_(EnzoBlock* enzo_block, int it,
+                                 enzo_float* particle_coordinates);
 
-  void get_particle_coordinates_(EnzoBlock * enzo_block, int it,
-				enzo_float * particle_coordinates);
-
-  bool particles_in_neighbouring_blocks_(EnzoBlock * enzo_block,
-					 enzo_float * particle_coordinates,
-					 int ** group_lists,int * group_sizes,
-					 int i);
+  bool particles_in_neighbouring_blocks_(EnzoBlock* enzo_block,
+                                         enzo_float* particle_coordinates,
+                                         int** group_lists, int* group_sizes,
+                                         int i);
 
   // Checks to be performed at initial cycle
   void do_checks_(const Block* block) throw();
 
-  
-protected: // attributes
-
+protected:  // attributes
   enzo_float merging_radius_cells_;
 };
 

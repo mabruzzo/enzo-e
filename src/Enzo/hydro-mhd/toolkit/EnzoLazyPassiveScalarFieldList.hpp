@@ -10,7 +10,6 @@
 #ifndef ENZO_ENZO_LAZY_PASSIVE_SCALAR_FIELD_LIST_HPP
 #define ENZO_ENZO_LAZY_PASSIVE_SCALAR_FIELD_LIST_HPP
 
-
 class EnzoLazyPassiveScalarFieldList {
   /// @class    EnzoLazyPassiveScalarFieldList
   /// @ingroup  Enzo
@@ -44,14 +43,11 @@ class EnzoLazyPassiveScalarFieldList {
 
 public:
   EnzoLazyPassiveScalarFieldList()
-    : initialized_(false),
-      passive_names_(nullptr)
-  { }
+      : initialized_(false), passive_names_(nullptr) {}
 
   /// Retrieve the nested passive scalar field list
-  std::shared_ptr<const str_vec_t> get_list() noexcept
-  {
-    if (!initialized_){
+  std::shared_ptr<const str_vec_t> get_list() noexcept {
+    if (!initialized_) {
       passive_names_ = build_passive_list_();
       initialized_ = true;
     }
@@ -61,13 +57,13 @@ public:
   /// Retrieve the nested passive scalar field list
   ///
   /// This method is required to support the timestep method of Method objects.
-  std::shared_ptr<const str_vec_t> get_list() const noexcept
-  { return (initialized_) ? passive_names_ : build_passive_list_(); }
+  std::shared_ptr<const str_vec_t> get_list() const noexcept {
+    return (initialized_) ? passive_names_ : build_passive_list_();
+  }
 
-  void pup(PUP::er &p);
+  void pup(PUP::er& p);
 
 private:
-
   /// Helper method where the nested list is actually constructed
   static std::shared_ptr<const str_vec_t> build_passive_list_() noexcept;
 
@@ -75,6 +71,5 @@ private:
   bool initialized_;
   std::shared_ptr<const str_vec_t> passive_names_;
 };
-
 
 #endif /* ENZO_ENZO_LAZY_PASSIVE_SCALAR_FIELD_LIST_HPP */

@@ -9,32 +9,29 @@
 #define ENZO_IO_ENZO_LEVEL_ARRAY_HPP
 
 class EnzoLevelArray : public CBase_EnzoLevelArray {
-
   /// @class    EnzoLevelArray
   /// @ingroup  Enzo
-  /// @brief    [\ref Io] 
+  /// @brief    [\ref Io]
 
-public: // interface
-
+public:  // interface
   /// Constructors
-  EnzoLevelArray(std::string field_group,
-                 int level_base, int level_array, int level_infer,
-                 int nax, int nay=1, int naz=1);
-  
+  EnzoLevelArray(std::string field_group, int level_base, int level_array,
+                 int level_infer, int nax, int nay = 1, int naz = 1);
+
   /// CHARM++ migration constructor
-  EnzoLevelArray(CkMigrateMessage *m) : CBase_EnzoLevelArray(m) {}
+  EnzoLevelArray(CkMigrateMessage* m) : CBase_EnzoLevelArray(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &);
+  void pup(PUP::er&);
 
   /// Destructor
   virtual ~EnzoLevelArray();
 
   /// Send data request to containing EnzoBlock in level_base
-  void p_request_data ();
+  void p_request_data();
 
   /// Accept requested data from blocks
-  void p_transfer_data (Index, int nf, enzo_float * field_data_list );
+  void p_transfer_data(Index, int nf, enzo_float* field_data_list);
 
   /// Exit EnzoMethodInference
   void p_done(Index);
@@ -44,42 +41,36 @@ public: // interface
   void apply_inference();
 
   /// Return the coordinates of the lower point of the inference array
-  void lower (double lower[3])
-  {
-    lower[0] = 1.0*thisIndex[0]/nax_;
-    lower[1] = 1.0*thisIndex[1]/nay_;
-    lower[2] = 1.0*thisIndex[2]/naz_;
+  void lower(double lower[3]) {
+    lower[0] = 1.0 * thisIndex[0] / nax_;
+    lower[1] = 1.0 * thisIndex[1] / nay_;
+    lower[2] = 1.0 * thisIndex[2] / naz_;
   }
 
   /// Return the coordinates of the lower point of the inference array
-  void upper (double upper[3])
-  {
-    upper[0] = 1.0*(thisIndex[0]+1)/nax_;
-    upper[1] = 1.0*(thisIndex[1]+1)/nay_;
-    upper[2] = 1.0*(thisIndex[2]+1)/naz_;
+  void upper(double upper[3]) {
+    upper[0] = 1.0 * (thisIndex[0] + 1) / nax_;
+    upper[1] = 1.0 * (thisIndex[1] + 1) / nay_;
+    upper[2] = 1.0 * (thisIndex[2] + 1) / naz_;
   }
 
   /// Return the coordinates of the lower point of the inference array
 
-
-protected: // functions
-
+protected:  // functions
   /// Return the index of the Block in level_base_ level
   // (unique and guaranteed to exist)
   Index get_block_index_();
 
-  void interpolate_
-  (enzo_float * af,
-   int mfx, int mfy, int mfz, int nfx, int nfy, int nfz, int efx, int efy, int efz,
-   const enzo_float * ac,
-   int mcx, int mcy, int mcz, int ncx, int ncy, int ncz, int ecx, int ecy, int ecz);
+  void interpolate_(enzo_float* af, int mfx, int mfy, int mfz, int nfx, int nfy,
+                    int nfz, int efx, int efy, int efz, const enzo_float* ac,
+                    int mcx, int mcy, int mcz, int ncx, int ncy, int ncz,
+                    int ecx, int ecy, int ecz);
 
-  void copy_
-  (      enzo_float * af, int mfx, int mfy, int mfz, int nfx, int nfy, int nfz,
-   const enzo_float * ac, int mcx, int mcy, int mcz, int ncx, int ncy, int ncz);
+  void copy_(enzo_float* af, int mfx, int mfy, int mfz, int nfx, int nfy,
+             int nfz, const enzo_float* ac, int mcx, int mcy, int mcz, int ncx,
+             int ncy, int ncz);
 
-private: // attributes
-
+private:  // attributes
   /// AMR level of blocks associated with this array
   /// 0 <= level_base_ <= level_array_
   int level_array_;
@@ -105,7 +96,7 @@ private: // attributes
   int num_fields_;
 
   /// Arrays of fields
-  std::vector< std::vector < enzo_float > > field_values_;
+  std::vector<std::vector<enzo_float> > field_values_;
 
   /// Variable for keeping track of volume of incoming data
   float volume_ratio_;
@@ -115,4 +106,3 @@ private: // attributes
 };
 
 #endif /* ENZO_IO_ENZO_LEVEL_ARRAY_HPP */
-

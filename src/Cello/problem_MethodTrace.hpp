@@ -1,7 +1,7 @@
 // See LICENSE_CELLO file for license and copyright information
 
-/// @file     problem_MethodTrace.hpp 
-/// @author   James Bordner (jobordner@ucsd.edu) 
+/// @file     problem_MethodTrace.hpp
+/// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2015-11-06 22:31:28
 /// @brief    [\ref Problem] Declaration for the MethodTrace class
 
@@ -11,63 +11,49 @@
 class Refresh;
 class Schedule;
 
-class MethodTrace : public Method
-{
+class MethodTrace : public Method {
   /// @class    MethodTrace
   /// @ingroup  MethodTrace
   /// @brief    [\ref MethodTrace] Test method for basic Particle methods
 
-public: // interface
-
+public:  // interface
   /// Create a new MethodTrace
-  MethodTrace (ParameterGroup p) noexcept;
+  MethodTrace(ParameterGroup p) noexcept;
 
   /// Destructor
-  virtual ~MethodTrace() throw()
-  {};
+  virtual ~MethodTrace() throw(){};
 
   /// Charm++ PUP::able declarations
   PUPable_decl(MethodTrace);
 
   /// Charm++ PUP::able migration constructor
-  MethodTrace (CkMigrateMessage *m)
-    : Method(m),
-      timestep_(0.0),
-      name_()
-  { }
+  MethodTrace(CkMigrateMessage* m) : Method(m), timestep_(0.0), name_() {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
+  void pup(PUP::er& p) {
     TRACEPUP;
     Method::pup(p);
     p | timestep_;
     p | name_;
   };
 
-public: // virtual functions
-
+public:  // virtual functions
   /// Compute maximum timestep for this method
-  virtual double timestep (Block * block) throw();
+  virtual double timestep(Block* block) throw();
 
-  /// Apply the method to advance a block one timestep 
+  /// Apply the method to advance a block one timestep
 
-  virtual void compute ( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
   /// Return the name of this MethodTrace
-  virtual std::string name () throw ()
-  { return "trace"; }
+  virtual std::string name() throw() { return "trace"; }
 
-protected: // functions
-
-
-protected: // attributes
-
+protected:  // functions
+protected:  // attributes
   double timestep_;
 
   /// Name of the particle type to update
   std::string name_;
-
 };
 
 #endif /* PROBLEM_METHOD_TRACE_HPP */

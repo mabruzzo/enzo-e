@@ -11,26 +11,23 @@
 //----------------------------------------------------------------------
 
 /// @brief Print a parameter expression
-extern "C" { 
-  void print_expression(struct node_expr * node,
-		      FILE * fp = stdout);
+extern "C" {
+void print_expression(struct node_expr* node, FILE* fp = stdout);
 }
 
 /// @brief Print a parameter expression
-extern "C" { 
-  void sprintf_expression(struct node_expr * node,
-			  char * buffer);
+extern "C" {
+void sprintf_expression(struct node_expr* node, char* buffer);
 }
 
 /// @brief Print a parameter list
-extern "C" { 
-  void cello_parameters_print_list(struct param_struct * head, int level);
+extern "C" {
+void cello_parameters_print_list(struct param_struct* head, int level);
 }
 
-typedef std::vector<class Param *> list_type;
+typedef std::vector<class Param*> list_type;
 
 //----------------------------------------------------------------------
-
 
 /// Types of formats for writing parameter
 
@@ -43,7 +40,6 @@ enum {
 //----------------------------------------------------------------------
 
 class Param {
-
   /// @class    Param
   /// @ingroup  Parameters
   /// @brief    [\ref Parameters] Represent and evaluate various
@@ -51,123 +47,108 @@ class Param {
 
   friend class Parameters;
 
-public: // interface
-
-  static const std::map<std::string, double (*) (double)> function_map;
+public:  // interface
+  static const std::map<std::string, double (*)(double)> function_map;
 
   /// Initialize a Param object
-  Param () 
-    : type_(parameter_unknown),
-      value_accessed_(false)
-  {};
+  Param() : type_(parameter_unknown), value_accessed_(false){};
 
   /// Delete a Param object
-  ~Param () 
-  { dealloc_(); };
+  ~Param() { dealloc_(); };
 
   /// Copy constructor
-  Param(const Param & param) throw()
-    : type_(parameter_unknown),
-      value_accessed_(false)
-  { INCOMPLETE("Param::Param"); };
+  Param(const Param& param) throw()
+      : type_(parameter_unknown), value_accessed_(false) {
+    INCOMPLETE("Param::Param");
+  };
 
   /// Assignment operator
-  Param & operator= (const Param & param) throw()
-  { INCOMPLETE("Param::operator =");
-    return *this; };
+  Param& operator=(const Param& param) throw() {
+    INCOMPLETE("Param::operator =");
+    return *this;
+  };
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Evaluate a floating-point expression given vectos x,y,z,t
-  void evaluate_float  
-  ( int                n, 
-    double *           result, 
-    double *           x, 
-    double *           y, 
-    double *           z, 
-    double             t,
-    struct node_expr * node = 0 );
+  void evaluate_float(int n, double* result, double* x, double* y, double* z,
+                      double t, struct node_expr* node = 0);
 
   /// Evaluate a logical expression given vectos x,y,z,t
-  void evaluate_logical  
-  ( int                n, 
-    bool *             result, 
-    double *           x, 
-    double *           y, 
-    double *           z, 
-    double             t,
-    struct node_expr * node = 0);
+  void evaluate_logical(int n, bool* result, double* x, double* y, double* z,
+                        double t, struct node_expr* node = 0);
 
   /// Set the parameter type and value
-  void set(struct param_struct * param);
+  void set(struct param_struct* param);
 
   /// Write the parameter to the file
-  void write(FILE * file_pointer,
-	     std::string parameter,
-	     int param_write_type);
+  void write(FILE* file_pointer, std::string parameter, int param_write_type);
 
   /// Return whether the parameter has the given type
-  bool is_type (parameter_enum type) { return type_ == type; }
+  bool is_type(parameter_enum type) { return type_ == type; }
 
-  bool accessed () const { return value_accessed_; }
+  bool accessed() const { return value_accessed_; }
 
-  void set_accessed () { value_accessed_ = true; }
+  void set_accessed() { value_accessed_ = true; }
 
   /// Get an integer parameter
-  int get_integer () 
-  { value_accessed_ = true; return value_integer_; }
+  int get_integer() {
+    value_accessed_ = true;
+    return value_integer_;
+  }
 
   /// Get a floating-point (double) parameter
-  double get_float  () 
-  { value_accessed_ = true; return value_float_; }
+  double get_float() {
+    value_accessed_ = true;
+    return value_float_;
+  }
 
   /// Get a logical parameter
-  int get_logical ()    
-  { value_accessed_ = true; return value_logical_; }
+  int get_logical() {
+    value_accessed_ = true;
+    return value_logical_;
+  }
 
   /// Get a string parameter (note that string is aliased)
-  const char * get_string () 
-  { value_accessed_ = true; return value_string_; }
+  const char* get_string() {
+    value_accessed_ = true;
+    return value_string_;
+  }
 
   /// Convert the parameter value into a string
-  std::string value_to_string (int write_type);
+  std::string value_to_string(int write_type);
 
   /// Return the type of the parameter
-  parameter_type type() const { return type_; } 
+  parameter_type type() const { return type_; }
 
   //----------------------------------------------------------------------
 
-private: // functions
-
+private:  // functions
   /// PUP a logical or floating-point expression (recursive)
-  void pup_expr_ (PUP::er &p, struct node_expr ** node);
+  void pup_expr_(PUP::er& p, struct node_expr** node);
 
   /// Set an integer parameter
-  void set_integer_ (int value)
-  { 
-    type_ = parameter_integer; 
-    value_integer_ = value; 
+  void set_integer_(int value) {
+    type_ = parameter_integer;
+    value_integer_ = value;
   };
 
   /// Set a floating-point (double) parameter
-  void set_float_  (double value) 
-  { 
-    type_ = parameter_float; 
-    value_float_ = value; 
+  void set_float_(double value) {
+    type_ = parameter_float;
+    value_float_ = value;
   };
 
   /// Set a logical parameter
-  void set_logical_ (int value)    
-  { 
-    type_ = parameter_logical; 
-    value_logical_ = (value != 0); 
+  void set_logical_(int value) {
+    type_ = parameter_logical;
+    value_logical_ = (value != 0);
   };
 
   /// Set a string parameter (note that string is aliased)
-  void set_string_ (char * value) 
-  { 
-    type_ = parameter_string; 
+  void set_string_(char* value) {
+    type_ = parameter_string;
     value_string_ = value;
   };
 
@@ -176,13 +157,12 @@ private: // functions
   /// Lists are bounded by "sentinel" types: the list values are
   /// taken to be between the first sentinel and the next sentinel
 
-  void set_list_ (struct param_struct * value) 
-  { 
-    type_ = parameter_list; 
+  void set_list_(struct param_struct* value) {
+    type_ = parameter_list;
     value_list_ = new list_type;
-    value = value->next; // Skip sentinel
+    value = value->next;  // Skip sentinel
     while (value->type != enum_parameter_sentinel) {
-      Param * param = new Param;
+      Param* param = new Param;
       param->set(value);
       value_list_->push_back(param);
       value = value->next;
@@ -190,39 +170,35 @@ private: // functions
   };
 
   /// Set a floating-point expression parameter
-  void set_float_expr_ (struct node_expr * value)
-  { 
+  void set_float_expr_(struct node_expr* value) {
     type_ = parameter_float_expr;
-    value_expr_     = value; 
+    value_expr_ = value;
   };
 
   /// Set a logical expression parameter
-  void set_logical_expr_ (struct node_expr * value)
-  { 
+  void set_logical_expr_(struct node_expr* value) {
     type_ = parameter_logical_expr;
-    value_expr_     = value; 
+    value_expr_ = value;
   };
 
   /// Deallocate the parameter
   void dealloc_();
 
   /// Deallocate a string
-  void dealloc_string_() { free (value_string_); } 
+  void dealloc_string_() { free(value_string_); }
 
   /// Deallocate a list of parameters
-  void dealloc_list_     (list_type *value_list_);
+  void dealloc_list_(list_type* value_list_);
 
   /// Deallocate an expression parameter
-  void dealloc_node_expr_ (struct node_expr * p);
+  void dealloc_node_expr_(struct node_expr* p);
 
   ///
-  void write_float_expr_(FILE * file_pointer,
-			  struct node_expr * value_expr_);
+  void write_float_expr_(FILE* file_pointer, struct node_expr* value_expr_);
 
   //----------------------------------------------------------------------
 
-private: // attributes
-
+private:  // attributes
   /// Parameter type
   parameter_type type_;
 
@@ -233,17 +209,15 @@ private: // attributes
 
   /// Value of the parameter, with type depending on type_
   union {
-    int                value_integer_; 
-    double             value_float_; 
-    bool               value_logical_; 
-    char *             value_string_;
-    list_type *        value_list_;
-    struct node_expr * value_expr_;
+    int value_integer_;
+    double value_float_;
+    bool value_logical_;
+    char* value_string_;
+    list_type* value_list_;
+    struct node_expr* value_expr_;
   };
-
 };
 
 //----------------------------------------------------------------------
 
 #endif /* PARAMETERS_PARAM_HPP */
-

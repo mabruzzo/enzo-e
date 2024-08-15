@@ -15,4 +15,3 @@
 #include "_monitor.hpp"
 
 #endif /* MONITOR_HPP */
-

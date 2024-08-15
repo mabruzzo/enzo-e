@@ -13,18 +13,18 @@
 #define OMEGA_TOLERANCE 1.0e-5
 
 #ifdef CONFIG_PRECISION_SINGLE
-#   define ETA_TOLERANCE 1.0e-5
-#   define ENZO_HUGE_VAL HUGE_VALF
-#   define type_enzo_float type_float
+#define ETA_TOLERANCE 1.0e-5
+#define ENZO_HUGE_VAL HUGE_VALF
+#define type_enzo_float type_float
 #endif
 #ifdef CONFIG_PRECISION_DOUBLE
-#   define ETA_TOLERANCE 1.0e-10
-#   define ENZO_HUGE_VAL HUGE_VAL
-#   define type_enzo_float type_double
+#define ETA_TOLERANCE 1.0e-10
+#define ENZO_HUGE_VAL HUGE_VAL
+#define type_enzo_float type_double
 #endif
 #ifdef CONFIG_PRECISION_QUAD
-#   define ETA_TOLERANCE 1.0e-20
-#   define ENZO_HUGE_VAL HUGE_VALL
+#define ETA_TOLERANCE 1.0e-20
+#define ENZO_HUGE_VAL HUGE_VALL
 #endif
 
 //----------------------------------------------------------------------

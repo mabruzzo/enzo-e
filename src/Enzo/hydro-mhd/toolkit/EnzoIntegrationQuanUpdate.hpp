@@ -11,23 +11,20 @@
 
 #ifndef ENZO_ENZO_INTEGRATION_QUAN_UPDATE_HPP
 #define ENZO_ENZO_INTEGRATION_QUAN_UPDATE_HPP
-class EnzoIntegrationQuanUpdate
-{
+class EnzoIntegrationQuanUpdate {
   /// @class    EnzoIntegrationQuanUpdate
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates the updating of (actively and
   ///           passively) advected integration quantites
 
-public: // interface
-
+public:  // interface
   /// Create a new EnzoIntegrationQuanUpdate instance
-  EnzoIntegrationQuanUpdate
-  (const std::vector<std::string> &integration_quantity_keys,
-   const bool skip_B_update) throw();
+  EnzoIntegrationQuanUpdate(
+      const std::vector<std::string>& integration_quantity_keys,
+      const bool skip_B_update) throw();
 
   /// Virtual destructor
-  virtual ~EnzoIntegrationQuanUpdate()
-  {  }
+  virtual ~EnzoIntegrationQuanUpdate() {}
 
   /// Iterates through all arrays in `dUcons_map` that are pre-registered
   /// integration quantities or are specified with `passive_list`. All elements
@@ -38,8 +35,8 @@ public: // interface
   ///     to all integration quantities.
   /// @param[in]     value The value array elements are assigned.
   /// @param[in]     passive_list A list of keys for passive scalars.
-  void clear_dUcons_map(EnzoEFltArrayMap &dUcons_map, enzo_float value,
-                        const str_vec_t &passive_list) const noexcept;
+  void clear_dUcons_map(EnzoEFltArrayMap& dUcons_map, enzo_float value,
+                        const str_vec_t& passive_list) const noexcept;
 
   /// Computes the change in (the conserved form of) the integration quantities
   /// (including passive scalars) due to the flux divergence along dimension
@@ -61,9 +58,9 @@ public: // interface
   ///     computed.
   /// @param[in]     passive_list A list of keys for passive scalars.
   void accumulate_flux_component(int dim, double dt, enzo_float cell_width,
-                                 const EnzoEFltArrayMap &flux_map,
-                                 EnzoEFltArrayMap &dUcons_map, int stale_depth,
-                                 const str_vec_t &passive_list) const noexcept;
+                                 const EnzoEFltArrayMap& flux_map,
+                                 EnzoEFltArrayMap& dUcons_map, int stale_depth,
+                                 const str_vec_t& passive_list) const noexcept;
 
   /// adds flux divergence (and source terms) to the initial integration
   /// quantities and stores the results in `out_integration_map`
@@ -84,28 +81,28 @@ public: // interface
   /// @param[in]  stale_depth The stale depth at the time of the function call
   ///     (the stale_depth must be incremented after this function is called)
   /// @param[in]  passive_list A list of keys for passive scalars.
-  void update_quantities
-  (EnzoEFltArrayMap &initial_integration_map,
-   const EnzoEFltArrayMap &dUcons_map,
-   EnzoEFltArrayMap &out_integration_map,
-   const int stale_depth, const str_vec_t &passive_list) const;
+  void update_quantities(EnzoEFltArrayMap& initial_integration_map,
+                         const EnzoEFltArrayMap& dUcons_map,
+                         EnzoEFltArrayMap& out_integration_map,
+                         const int stale_depth,
+                         const str_vec_t& passive_list) const;
 
   /// provides a const vector of all registerred integration keys
-  const std::vector<std::string> integration_keys() const throw()
-  { return integration_keys_; }
+  const std::vector<std::string> integration_keys() const throw() {
+    return integration_keys_;
+  }
 
 private:
-
   /// Helper method that updates that takes the initial passively advected
   /// scalars in specific form (as mass fractions) and computes the updated
   /// value in conserved form (as mass densities)
   ///
   /// (This should called before the density is updated)
-  void update_passive_scalars_
-  (EnzoEFltArrayMap &initial_integration_map,
-   const EnzoEFltArrayMap &dUcons_map,
-   EnzoEFltArrayMap &out_integration_map, const int stale_depth,
-   const str_vec_t &passive_list) const;
+  void update_passive_scalars_(EnzoEFltArrayMap& initial_integration_map,
+                               const EnzoEFltArrayMap& dUcons_map,
+                               EnzoEFltArrayMap& out_integration_map,
+                               const int stale_depth,
+                               const str_vec_t& passive_list) const;
 
   /// Constructs a vector ``EFlt3DArray`` or ``CelloView<const enzo_float,3>``
   /// that are loaded from `map` using the ordering of keys in integration_keys_
@@ -113,14 +110,13 @@ private:
   ///   quantities registered in integration_keys_
   /// @param[in] stale_depth indicates the current stale_depth for the loaded
   ///   quantities.
-  const std::vector<EFlt3DArray> load_integration_quan_
-  (EnzoEFltArrayMap &map, const int stale_depth) const noexcept;
+  const std::vector<EFlt3DArray> load_integration_quan_(
+      EnzoEFltArrayMap& map, const int stale_depth) const noexcept;
 
-  const std::vector<CelloView<const enzo_float, 3>> load_integration_quan_
-  (const EnzoEFltArrayMap &map, int stale_depth) const noexcept;
+  const std::vector<CelloView<const enzo_float, 3>> load_integration_quan_(
+      const EnzoEFltArrayMap& map, int stale_depth) const noexcept;
 
-private: // attributes
-
+private:  // attributes
   /// Holds key names used to load each integration quantity component from a
   /// a mapping. Keys for conserved quantities are always listed before the
   /// specfic quantities. This excludes passively advected scalars.

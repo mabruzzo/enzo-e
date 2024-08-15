@@ -11,21 +11,14 @@
 
 //----------------------------------------------------------------------
 
-ScheduleList::ScheduleList () throw()
-  : Schedule(),
-    cycle_list_(),
-    time_list_(),
-    seconds_list_()
-{
-}
+ScheduleList::ScheduleList() throw()
+    : Schedule(), cycle_list_(), time_list_(), seconds_list_() {}
 
 //----------------------------------------------------------------------
 
-void ScheduleList::set_cycle_list (std::vector<int> cycle_list) throw()
-{
+void ScheduleList::set_cycle_list(std::vector<int> cycle_list) throw() {
   if (type_ != schedule_type_unknown) {
-    WARNING ("ScheduleList::set_cycle_list",
-	     "Resetting Output scheduling");
+    WARNING("ScheduleList::set_cycle_list", "Resetting Output scheduling");
   }
 
   type_ = schedule_type_cycle;
@@ -35,17 +28,13 @@ void ScheduleList::set_cycle_list (std::vector<int> cycle_list) throw()
   cycle_list_ = cycle_list;
 
   active_ = true;
-
 }
 
 //----------------------------------------------------------------------
 
-void ScheduleList::set_time_list (std::vector<double> time_list) throw()
-{
-
+void ScheduleList::set_time_list(std::vector<double> time_list) throw() {
   if (type_ != schedule_type_unknown) {
-    WARNING ("ScheduleList::set_time_list",
-	     "Resetting Output scheduling");
+    WARNING("ScheduleList::set_time_list", "Resetting Output scheduling");
   }
 
   type_ = schedule_type_time;
@@ -59,12 +48,9 @@ void ScheduleList::set_time_list (std::vector<double> time_list) throw()
 
 //----------------------------------------------------------------------
 
-void ScheduleList::set_seconds_list (std::vector<double> seconds_list) throw()
-{
-
+void ScheduleList::set_seconds_list(std::vector<double> seconds_list) throw() {
   if (type_ != schedule_type_unknown) {
-    WARNING ("ScheduleList::set_seconds_list",
-	     "Resetting Output scheduling");
+    WARNING("ScheduleList::set_seconds_list", "Resetting Output scheduling");
   }
 
   type_ = schedule_type_seconds;
@@ -78,51 +64,48 @@ void ScheduleList::set_seconds_list (std::vector<double> seconds_list) throw()
 
 //----------------------------------------------------------------------
 
-bool ScheduleList::write_this_cycle ( int cycle, double time ) throw()
-{
+bool ScheduleList::write_this_cycle(int cycle, double time) throw() {
   bool result = false;
 
-  if (! active_) return false;
+  if (!active_) return false;
 
-  const double tol = 2*cello::machine_epsilon(precision_single);
+  const double tol = 2 * cello::machine_epsilon(precision_single);
 
   double seconds = timer_.value();
 
   switch (type_) {
+    case schedule_type_time:
 
-  case schedule_type_time:
-
-
-    // time_list_
-    for (size_t i=0; i<time_list_.size(); i++) {
-      if (cello::err_abs(time,time_list_[i]) < tol) {
-	result = true;
-	break;
+      // time_list_
+      for (size_t i = 0; i < time_list_.size(); i++) {
+        if (cello::err_abs(time, time_list_[i]) < tol) {
+          result = true;
+          break;
+        }
       }
-    }
-    break;
+      break;
 
-  case schedule_type_cycle:
-    for (size_t i=0; i<cycle_list_.size(); i++) {
-      if (cycle == cycle_list_[i]) {
-	result = true;
-	break;
+    case schedule_type_cycle:
+      for (size_t i = 0; i < cycle_list_.size(); i++) {
+        if (cycle == cycle_list_[i]) {
+          result = true;
+          break;
+        }
       }
-    }
-    break;
+      break;
 
-  case schedule_type_seconds:
-    for (size_t i=0; i<seconds_list_.size(); i++) {
-      if (seconds == seconds_list_[i]) {
-	result = true;
-	break;
+    case schedule_type_seconds:
+      for (size_t i = 0; i < seconds_list_.size(); i++) {
+        if (seconds == seconds_list_[i]) {
+          result = true;
+          break;
+        }
       }
-    }
-    break;
+      break;
 
-  default:
-    WARNING("ScheduleList::write_next_cycle",
-	    "Unknown schedule type for active ScheduleList object");
+    default:
+      WARNING("ScheduleList::write_next_cycle",
+              "Unknown schedule type for active ScheduleList object");
   }
 
   return result;
@@ -130,31 +113,28 @@ bool ScheduleList::write_this_cycle ( int cycle, double time ) throw()
 
 //----------------------------------------------------------------------
 
-double ScheduleList::update_timestep ( double time, double dt) const throw()
-{
-  if (! active_) return dt;
+double ScheduleList::update_timestep(double time, double dt) const throw() {
+  if (!active_) return dt;
 
   double new_dt = dt;
 
-  const double time_next  = time + dt;
+  const double time_next = time + dt;
 
   double time_dump;
 
   switch (type_) {
+    case schedule_type_time:
 
-  case schedule_type_time:
-
-    for (size_t i=0; i<time_list_.size(); i++) {
-      time_dump = time_list_[i];
-      if (time < time_dump && time_dump < time_next) {
-	new_dt = time_dump - time;
-	break;
+      for (size_t i = 0; i < time_list_.size(); i++) {
+        time_dump = time_list_[i];
+        if (time < time_dump && time_dump < time_next) {
+          new_dt = time_dump - time;
+          break;
+        }
       }
-    }
-    break;
-  default:
-    break;
+      break;
+    default:
+      break;
   }
   return new_dt;
 }
-

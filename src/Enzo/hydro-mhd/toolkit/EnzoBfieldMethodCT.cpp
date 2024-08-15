@@ -11,41 +11,40 @@
 
 //----------------------------------------------------------------------
 
-namespace{
-  std::array<CelloView<const enzo_float,3>,3> immutable_arr_of_EFlt3DArray
-    (const std::array<CelloView<enzo_float,3>,3>& arg) noexcept
-  {
-    std::array<CelloView<const enzo_float,3>, 3> out;
-    for (std::size_t i = 0; i < 3; i++){ out[i] = arg[i]; }
-    return out;
+namespace {
+std::array<CelloView<const enzo_float, 3>, 3> immutable_arr_of_EFlt3DArray(
+    const std::array<CelloView<enzo_float, 3>, 3>& arg) noexcept {
+  std::array<CelloView<const enzo_float, 3>, 3> out;
+  for (std::size_t i = 0; i < 3; i++) {
+    out[i] = arg[i];
   }
+  return out;
 }
-
+}  // namespace
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethodCT::register_target_block_
-(Block *block, bool first_initialization) noexcept
-{
+void EnzoBfieldMethodCT::register_target_block_(
+    Block* block, bool first_initialization) noexcept {
   // setup bfieldi_l_ (initialize arrays that wrap the fields holding each
   // component of the interface centered magnetic field).
   const std::string field_names[] = {"bfieldi_x", "bfieldi_y", "bfieldi_z"};
   Field field = block->data()->field();
-  for (std::size_t i = 0; i<3; i++){
+  for (std::size_t i = 0; i < 3; i++) {
     bfieldi_l_[i] = field.view<enzo_float>(field_names[i]);
   }
 
-  EnzoBlock *enzo_block = enzo::block(block);
+  EnzoBlock* enzo_block = enzo::block(block);
   cell_widths_ = (const enzo_float*)enzo_block->CellWidth;
 
-  if (first_initialization){
+  if (first_initialization) {
     // if num_partial_timesteps() > 1, setup temp_bfieldi_l_ (they have the same
     // shape as each component of bfieldi_l_ and manage their own memory).
-    if (num_partial_timesteps() > 1){
-      for (std::size_t i = 0; i<3; i++){
-        temp_bfieldi_l_[i] = EFlt3DArray(bfieldi_l_[i].shape(0),
-                                         bfieldi_l_[i].shape(1),
-                                         bfieldi_l_[i].shape(2));
+    if (num_partial_timesteps() > 1) {
+      for (std::size_t i = 0; i < 3; i++) {
+        temp_bfieldi_l_[i] =
+            EFlt3DArray(bfieldi_l_[i].shape(0), bfieldi_l_[i].shape(1),
+                        bfieldi_l_[i].shape(2));
       }
     }
 
@@ -60,83 +59,80 @@ void EnzoBfieldMethodCT::register_target_block_
     // allocate arrays to hold weight values for each dimension. For a given
     // dimension, the array tracks the upwind/downwind direction on the cell
     // interfaces for that dimension (they exclude exterior faces of the block)
-    weight_l_[0] = EFlt3DArray(  mz,   my, mx-1);
-    weight_l_[1] = EFlt3DArray(  mz, my-1,   mx);
-    weight_l_[2] = EFlt3DArray(mz-1,   my,   mx);
+    weight_l_[0] = EFlt3DArray(mz, my, mx - 1);
+    weight_l_[1] = EFlt3DArray(mz, my - 1, mx);
+    weight_l_[2] = EFlt3DArray(mz - 1, my, mx);
 
     // allocate arrays to hold for each component of the edge-centered electric
     // fields. The array for component i is cell-centered along i and face
     // centered along j and k.
-    edge_efield_l_[0] = EFlt3DArray(mz-1, my-1,   mx);
-    edge_efield_l_[1] = EFlt3DArray(mz-1,   my, mx-1);
-    edge_efield_l_[2] = EFlt3DArray(  mz, my-1, mx-1);
+    edge_efield_l_[0] = EFlt3DArray(mz - 1, my - 1, mx);
+    edge_efield_l_[1] = EFlt3DArray(mz - 1, my, mx - 1);
+    edge_efield_l_[2] = EFlt3DArray(mz, my - 1, mx - 1);
 
     // allocate array to temporarily store cell-centered e-field
-    center_efield_ = EFlt3DArray(mz,my,mx);
+    center_efield_ = EFlt3DArray(mz, my, mx);
   }
 }
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethodCT::check_required_fields() const noexcept
-{
-  FieldDescr * field_descr = cello::field_descr();
-  ASSERT("EnzoBfieldMethodCT::check_required_fields",
-	 ("There must be face-centered permanent fields called \"bfieldi_x\","
-	  "\"bfield_y\" and \"bfield_z\"."),
-	 (field_descr->is_field("bfield_x") &&
-	  field_descr->is_field("bfield_y") &&
-	  field_descr->is_field("bfield_z")));
+void EnzoBfieldMethodCT::check_required_fields() const noexcept {
+  FieldDescr* field_descr = cello::field_descr();
+  ASSERT(
+      "EnzoBfieldMethodCT::check_required_fields",
+      ("There must be face-centered permanent fields called \"bfieldi_x\","
+       "\"bfield_y\" and \"bfield_z\"."),
+      (field_descr->is_field("bfield_x") && field_descr->is_field("bfield_y") &&
+       field_descr->is_field("bfield_z")));
 
   std::vector<std::string> names = {"bfieldi_x", "bfieldi_y", "bfieldi_z"};
   std::vector<std::string> axes = {"x", "y", "z"};
-  for (std::size_t i = 0; i < 3; i++){
+  for (std::size_t i = 0; i < 3; i++) {
     std::string name = names[i];
     // first check that field exists
     ASSERT1("EnzoBfieldMethodCT::check_required_fields",
-	    "There must be face-centered permanent fields called \"%s\"",
-	    name.c_str(), field_descr->is_field(name));
+            "There must be face-centered permanent fields called \"%s\"",
+            name.c_str(), field_descr->is_field(name));
 
     int field_id = field_descr->field_id(name);
     // next check the centering of the field
     int centering[3] = {0, 0, 0};
     field_descr->centering(field_id, &centering[0], &centering[1],
-			   &centering[2]);
-    for (std::size_t j = 0; j<3; j++){
-      if (j!=i){
-	ASSERT2("EnzoBfieldMethodCT::update_refresh",
-		"The \"%s\" field must be cell-centered along the %s-axis",
-		name.c_str(), axes[j].c_str(), centering[j] == 0);
+                           &centering[2]);
+    for (std::size_t j = 0; j < 3; j++) {
+      if (j != i) {
+        ASSERT2("EnzoBfieldMethodCT::update_refresh",
+                "The \"%s\" field must be cell-centered along the %s-axis",
+                name.c_str(), axes[j].c_str(), centering[j] == 0);
       } else {
-	ASSERT2("EnzoBfieldMethodCT::update_refresh",
-		"The \"%s\" field must be face-centered along the %s-axis",
-		name.c_str(), axes[j].c_str(), centering[j] == 1);
+        ASSERT2("EnzoBfieldMethodCT::update_refresh",
+                "The \"%s\" field must be face-centered along the %s-axis",
+                name.c_str(), axes[j].c_str(), centering[j] == 1);
       }
     }
-
   }
 }
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethodCT::correct_reconstructed_bfield
-(EnzoEFltArrayMap &l_map, EnzoEFltArrayMap &r_map, int dim,
- int stale_depth) noexcept
-{
-  require_registered_block_(); // confirm that target_block_ is valid
+void EnzoBfieldMethodCT::correct_reconstructed_bfield(
+    EnzoEFltArrayMap& l_map, EnzoEFltArrayMap& r_map, int dim,
+    int stale_depth) noexcept {
+  require_registered_block_();  // confirm that target_block_ is valid
 
-  std::array<EFlt3DArray,3> *cur_bfieldi_l;
-  if (partial_timestep_index() == 0){
+  std::array<EFlt3DArray, 3>* cur_bfieldi_l;
+  if (partial_timestep_index() == 0) {
     cur_bfieldi_l = &bfieldi_l_;
-  } else if (partial_timestep_index() == 1){
+  } else if (partial_timestep_index() == 1) {
     cur_bfieldi_l = &temp_bfieldi_l_;
   } else {
     ERROR1("EnzoBfieldMethodCT::correct_reconstructed_bfield",
-	   "Unsure how to handle current partial_timestep_index_ of %d",
-	   partial_timestep_index());
+           "Unsure how to handle current partial_timestep_index_ of %d",
+           partial_timestep_index());
   }
 
-  if ((dim < 0) || (dim > 2)){
+  if ((dim < 0) || (dim > 2)) {
     ERROR("EnzoBfieldMethodCT::correct_reconstructed_bfield",
           "dim has an invalid value");
   } else {
@@ -144,33 +140,31 @@ void EnzoBfieldMethodCT::correct_reconstructed_bfield
     // on the exterior faces of the block. We only need the values on the
     // interior faces.
     EnzoPermutedCoordinates coord(dim);
-    CSlice full_ax(nullptr,nullptr);
-    EFlt3DArray bfield = coord.get_subarray((*cur_bfieldi_l)[dim],
-                                            full_ax, full_ax, CSlice(1,-1));
+    CSlice full_ax(nullptr, nullptr);
+    EFlt3DArray bfield = coord.get_subarray((*cur_bfieldi_l)[dim], full_ax,
+                                            full_ax, CSlice(1, -1));
 
     const std::string names[3] = {"bfield_x", "bfield_y", "bfield_z"};
     EFlt3DArray l_bfield = l_map.at(names[dim]);
     EFlt3DArray r_bfield = r_map.at(names[dim]);
 
     // All 3 array objects are the same shape
-    for (int iz = stale_depth; iz< bfield.shape(0) - stale_depth; iz++) {
-      for (int iy = stale_depth; iy< bfield.shape(1) - stale_depth; iy++) {
+    for (int iz = stale_depth; iz < bfield.shape(0) - stale_depth; iz++) {
+      for (int iy = stale_depth; iy < bfield.shape(1) - stale_depth; iy++) {
         for (int ix = stale_depth; ix < bfield.shape(2) - stale_depth; ix++) {
-          l_bfield(iz,iy,ix) = bfield(iz,iy,ix);
-          r_bfield(iz,iy,ix) = bfield(iz,iy,ix);
+          l_bfield(iz, iy, ix) = bfield(iz, iy, ix);
+          r_bfield(iz, iy, ix) = bfield(iz, iy, ix);
         }
       }
     }
-
   }
 }
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethodCT::identify_upwind(const EnzoEFltArrayMap &flux_map,
-                                         int dim, int stale_depth) noexcept
-{
-  require_registered_block_(); // confirm that target_block_ is valid
+void EnzoBfieldMethodCT::identify_upwind(const EnzoEFltArrayMap& flux_map,
+                                         int dim, int stale_depth) noexcept {
+  require_registered_block_();  // confirm that target_block_ is valid
 
   //  - Currently, weight is set to 1.0 if upwind is in positive direction of
   //    the current dimension, 0 if upwind is in the negative direction of the
@@ -181,93 +175,89 @@ void EnzoBfieldMethodCT::identify_upwind(const EnzoEFltArrayMap &flux_map,
   //    scheme from Athena++, which requires knowledge of the reconstructed
   //    densities.
 
-  if ((dim < 0) || (dim > 2)){
-    ERROR("EnzoBfieldMethodCT::identify_upwind",
-          "dim has an invalid value");
+  if ((dim < 0) || (dim > 2)) {
+    ERROR("EnzoBfieldMethodCT::identify_upwind", "dim has an invalid value");
   } else {
-    const CelloView<const enzo_float, 3> density_flux = flux_map.get
-      ("density", stale_depth);
+    const CelloView<const enzo_float, 3> density_flux =
+        flux_map.get("density", stale_depth);
 
-    CSlice stale_slc = (stale_depth > 0) ?
-      CSlice(stale_depth,-stale_depth) : CSlice(nullptr, nullptr);
+    CSlice stale_slc = (stale_depth > 0) ? CSlice(stale_depth, -stale_depth)
+                                         : CSlice(nullptr, nullptr);
 
     const CelloView<enzo_float, 3> weight_field =
-      weight_l_[dim].subarray(stale_slc, stale_slc, stale_slc);
+        weight_l_[dim].subarray(stale_slc, stale_slc, stale_slc);
 
     // Iteration limits compatible with both 2D and 3D grids
-    for (int iz=0; iz<density_flux.shape(0); iz++) {
-      for (int iy=0; iy<density_flux.shape(1); iy++) {
-        for (int ix=0; ix<density_flux.shape(2); ix++) {
+    for (int iz = 0; iz < density_flux.shape(0); iz++) {
+      for (int iy = 0; iy < density_flux.shape(1); iy++) {
+        for (int ix = 0; ix < density_flux.shape(2); ix++) {
           // density flux is the face-centered density times the face-centered
           // velocity along dim
 
-          if ( density_flux(iz,iy,ix) > 0){
-            weight_field(iz,iy,ix) = 1.0;
-          } else if ( density_flux(iz,iy,ix) < 0){
-            weight_field(iz,iy,ix) = 0.0;
+          if (density_flux(iz, iy, ix) > 0) {
+            weight_field(iz, iy, ix) = 1.0;
+          } else if (density_flux(iz, iy, ix) < 0) {
+            weight_field(iz, iy, ix) = 0.0;
           } else {
-            weight_field(iz,iy,ix) = 0.5;
+            weight_field(iz, iy, ix) = 0.5;
           }
         }
       }
     }
-
   }
 }
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethodCT::update_all_bfield_components
-(EnzoEFltArrayMap &cur_integration_map, const EnzoEFltArrayMap &xflux_map,
- const EnzoEFltArrayMap &yflux_map, const EnzoEFltArrayMap &zflux_map,
- EnzoEFltArrayMap &out_centered_bfield_map, enzo_float dt,
- int stale_depth) noexcept
-{
+void EnzoBfieldMethodCT::update_all_bfield_components(
+    EnzoEFltArrayMap& cur_integration_map, const EnzoEFltArrayMap& xflux_map,
+    const EnzoEFltArrayMap& yflux_map, const EnzoEFltArrayMap& zflux_map,
+    EnzoEFltArrayMap& out_centered_bfield_map, enzo_float dt,
+    int stale_depth) noexcept {
   // The current interface values of the interface magnetic fields that are to
   // be updated are always the values from the start of the timestep
-  std::array<EFlt3DArray,3> *cur_bfieldi_l = &bfieldi_l_;
+  std::array<EFlt3DArray, 3>* cur_bfieldi_l = &bfieldi_l_;
   // Now determine the set of arrays where the updated interface bfields are to
   // be stored:
-  std::array<EFlt3DArray,3> *out_bfieldi_l;
-  if ((partial_timestep_index()== 1) || (num_partial_timesteps() == 1)){
-    out_bfieldi_l = &bfieldi_l_; // the same as cur_bfieldi_l
-  } else if (partial_timestep_index()== 0){
+  std::array<EFlt3DArray, 3>* out_bfieldi_l;
+  if ((partial_timestep_index() == 1) || (num_partial_timesteps() == 1)) {
+    out_bfieldi_l = &bfieldi_l_;  // the same as cur_bfieldi_l
+  } else if (partial_timestep_index() == 0) {
     out_bfieldi_l = &temp_bfieldi_l_;
   } else {
     ERROR1("EnzoBfieldMethodCT::correct_reconstructed_bfield",
-	   "Unsure how to handle current partial_timestep_index_ of %d",
-	   partial_timestep_index());
+           "Unsure how to handle current partial_timestep_index_ of %d",
+           partial_timestep_index());
   }
 
   // First, compute the edge-centered Electric fields (each time, it uses
   // the current integration quantities)
-  EnzoBfieldMethodCT::compute_all_edge_efields
-    (cur_integration_map, xflux_map, yflux_map, zflux_map, center_efield_,
-     edge_efield_l_, immutable_arr_of_EFlt3DArray(weight_l_), stale_depth);
+  EnzoBfieldMethodCT::compute_all_edge_efields(
+      cur_integration_map, xflux_map, yflux_map, zflux_map, center_efield_,
+      edge_efield_l_, immutable_arr_of_EFlt3DArray(weight_l_), stale_depth);
 
   // Update longitudinal B-field (add source terms of constrained transport)
   const auto const_edge_efield_l = immutable_arr_of_EFlt3DArray(edge_efield_l_);
-  for (int dim = 0; dim<3; dim++){
-    EnzoBfieldMethodCT::update_bfield
-      (cell_widths_, dim, const_edge_efield_l, (*cur_bfieldi_l)[dim],
-       (*out_bfieldi_l)[dim], dt, stale_depth);
+  for (int dim = 0; dim < 3; dim++) {
+    EnzoBfieldMethodCT::update_bfield(cell_widths_, dim, const_edge_efield_l,
+                                      (*cur_bfieldi_l)[dim],
+                                      (*out_bfieldi_l)[dim], dt, stale_depth);
   }
 
   // Finally, update cell-centered B-field
   const std::string names[3] = {"bfield_x", "bfield_y", "bfield_z"};
-  for (int dim = 0; dim<3; dim++){
-    EnzoBfieldMethodCT::compute_center_bfield
-      (dim, out_centered_bfield_map[names[dim]], (*out_bfieldi_l)[dim],
-       stale_depth);
+  for (int dim = 0; dim < 3; dim++) {
+    EnzoBfieldMethodCT::compute_center_bfield(
+        dim, out_centered_bfield_map[names[dim]], (*out_bfieldi_l)[dim],
+        stale_depth);
   }
 }
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethodCT::compute_center_efield
-(const int dim, EFlt3DArray &efield, const EnzoEFltArrayMap &integration_map,
- int stale_depth)
-{
+void EnzoBfieldMethodCT::compute_center_efield(
+    const int dim, EFlt3DArray& efield, const EnzoEFltArrayMap& integration_map,
+    int stale_depth) {
   const std::string v_names[3] = {"velocity_x", "velocity_y", "velocity_z"};
   const std::string b_names[3] = {"bfield_x", "bfield_y", "bfield_z"};
 
@@ -281,11 +271,11 @@ void EnzoBfieldMethodCT::compute_center_efield
   const CelloView<const enzo_float, 3> b_j = integration_map.at(b_names[j]);
   const CelloView<const enzo_float, 3> b_k = integration_map.at(b_names[k]);
 
-  for (int iz=stale_depth; iz<efield.shape(0)-stale_depth; iz++) {
-    for (int iy=stale_depth; iy<efield.shape(1)-stale_depth; iy++) {
-      for (int ix=stale_depth; ix<efield.shape(2)-stale_depth; ix++) {
-	efield(iz,iy,ix) = (-vel_j(iz,iy,ix) * b_k(iz,iy,ix) +
-                            vel_k(iz,iy,ix) * b_j(iz,iy,ix));
+  for (int iz = stale_depth; iz < efield.shape(0) - stale_depth; iz++) {
+    for (int iy = stale_depth; iy < efield.shape(1) - stale_depth; iy++) {
+      for (int ix = stale_depth; ix < efield.shape(2) - stale_depth; ix++) {
+        efield(iz, iy, ix) = (-vel_j(iz, iy, ix) * b_k(iz, iy, ix) +
+                              vel_k(iz, iy, ix) * b_j(iz, iy, ix));
       }
     }
   }
@@ -308,12 +298,12 @@ void EnzoBfieldMethodCT::compute_center_efield
 //     dEdx(ix-1/4,iy-1/2) = [(E(ix,iy-1) - E(ix-1/2,iy-1))/dx
 //                            + (E(ix,iy) - E(ix-1/2,iy))/dx ]
 //   We pulled out a factor of 2 and dx from the derivatives (they cancel)
-//  
+//
 //   If upwind is in the positive y direction W_y = 1, if downwind W_y = 0,
 //     and otherwise W_y = 0.5 (W_y is centered on faces along y-direction)
 //
 // The form of equations from Stone & Gardiner 09 are as follows. This is
-// all necessary to compute Ez(ix-1/2, iy-1/2, iz): 
+// all necessary to compute Ez(ix-1/2, iy-1/2, iz):
 //  dEdj_r = dEdx(ix-1/4,iy-1/2) =
 //       W_y(    ix,iy-1/2)  * (E(    ix,  iy-1) - E(ix-1/2,  iy-1)) +
 //    (1-W_y(    ix,iy-1/2)) * (E(    ix,    iy) - E(ix-1/2,    iy))
@@ -343,7 +333,7 @@ void EnzoBfieldMethodCT::compute_center_efield
 //       W_x(ix+1/2,   iy)  * (E(     ix,iy+1/2) - E(    ix,    iy)) +
 //    (1-W_x(ix+1/2,   iy)) * (E(   ix+1,iy+1/2) - E(  ix+1,    iy))
 //
-// Now let's rewrite in totally Generalized notation:  [z->i, x->j, y->k] 
+// Now let's rewrite in totally Generalized notation:  [z->i, x->j, y->k]
 //  dEdj_r = dEdj(k+1/2,j+3/4,i) =
 //       W_k(k+1/2,  j+1)  * (E(    k,  j+1) - E(    k,j+1/2)) +
 //    (1-W_k(k+1/2,  j+1)) * (E(  k+1,  j+1) - E(  k+1,j+1/2))
@@ -381,76 +371,74 @@ void EnzoBfieldMethodCT::compute_center_efield
 //     Eedge(k,j,i)    =     E(k+1/2,j+1/2,i)
 // To be independent of reconstruction method, compute E-field at all edges
 // that lie within the mesh.
-template<bool negate_Ej>
-void compute_edge_(int xstart, int ystart, int zstart,
-		   int xstop, int ystop, int zstop,
-		   const CelloView<enzo_float, 3> &Eedge,
-		   const CelloView<const enzo_float, 3> &Wj,
-		   const CelloView<const enzo_float, 3> &Wj_kp1,
-		   const CelloView<const enzo_float, 3> &Wk,
-		   const CelloView<const enzo_float, 3> &Wk_jp1,
-		   const CelloView<const enzo_float, 3> &Ec,
-		   const CelloView<const enzo_float, 3> &Ec_jkp1,
-		   const CelloView<const enzo_float, 3> &Ec_jp1,
-		   const CelloView<const enzo_float, 3> &Ec_kp1,
-		   const CelloView<const enzo_float, 3> &Ej,
-		   const CelloView<const enzo_float, 3> &Ej_kp1,
-		   const CelloView<const enzo_float, 3> &Ek,
-		   const CelloView<const enzo_float, 3> &Ek_jp1)
-{
-  for (int iz = zstart; iz < zstop; iz++){
-    for (int iy = ystart; iy < ystop; iy++){
-      for (int ix = xstart; ix < xstop; ix++){
+template <bool negate_Ej>
+void compute_edge_(int xstart, int ystart, int zstart, int xstop, int ystop,
+                   int zstop, const CelloView<enzo_float, 3>& Eedge,
+                   const CelloView<const enzo_float, 3>& Wj,
+                   const CelloView<const enzo_float, 3>& Wj_kp1,
+                   const CelloView<const enzo_float, 3>& Wk,
+                   const CelloView<const enzo_float, 3>& Wk_jp1,
+                   const CelloView<const enzo_float, 3>& Ec,
+                   const CelloView<const enzo_float, 3>& Ec_jkp1,
+                   const CelloView<const enzo_float, 3>& Ec_jp1,
+                   const CelloView<const enzo_float, 3>& Ec_kp1,
+                   const CelloView<const enzo_float, 3>& Ej,
+                   const CelloView<const enzo_float, 3>& Ej_kp1,
+                   const CelloView<const enzo_float, 3>& Ek,
+                   const CelloView<const enzo_float, 3>& Ek_jp1) {
+  for (int iz = zstart; iz < zstop; iz++) {
+    for (int iy = ystart; iy < ystop; iy++) {
+      for (int ix = xstart; ix < xstop; ix++) {
+        enzo_float dEdj_l, dEdj_r, dEdk_l, dEdk_r;
 
-	enzo_float dEdj_l, dEdj_r, dEdk_l, dEdk_r;
+        //  dEdj(k+1/2,j+3/4,i) =
+        //       W_k(k+1/2,  j+1)  * (E(    k,  j+1) - E(    k,j+1/2)) +
+        //    (1-W_k(k+1/2,  j+1)) * (E(  k+1,  j+1) - E(  k+1,j+1/2))
+        if (negate_Ej) {
+          dEdj_r = Wk_jp1(iz, iy, ix) * (Ec_jp1(iz, iy, ix) + Ej(iz, iy, ix)) +
+                   (1 - Wk_jp1(iz, iy, ix)) *
+                       (Ec_jkp1(iz, iy, ix) + Ej_kp1(iz, iy, ix));
+        } else {
+          dEdj_r = Wk_jp1(iz, iy, ix) * (Ec_jp1(iz, iy, ix) - Ej(iz, iy, ix)) +
+                   (1 - Wk_jp1(iz, iy, ix)) *
+                       (Ec_jkp1(iz, iy, ix) - Ej_kp1(iz, iy, ix));
+        }
 
-	//  dEdj(k+1/2,j+3/4,i) =
-	//       W_k(k+1/2,  j+1)  * (E(    k,  j+1) - E(    k,j+1/2)) +
-	//    (1-W_k(k+1/2,  j+1)) * (E(  k+1,  j+1) - E(  k+1,j+1/2))
-	if (negate_Ej){
-	  dEdj_r =
-	         Wk_jp1(iz,iy,ix)  * ( Ec_jp1(iz,iy,ix) +     Ej(iz,iy,ix)) +
-	    (1 - Wk_jp1(iz,iy,ix)) * (Ec_jkp1(iz,iy,ix) + Ej_kp1(iz,iy,ix));
-	} else {
-	  dEdj_r =
-	         Wk_jp1(iz,iy,ix)  * ( Ec_jp1(iz,iy,ix) -     Ej(iz,iy,ix)) +
-	    (1 - Wk_jp1(iz,iy,ix)) * (Ec_jkp1(iz,iy,ix) - Ej_kp1(iz,iy,ix));
-	}
+        //  dEdj(k+1/2,j+1/4,i) =
+        //       W_k(k+1/2,    j)  * (E(    k,j+1/2) - E(    k,    j)) +
+        //    (1-W_k(k+1/2,    j)) * (E(  k+1,j+1/2) - E(  k+1,    j))
+        if (negate_Ej) {
+          dEdj_l =
+              Wk(iz, iy, ix) * (-Ej(iz, iy, ix) - Ec(iz, iy, ix)) +
+              (1 - Wk(iz, iy, ix)) * (-Ej_kp1(iz, iy, ix) - Ec_kp1(iz, iy, ix));
+        } else {
+          dEdj_l =
+              Wk(iz, iy, ix) * (Ej(iz, iy, ix) - Ec(iz, iy, ix)) +
+              (1 - Wk(iz, iy, ix)) * (Ej_kp1(iz, iy, ix) - Ec_kp1(iz, iy, ix));
+        }
 
-	//  dEdj(k+1/2,j+1/4,i) =
-	//       W_k(k+1/2,    j)  * (E(    k,j+1/2) - E(    k,    j)) +
-	//    (1-W_k(k+1/2,    j)) * (E(  k+1,j+1/2) - E(  k+1,    j))
-	if (negate_Ej){
-	  dEdj_l =
-	             Wk(iz,iy,ix)  * (    -Ej(iz,iy,ix) -     Ec(iz,iy,ix)) +
-	    (1 -     Wk(iz,iy,ix)) * (-Ej_kp1(iz,iy,ix) - Ec_kp1(iz,iy,ix));
-	} else {
-	  dEdj_l =
-	             Wk(iz,iy,ix)  * (     Ej(iz,iy,ix) -     Ec(iz,iy,ix)) +
-	    (1 -     Wk(iz,iy,ix)) * ( Ej_kp1(iz,iy,ix) - Ec_kp1(iz,iy,ix));
-	}
+        //  dEdk(k+3/4,j+1/2,i) =
+        //       W_j(  k+1,j+1/2)  * (E(  k+1,    j) - E(k+1/2,    j)) +
+        //    (1-W_j(  k+1,j+1/2)) * (E(  k+1,  j+1) - E(k+1/2,  j+1))
+        dEdk_r = Wj_kp1(iz, iy, ix) * (Ec_kp1(iz, iy, ix) - Ek(iz, iy, ix)) +
+                 (1 - Wj_kp1(iz, iy, ix)) *
+                     (Ec_jkp1(iz, iy, ix) - Ek_jp1(iz, iy, ix));
 
-	//  dEdk(k+3/4,j+1/2,i) =
-	//       W_j(  k+1,j+1/2)  * (E(  k+1,    j) - E(k+1/2,    j)) +
-	//    (1-W_j(  k+1,j+1/2)) * (E(  k+1,  j+1) - E(k+1/2,  j+1))
-	dEdk_r =
-	       Wj_kp1(iz,iy,ix)  * ( Ec_kp1(iz,iy,ix) -     Ek(iz,iy,ix)) +
-	  (1 - Wj_kp1(iz,iy,ix)) * (Ec_jkp1(iz,iy,ix) - Ek_jp1(iz,iy,ix));
+        //  dEdk(k+1/4,j+1/2,i) =
+        //       W_j(    k,j+1/2)  * (E(k+1/2,     j) - E(    k,    j)) +
+        //    (1-W_j(    k,j+1/2)) * (E(k+1/2,   j+1) - E(    k,  j+1))
+        dEdk_l =
+            Wj(iz, iy, ix) * (Ek(iz, iy, ix) - Ec(iz, iy, ix)) +
+            (1 - Wj(iz, iy, ix)) * (Ek_jp1(iz, iy, ix) - Ec_jp1(iz, iy, ix));
 
-	//  dEdk(k+1/4,j+1/2,i) =
-	//       W_j(    k,j+1/2)  * (E(k+1/2,     j) - E(    k,    j)) +
-	//    (1-W_j(    k,j+1/2)) * (E(k+1/2,   j+1) - E(    k,  j+1))
-	dEdk_l =
-	           Wj(iz,iy,ix)  * (     Ek(iz,iy,ix) -     Ec(iz,iy,ix)) +
-	  (1 -     Wj(iz,iy,ix)) * ( Ek_jp1(iz,iy,ix) - Ec_jp1(iz,iy,ix));
+        enzo_float Ej_sum = Ej(iz, iy, ix) + Ej_kp1(iz, iy, ix);
+        if (negate_Ej) {
+          Ej_sum *= -1;
+        }
+        enzo_float Ek_sum = Ek(iz, iy, ix) + Ek_jp1(iz, iy, ix);
 
-	enzo_float Ej_sum = Ej(iz,iy,ix) + Ej_kp1(iz,iy,ix);
-	if (negate_Ej){Ej_sum *= -1;}
-	enzo_float Ek_sum = Ek(iz,iy,ix) + Ek_jp1(iz,iy,ix);
-
-	Eedge(iz,iy,ix) = 0.25*(Ej_sum + Ek_sum +
-				(dEdj_l-dEdj_r) + (dEdk_l - dEdk_r));
-
+        Eedge(iz, iy, ix) =
+            0.25 * (Ej_sum + Ek_sum + (dEdj_l - dEdj_r) + (dEdk_l - dEdk_r));
       }
     }
   }
@@ -477,21 +465,20 @@ void compute_edge_(int xstart, int ystart, int zstart,
 //     down the x, y, and z direction. Currently, it expects values of 1 and 0
 //     to indicate that the upwind direction is in positive and negative
 //     direction, or 0 to indicate no upwind direction.
-void EnzoBfieldMethodCT::compute_edge_efield
-(int dim, const CelloView<const enzo_float, 3> &center_efield,
- const CelloView<enzo_float, 3> &edge_efield,
- const EnzoEFltArrayMap &jflux_map, const EnzoEFltArrayMap &kflux_map,
- const std::array<CelloView<const enzo_float, 3>,3> &weight_l, int stale_depth)
-{
-
+void EnzoBfieldMethodCT::compute_edge_efield(
+    int dim, const CelloView<const enzo_float, 3>& center_efield,
+    const CelloView<enzo_float, 3>& edge_efield,
+    const EnzoEFltArrayMap& jflux_map, const EnzoEFltArrayMap& kflux_map,
+    const std::array<CelloView<const enzo_float, 3>, 3>& weight_l,
+    int stale_depth) {
   EnzoPermutedCoordinates coord(dim);
   // determine components of j and k unit vectors:
   int j_x, j_y, j_z, k_x, k_y, k_z;
   coord.j_unit_vector(j_z, j_y, j_x);
   coord.k_unit_vector(k_z, k_y, k_x);
 
-  CSlice stale_slc = (stale_depth > 0) ?
-      CSlice(stale_depth,-stale_depth) : CSlice(nullptr, nullptr);
+  CSlice stale_slc = (stale_depth > 0) ? CSlice(stale_depth, -stale_depth)
+                                       : CSlice(nullptr, nullptr);
 
   // Initialize edge-centered Efield [it maps (k,j,i) -> (k+1/2,j+1/2,i)]
   EFlt3DArray Eedge = edge_efield.subarray(stale_slc, stale_slc, stale_slc);
@@ -499,29 +486,29 @@ void EnzoBfieldMethodCT::compute_edge_efield
   using RdOnlyEFlt3DArray = CelloView<const enzo_float, 3>;
 
   // Initialize Cell-Centered E-fields
-  const RdOnlyEFlt3DArray Ec = center_efield.subarray(stale_slc, stale_slc,
-						      stale_slc);
-  const RdOnlyEFlt3DArray Ec_jp1  = coord.left_edge_offset(Ec, 0, 1, 0);
-  const RdOnlyEFlt3DArray Ec_kp1  = coord.left_edge_offset(Ec, 1, 0, 0);
+  const RdOnlyEFlt3DArray Ec =
+      center_efield.subarray(stale_slc, stale_slc, stale_slc);
+  const RdOnlyEFlt3DArray Ec_jp1 = coord.left_edge_offset(Ec, 0, 1, 0);
+  const RdOnlyEFlt3DArray Ec_kp1 = coord.left_edge_offset(Ec, 1, 0, 0);
   const RdOnlyEFlt3DArray Ec_jkp1 = coord.left_edge_offset(Ec, 1, 1, 0);
 
   // Initialize face-centered E-fields
   const std::string keys[] = {"bfield_x", "bfield_y", "bfield_z"};
 
   // Ex(k,j+1/2,i) = -1.*yflux(Bz) // defer the negation until later!
-  const RdOnlyEFlt3DArray Ej = jflux_map.get(keys[coord.k_axis()],stale_depth);
+  const RdOnlyEFlt3DArray Ej = jflux_map.get(keys[coord.k_axis()], stale_depth);
   const RdOnlyEFlt3DArray Ej_kp1 = coord.left_edge_offset(Ej, 1, 0, 0);
 
   // Ex(k+1/2,j,i) = zflux(By)
-  const RdOnlyEFlt3DArray Ek = kflux_map.get(keys[coord.j_axis()],stale_depth);
+  const RdOnlyEFlt3DArray Ek = kflux_map.get(keys[coord.j_axis()], stale_depth);
   const RdOnlyEFlt3DArray Ek_jp1 = coord.left_edge_offset(Ek, 0, 1, 0);
 
   // Initialize the weight arrays
   const RdOnlyEFlt3DArray Wj =
-    weight_l[coord.j_axis()].subarray(stale_slc, stale_slc, stale_slc);
+      weight_l[coord.j_axis()].subarray(stale_slc, stale_slc, stale_slc);
   const RdOnlyEFlt3DArray Wj_kp1 = coord.left_edge_offset(Wj, 1, 0, 0);
   const RdOnlyEFlt3DArray Wk =
-    weight_l[coord.k_axis()].subarray(stale_slc, stale_slc, stale_slc);
+      weight_l[coord.k_axis()].subarray(stale_slc, stale_slc, stale_slc);
   const RdOnlyEFlt3DArray Wk_jp1 = coord.left_edge_offset(Wk, 0, 1, 0);
 
   // Integration limits
@@ -545,37 +532,33 @@ void EnzoBfieldMethodCT::compute_edge_efield
   //    jstart = 0     jstop = jmax - 1
   //    kstart = 0     kstop = kmax - 1
 
-  int xstart = 1 - j_x - k_x; // if dim==0: 1, otherwise: 0
-  int ystart = 1 - j_y - k_y; // if dim==1: 1, otherwise: 0
-  int zstart = 1 - j_z - k_z; // if dim==2: 1, otherwise: 0
+  int xstart = 1 - j_x - k_x;  // if dim==0: 1, otherwise: 0
+  int ystart = 1 - j_y - k_y;  // if dim==1: 1, otherwise: 0
+  int zstart = 1 - j_z - k_z;  // if dim==2: 1, otherwise: 0
 
-  compute_edge_<true>(xstart, ystart, zstart,
-		      Ec.shape(2) - 1, Ec.shape(1) - 1, Ec.shape(0) - 1,
-		      Eedge, Wj, Wj_kp1, Wk, Wk_jp1,
-		      Ec, Ec_jkp1, Ec_jp1, Ec_kp1,
-		      Ej, Ej_kp1, Ek, Ek_jp1);
+  compute_edge_<true>(xstart, ystart, zstart, Ec.shape(2) - 1, Ec.shape(1) - 1,
+                      Ec.shape(0) - 1, Eedge, Wj, Wj_kp1, Wk, Wk_jp1, Ec,
+                      Ec_jkp1, Ec_jp1, Ec_kp1, Ej, Ej_kp1, Ek, Ek_jp1);
 }
 
 //----------------------------------------------------------------------
 
-void EnzoBfieldMethodCT::compute_all_edge_efields
-  (const EnzoEFltArrayMap &integration_map, const EnzoEFltArrayMap &xflux_map,
-   const EnzoEFltArrayMap &yflux_map, const EnzoEFltArrayMap &zflux_map,
-   EFlt3DArray &center_efield, std::array<EFlt3DArray,3> &edge_efield_l,
-   const std::array< CelloView<const enzo_float, 3>, 3> &weight_l,
-   int stale_depth)
-{
+void EnzoBfieldMethodCT::compute_all_edge_efields(
+    const EnzoEFltArrayMap& integration_map, const EnzoEFltArrayMap& xflux_map,
+    const EnzoEFltArrayMap& yflux_map, const EnzoEFltArrayMap& zflux_map,
+    EFlt3DArray& center_efield, std::array<EFlt3DArray, 3>& edge_efield_l,
+    const std::array<CelloView<const enzo_float, 3>, 3>& weight_l,
+    int stale_depth) {
+  for (int i = 0; i < 3; i++) {
+    EnzoBfieldMethodCT::compute_center_efield(i, center_efield, integration_map,
+                                              stale_depth);
 
-  for (int i = 0; i < 3; i++){
-    EnzoBfieldMethodCT::compute_center_efield(i, center_efield,
-                                              integration_map, stale_depth);
-
-    const EnzoEFltArrayMap *jflux_map;
-    const EnzoEFltArrayMap *kflux_map;
-    if (i == 0){
+    const EnzoEFltArrayMap* jflux_map;
+    const EnzoEFltArrayMap* kflux_map;
+    if (i == 0) {
       jflux_map = &yflux_map;
       kflux_map = &zflux_map;
-    } else if (i==1){
+    } else if (i == 1) {
       jflux_map = &zflux_map;
       kflux_map = &xflux_map;
     } else {
@@ -604,33 +587,32 @@ void EnzoBfieldMethodCT::compute_all_edge_efields
 // Assuming 3D:
 //   E_k_term(k,j,i+1/2) = dt/dj*(E_k(k,j+1/2,i+1/2) - E_k(k,j-1/2,i+1/2))
 //   E_j_term(k,j,i+1/2) = dt/dk*(E_j(k+1/2,j,i+1/2) - E_j(k-1/2,j,i+1/2))
-// 
+//
 // We define: (notation DIFFERENT from compute_edge_efield & compute_edge_)
-//   ej_Lk(k,j,i) = E_j(k-1/2,     j, i+1/2) 
+//   ej_Lk(k,j,i) = E_j(k-1/2,     j, i+1/2)
 //   ej_Rk(k,j,i) = E_j(k+1/2,     j, i+1/2)
-//   ek_Lj(k,j,i) = E_k(    k, j-1/2, i+1/2) 
+//   ek_Lj(k,j,i) = E_k(    k, j-1/2, i+1/2)
 //   ek_Rj(k,j,i) = E_k(    k, j+1/2, i+1/2)
 //
 // Then:
 //   E_k_term(k,j,i+1/2) = dt/dj*(ek_Rj(k,j,i) - ek_Lj(k,j,i))
 //   E_j_term(k,j,i+1/2) = dt/dk*(ej_Rk(k,j,i) - ej_Lk(k,j,i))
-void EnzoBfieldMethodCT::update_bfield
-(const enzo_float* &cell_widths, int dim,
- const std::array<CelloView<const enzo_float, 3>,3> &efield_l,
- const CelloView<enzo_float, 3> &cur_interface_bfield,
- const CelloView<enzo_float, 3> &out_interface_bfield,
- enzo_float dt, int stale_depth)
-{
+void EnzoBfieldMethodCT::update_bfield(
+    const enzo_float*& cell_widths, int dim,
+    const std::array<CelloView<const enzo_float, 3>, 3>& efield_l,
+    const CelloView<enzo_float, 3>& cur_interface_bfield,
+    const CelloView<enzo_float, 3>& out_interface_bfield, enzo_float dt,
+    int stale_depth) {
   EnzoPermutedCoordinates coord(dim);
 
   // compute the ratios of dt to the widths of cells along j and k directions
-  enzo_float dtdj = dt/cell_widths[coord.j_axis()];
-  enzo_float dtdk = dt/cell_widths[coord.k_axis()];
+  enzo_float dtdj = dt / cell_widths[coord.j_axis()];
+  enzo_float dtdk = dt / cell_widths[coord.k_axis()];
 
-  CSlice stale_slc = (stale_depth > 0) ?
-      CSlice(stale_depth,-stale_depth) : CSlice(nullptr, nullptr);
+  CSlice stale_slc = (stale_depth > 0) ? CSlice(stale_depth, -stale_depth)
+                                       : CSlice(nullptr, nullptr);
 
-  // Load edge centered efields 
+  // Load edge centered efields
   CelloView<const enzo_float, 3> E_j, ej_Lk, ej_Rk, E_k, ek_Lj, ek_Rj;
   E_j = efield_l[coord.j_axis()].subarray(stale_slc, stale_slc, stale_slc);
   E_k = efield_l[coord.k_axis()].subarray(stale_slc, stale_slc, stale_slc);
@@ -655,32 +637,31 @@ void EnzoBfieldMethodCT::update_bfield
   //       bnew and bout only include interior faces
   //
   // Also need to omit outermost layer of cell-centered vals
-  CSlice full_ax(nullptr, nullptr); // includes full axis
-  CSlice inner_cent(1,-1);          // excludes outermost cell-centered values
+  CSlice full_ax(nullptr, nullptr);  // includes full axis
+  CSlice inner_cent(1, -1);          // excludes outermost cell-centered values
 
   // the following arrays should all have the same shape
-  ej_Lk = coord.get_subarray(E_j, CSlice(0,      -1), inner_cent, full_ax);
+  ej_Lk = coord.get_subarray(E_j, CSlice(0, -1), inner_cent, full_ax);
   ej_Rk = coord.get_subarray(E_j, CSlice(1, nullptr), inner_cent, full_ax);
-  ek_Lj = coord.get_subarray(E_k, inner_cent, CSlice(0,      -1), full_ax);
+  ek_Lj = coord.get_subarray(E_k, inner_cent, CSlice(0, -1), full_ax);
   ek_Rj = coord.get_subarray(E_k, inner_cent, CSlice(1, nullptr), full_ax);
-  bcur = coord.get_subarray(cur_bfield, inner_cent, inner_cent, CSlice(1,-1));
-  bout = coord.get_subarray(out_bfield, inner_cent, inner_cent, CSlice(1,-1));
+  bcur = coord.get_subarray(cur_bfield, inner_cent, inner_cent, CSlice(1, -1));
+  bout = coord.get_subarray(out_bfield, inner_cent, inner_cent, CSlice(1, -1));
 
   // We could simplify this iteration by using subarrays - However, it would be
   // more complicated
-  for (int iz=0; iz<bout.shape(0); iz++) {
-    for (int iy=0; iy<bout.shape(1); iy++) {
-      for (int ix=0; ix<bout.shape(2); ix++) {
+  for (int iz = 0; iz < bout.shape(0); iz++) {
+    for (int iy = 0; iy < bout.shape(1); iy++) {
+      for (int ix = 0; ix < bout.shape(2); ix++) {
+        // E_k_term(k,j,i+1/2) = dt/dj*(E_k(k,j+1/2,i+1/2) - E_k(k,j-1/2,i+1/2))
+        enzo_float E_k_term = dtdj * (ek_Rj(iz, iy, ix) - ek_Lj(iz, iy, ix));
 
-	// E_k_term(k,j,i+1/2) = dt/dj*(E_k(k,j+1/2,i+1/2) - E_k(k,j-1/2,i+1/2))
-	enzo_float E_k_term = dtdj*(ek_Rj(iz,iy,ix) - ek_Lj(iz,iy,ix));
+        // E_j_term(k,j,i+1/2) = dt/dk*(E_j(k+1/2,j,i+1/2) - E_j(k-1/2,j,i+1/2))
+        enzo_float E_j_term = dtdk * (ej_Rk(iz, iy, ix) - ej_Lk(iz, iy, ix));
 
-	// E_j_term(k,j,i+1/2) = dt/dk*(E_j(k+1/2,j,i+1/2) - E_j(k-1/2,j,i+1/2))
-	enzo_float E_j_term = dtdk*(ej_Rk(iz,iy,ix) - ej_Lk(iz,iy,ix)); 
-
-	// Bnew_i(k, j, i+1/2) =
-	//   Bold_i(k, j, i+1/2) - E_k_term(k,j,i+1/2) + E_j_term(k,j,i+1/2)
-	bout(iz,iy,ix) = bcur(iz,iy,ix) - E_k_term + E_j_term;
+        // Bnew_i(k, j, i+1/2) =
+        //   Bold_i(k, j, i+1/2) - E_k_term(k,j,i+1/2) + E_j_term(k,j,i+1/2)
+        bout(iz, iy, ix) = bcur(iz, iy, ix) - E_k_term + E_j_term;
       }
     }
   }
@@ -699,29 +680,29 @@ void EnzoBfieldMethodCT::update_bfield
 //   B_center(k,j,i)   ->  B_i(k,j,i+1)
 //   Bi_left(k,j,i)    ->  B_i(k,j,i+1/2)
 //   Bi_right(k,j,i)   ->  B_i(k,j,i+3/2)
-void EnzoBfieldMethodCT::compute_center_bfield
-(int dim, const CelloView<enzo_float,3> &bfieldc_comp,
- const CelloView<const enzo_float,3> &bfieldi_comp, int stale_depth)
-{
+void EnzoBfieldMethodCT::compute_center_bfield(
+    int dim, const CelloView<enzo_float, 3>& bfieldc_comp,
+    const CelloView<const enzo_float, 3>& bfieldi_comp, int stale_depth) {
   EnzoPermutedCoordinates coord(dim);
-  CSlice stale_slc = (stale_depth > 0) ?
-      CSlice(stale_depth,-stale_depth) : CSlice(nullptr, nullptr);
+  CSlice stale_slc = (stale_depth > 0) ? CSlice(stale_depth, -stale_depth)
+                                       : CSlice(nullptr, nullptr);
 
   // Load Cell-centered fields
-  const CelloView<enzo_float,3> b_center
-    = bfieldc_comp.subarray(stale_slc,stale_slc,stale_slc);
+  const CelloView<enzo_float, 3> b_center =
+      bfieldc_comp.subarray(stale_slc, stale_slc, stale_slc);
   // Load Face-centered fields
-  const CelloView<const enzo_float,3> bi_left
-    = bfieldi_comp.subarray(stale_slc,stale_slc,stale_slc);
+  const CelloView<const enzo_float, 3> bi_left =
+      bfieldi_comp.subarray(stale_slc, stale_slc, stale_slc);
   // Get the view of the Face-center B-field that starting from i=1
-  const CelloView<const enzo_float,3> bi_right
-    = coord.left_edge_offset(bi_left,0,0,1);
+  const CelloView<const enzo_float, 3> bi_right =
+      coord.left_edge_offset(bi_left, 0, 0, 1);
 
   // iteration limits are compatible with a 2D grid and 3D grid
-  for (int iz=0; iz<b_center.shape(0); iz++) {
-    for (int iy=0; iy<b_center.shape(1); iy++) {
-      for (int ix=0; ix<b_center.shape(2); ix++) {
-	b_center(iz,iy,ix) = 0.5*(bi_left(iz,iy,ix) + bi_right(iz,iy,ix));
+  for (int iz = 0; iz < b_center.shape(0); iz++) {
+    for (int iy = 0; iy < b_center.shape(1); iy++) {
+      for (int ix = 0; ix < b_center.shape(2); ix++) {
+        b_center(iz, iy, ix) =
+            0.5 * (bi_left(iz, iy, ix) + bi_right(iz, iy, ix));
       }
     }
   }

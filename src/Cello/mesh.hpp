@@ -3,7 +3,7 @@
 /// @file     mesh.hpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     Thu Mar 11 17:20:03 PST 2010
-/// @brief    Include file for the \ref Mesh component 
+/// @brief    Include file for the \ref Mesh component
 
 #ifndef MESH_HPP
 #define MESH_HPP
@@ -25,7 +25,7 @@
 #include "_simulation.hpp"
 #include "_mesh.hpp"
 #include "_view.hpp"
-#include "_data.hpp" 
+#include "_data.hpp"
 
 //----------------------------------------------------------------------
 extern void mutex_init_hierarchy();
@@ -34,4 +34,3 @@ extern void mutex_init_field_face();
 //----------------------------------------------------------------------
 
 #endif /* MESH_HPP */
-

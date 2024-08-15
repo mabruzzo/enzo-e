@@ -11,8 +11,7 @@
 #include "cello.hpp"
 #include "simulation.decl.h"
 
-class MappingArray: public CkArrayMap {
-
+class MappingArray : public CkArrayMap {
   /// @class    MappingArray
   /// @ingroup  Charm
   /// @brief    [\ref Parallel] Class for mapping Blocks to processors
@@ -21,20 +20,15 @@ class MappingArray: public CkArrayMap {
   /// processes
 
 public:
-
   MappingArray(int nx, int ny, int nz);
 
-  int procNum(int, const CkArrayIndex &idx);
+  int procNum(int, const CkArrayIndex& idx);
 
   /// CHARM++ migration constructor for PUP::able
-  MappingArray (CkMigrateMessage *m)
-    : CkArrayMap(m),
-      nx_(0),ny_(0),nz_(0)
-  { }
+  MappingArray(CkMigrateMessage* m) : CkArrayMap(m), nx_(0), ny_(0), nz_(0) {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
     CkArrayMap::pup(p);
     // NOTE: change this function whenever attributes change
@@ -44,10 +38,7 @@ public:
   }
 
 private:
-
   int nx_, ny_, nz_;
-
 };
 
 #endif /* CHARM_MAPPING_ARRAY_HPP */
-

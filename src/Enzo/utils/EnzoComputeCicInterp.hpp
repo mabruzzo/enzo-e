@@ -1,7 +1,7 @@
 // See LICENSE_CELLO file for license and copyright information
 
 /// @file     enzo_EnzoComputeCicInterp.hpp
-/// @author   James Bordner (jobordner@ucsd.edu) 
+/// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2016-05-05
 /// @brief    [\ref Enzo] Implementation of Enzo's ComputeCicInterp functions
 
@@ -9,43 +9,33 @@
 #define ENZO_ENZO_COMPUTE_CIC_INTERP_HPP
 
 class EnzoComputeCicInterp : public Compute {
-
   /// @class    EnzoComputeCicInterp
   /// @ingroup  Enzo
-  /// @brief    [\ref Enzo] Encapsulate CIC (Cloud-in-cell) particle-field interpolation
+  /// @brief    [\ref Enzo] Encapsulate CIC (Cloud-in-cell) particle-field
+  /// interpolation
 
-public: // interface
-
+public:  // interface
   /// Create a new EnzoComputeCicInterp object
-  EnzoComputeCicInterp (std::string field_name,
-			std::string particle_type,
-			std::string particle_attribute,
-			double dt = 0.0);
+  EnzoComputeCicInterp(std::string field_name, std::string particle_type,
+                       std::string particle_attribute, double dt = 0.0);
 
   /// Charm++ PUP::able declarations
   PUPable_decl(EnzoComputeCicInterp);
-  
+
   /// Charm++ PUP::able migration constructor
-  EnzoComputeCicInterp (CkMigrateMessage *m)
-    : Compute(m),
-      it_p_(0),
-      ia_p_(0),
-      if_(0),
-      dt_(0.0)
-  { }
+  EnzoComputeCicInterp(CkMigrateMessage* m)
+      : Compute(m), it_p_(0), ia_p_(0), if_(0), dt_(0.0) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
-  
+  void pup(PUP::er& p);
+
   /// Perform the computation on the block
-  virtual void compute( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
-private: // functions
+private:  // functions
+  void compute_(Block* block);
 
-  void compute_(Block * block);
-
-private: // attributes
-
+private:  // attributes
   /// particle type
   int it_p_;
 
@@ -57,7 +47,6 @@ private: // attributes
 
   /// dt at which to apply the interpolation
   double dt_;
-
 };
 
 #endif /* ENZO_ENZO_COMPUTE_CIC_INTERP_HPP */

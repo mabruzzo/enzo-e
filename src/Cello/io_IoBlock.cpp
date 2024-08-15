@@ -9,9 +9,7 @@
 
 //----------------------------------------------------------------------
 
-IoBlock::IoBlock() throw ()
-  : Io()
-{
+IoBlock::IoBlock() throw() : Io() {
   meta_name_.push_back("num_field_data");
   meta_name_.push_back("index");
   meta_name_.push_back("lower");
@@ -26,148 +24,139 @@ IoBlock::IoBlock() throw ()
 
 //----------------------------------------------------------------------
 
-void IoBlock::set_block (Block * block) throw()
-{
+void IoBlock::set_block(Block* block) throw() {
   int i;
-  Data * data = block->data();
+  Data* data = block->data();
   num_field_data_ = data->num_field_data_;
 
-  for (i=0; i<3; i++) index_[i] = block->index_[i];
-  for (i=0; i<3; i++) lower_[i] = data->lower_[i];
-  for (i=0; i<3; i++) upper_[i] = data->upper_[i];
+  for (i = 0; i < 3; i++) index_[i] = block->index_[i];
+  for (i = 0; i < 3; i++) lower_[i] = data->lower_[i];
+  for (i = 0; i < 3; i++) upper_[i] = data->upper_[i];
   cycle_ = block->cycle_;
-  time_  = block->time_;
-  dt_    = block->dt_;
-  for (i=0; i<3; i++) array_[i] = block->array_[i];
+  time_ = block->time_;
+  dt_ = block->dt_;
+  for (i = 0; i < 3; i++) array_[i] = block->array_[i];
   block->get_order(&index_order_, &count_order_);
 }
 
 //----------------------------------------------------------------------
 
-void IoBlock::meta_value
-(int index,
- void ** buffer, std::string * name, int * type,
- int * nxd, int * nyd, int * nzd) throw()
-{
-  Io::meta_value(index,buffer,name,type,nxd,nyd,nzd);
+void IoBlock::meta_value(int index, void** buffer, std::string* name, int* type,
+                         int* nxd, int* nyd, int* nzd) throw() {
+  Io::meta_value(index, buffer, name, type, nxd, nyd, nzd);
 
   int count = 0;
 
   if (index == count++) {
-    *buffer = (void *) & num_field_data_;
-    *type   = type_int;
+    *buffer = (void*)&num_field_data_;
+    *type = type_int;
   } else if (index == count++) {
-    *buffer = (void *) & index_;
-    *type   = type_int;
-    *nxd     = 3;
+    *buffer = (void*)&index_;
+    *type = type_int;
+    *nxd = 3;
   } else if (index == count++) {
-    *buffer = (void *) lower_;
-    *type   = type_double;
-    *nxd     = 3;
+    *buffer = (void*)lower_;
+    *type = type_double;
+    *nxd = 3;
   } else if (index == count++) {
-    *buffer = (void *) upper_;
-    *type   = type_double;
-    *nxd     = 3;
+    *buffer = (void*)upper_;
+    *type = type_double;
+    *nxd = 3;
   } else if (index == count++) {
-    *buffer = (void *) & cycle_;
-    *type   = type_int;
+    *buffer = (void*)&cycle_;
+    *type = type_int;
   } else if (index == count++) {
-    *buffer = (void *) & time_;
-    *type   = type_double;
+    *buffer = (void*)&time_;
+    *type = type_double;
   } else if (index == count++) {
-    *buffer = (void *) & dt_;
-    *type   = type_double;
+    *buffer = (void*)&dt_;
+    *type = type_double;
   } else if (index == count++) {
-    *buffer = (void *) & array_;
-    *type   = type_int;
-    *nxd    = 3;
+    *buffer = (void*)&array_;
+    *type = type_int;
+    *nxd = 3;
   } else if (index == count++) {
-    *buffer = (void *) & index_order_;
-    *type   = type_long_long;
+    *buffer = (void*)&index_order_;
+    *type = type_long_long;
   } else if (index == count++) {
-    *buffer = (void *) & count_order_;
-    *type   = type_long_long;
+    *buffer = (void*)&count_order_;
+    *type = type_long_long;
   }
 }
 //======================================================================
 
-int IoBlock::data_size () const
-{
+int IoBlock::data_size() const {
   int size = 0;
 
   size += Io::data_size();
 
-  SIZE_SCALAR_TYPE(size,int,num_field_data_);
-  SIZE_ARRAY_TYPE(size,int,index_,3);
-  SIZE_ARRAY_TYPE(size,double, lower_,3);
-  SIZE_ARRAY_TYPE(size,double, upper_,3);
-  SIZE_SCALAR_TYPE(size,int, cycle_);
-  SIZE_SCALAR_TYPE(size,double, time_);
-  SIZE_SCALAR_TYPE(size,double, dt_);
-  SIZE_ARRAY_TYPE(size,int,array_,3);
-  SIZE_SCALAR_TYPE(size,long long, index_order_);
-  SIZE_SCALAR_TYPE(size,long long, count_order_);
+  SIZE_SCALAR_TYPE(size, int, num_field_data_);
+  SIZE_ARRAY_TYPE(size, int, index_, 3);
+  SIZE_ARRAY_TYPE(size, double, lower_, 3);
+  SIZE_ARRAY_TYPE(size, double, upper_, 3);
+  SIZE_SCALAR_TYPE(size, int, cycle_);
+  SIZE_SCALAR_TYPE(size, double, time_);
+  SIZE_SCALAR_TYPE(size, double, dt_);
+  SIZE_ARRAY_TYPE(size, int, array_, 3);
+  SIZE_SCALAR_TYPE(size, long long, index_order_);
+  SIZE_SCALAR_TYPE(size, long long, count_order_);
 
   return size;
 }
 
 //----------------------------------------------------------------------
 
-char * IoBlock::save_data (char * buffer) const
-{
-  char * pc = buffer;
+char* IoBlock::save_data(char* buffer) const {
+  char* pc = buffer;
 
   pc = Io::save_data(pc);
-  
-  SAVE_SCALAR_TYPE(pc,int,num_field_data_);
-  SAVE_ARRAY_TYPE(pc,int,index_,3);
-  SAVE_ARRAY_TYPE(pc,double, lower_,3);
-  SAVE_ARRAY_TYPE(pc,double, upper_,3);
-  SAVE_SCALAR_TYPE(pc,int, cycle_);
-  SAVE_SCALAR_TYPE(pc,double, time_);
-  SAVE_SCALAR_TYPE(pc,double, dt_);
-  SAVE_ARRAY_TYPE(pc,int,array_,3);
-  SAVE_SCALAR_TYPE(pc,long long, index_order_);
-  SAVE_SCALAR_TYPE(pc,long long, count_order_);
 
-  ASSERT2 ("IoBlock::save_data()",
-  	   "Expecting buffer size %d actual size %d",
-  	   IoBlock::data_size(),(pc-buffer),
-  	   (IoBlock::data_size() == (pc-buffer)));
-  
+  SAVE_SCALAR_TYPE(pc, int, num_field_data_);
+  SAVE_ARRAY_TYPE(pc, int, index_, 3);
+  SAVE_ARRAY_TYPE(pc, double, lower_, 3);
+  SAVE_ARRAY_TYPE(pc, double, upper_, 3);
+  SAVE_SCALAR_TYPE(pc, int, cycle_);
+  SAVE_SCALAR_TYPE(pc, double, time_);
+  SAVE_SCALAR_TYPE(pc, double, dt_);
+  SAVE_ARRAY_TYPE(pc, int, array_, 3);
+  SAVE_SCALAR_TYPE(pc, long long, index_order_);
+  SAVE_SCALAR_TYPE(pc, long long, count_order_);
+
+  ASSERT2("IoBlock::save_data()", "Expecting buffer size %d actual size %d",
+          IoBlock::data_size(), (pc - buffer),
+          (IoBlock::data_size() == (pc - buffer)));
+
   // return first byte after filled buffer
   return pc;
 }
 
 //----------------------------------------------------------------------
 
-char * IoBlock::load_data (char * buffer)
-{
-  char * pc = buffer;
+char* IoBlock::load_data(char* buffer) {
+  char* pc = buffer;
 
   pc = Io::load_data(pc);
-  
-  LOAD_SCALAR_TYPE(pc,int,num_field_data_);
-  LOAD_ARRAY_TYPE(pc,int,index_,3);
-  LOAD_ARRAY_TYPE(pc,double, lower_,3);
-  LOAD_ARRAY_TYPE(pc,double, upper_,3);
-  LOAD_SCALAR_TYPE(pc,int, cycle_);
-  LOAD_SCALAR_TYPE(pc,double, time_);
-  LOAD_SCALAR_TYPE(pc,double, dt_);
-  LOAD_ARRAY_TYPE(pc,int,array_,3);
-  LOAD_SCALAR_TYPE(pc,long long, index_order_);
-  LOAD_SCALAR_TYPE(pc,long long, count_order_);
+
+  LOAD_SCALAR_TYPE(pc, int, num_field_data_);
+  LOAD_ARRAY_TYPE(pc, int, index_, 3);
+  LOAD_ARRAY_TYPE(pc, double, lower_, 3);
+  LOAD_ARRAY_TYPE(pc, double, upper_, 3);
+  LOAD_SCALAR_TYPE(pc, int, cycle_);
+  LOAD_SCALAR_TYPE(pc, double, time_);
+  LOAD_SCALAR_TYPE(pc, double, dt_);
+  LOAD_ARRAY_TYPE(pc, int, array_, 3);
+  LOAD_SCALAR_TYPE(pc, long long, index_order_);
+  LOAD_SCALAR_TYPE(pc, long long, count_order_);
 
   return pc;
 }
 
 //----------------------------------------------------------------------
 
-void IoBlock::save_to (void * v)
-{
-  Block * b = static_cast<Block *>(v);
+void IoBlock::save_to(void* v) {
+  Block* b = static_cast<Block*>(v);
 
-  for (int i=0; i<3; i++) {
+  for (int i = 0; i < 3; i++) {
     b->index_[i] = index_[i];
     // Block lower/upper computed from index
     //    b->lower_[i] = lower_[i];
@@ -175,8 +164,7 @@ void IoBlock::save_to (void * v)
     b->array_[i] = array_[i];
   }
   b->cycle_ = cycle_;
-  b->time_  = time_;
-  b->dt_    = dt_;
+  b->time_ = time_;
+  b->dt_ = dt_;
   b->set_order(index_order_, count_order_);
 }
-

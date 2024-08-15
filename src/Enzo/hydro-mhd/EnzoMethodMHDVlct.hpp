@@ -48,7 +48,7 @@
 ///           of for each of the quantities in integration_map. These arrays
 ///           are used to store the estimated values at the partial timestep.
 ///        3. primitive_map: Map of arrays used to temporarily store the
-///           primitive quantities 
+///           primitive quantities
 ///        4. priml_map: holds left reconstructed primitive quantities (has the
 ///           same keys as primitive_map)
 ///        5. primr_map: holds right reconstructed primitive quantities (has the
@@ -75,23 +75,19 @@
 #ifndef ENZO_ENZO_METHOD_VLCT_HPP
 #define ENZO_ENZO_METHOD_VLCT_HPP
 
-struct EnzoVlctScratchSpace; // defined at the end of this header file
+struct EnzoVlctScratchSpace;  // defined at the end of this header file
 
-class EnzoMHDIntegratorStageCommands; // the header declaring this class will be
-                             // included in the source file
-struct EnzoMHDIntegratorStageArgPack; // declared alongside
-                                      // EnzoMHDIntegratorStageCommands
-
+class EnzoMHDIntegratorStageCommands;  // the header declaring this class will
+                                       // be included in the source file
+struct EnzoMHDIntegratorStageArgPack;  // declared alongside
+                                       // EnzoMHDIntegratorStageCommands
 
 class EnzoMethodMHDVlct : public Method {
-
   /// @class    EnzoMethodMHDVlct
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulate VL + CT MHD method
 
-
-public: // interface
-
+public:  // interface
   /// Create a new EnzoMethodMHDVlct object
   EnzoMethodMHDVlct(ParameterGroup p, bool store_fluxes_for_corrections);
 
@@ -99,35 +95,32 @@ public: // interface
   PUPable_decl(EnzoMethodMHDVlct);
 
   /// Charm++ PUP::able migration constructor
-  EnzoMethodMHDVlct (CkMigrateMessage *m)
-    : Method (m),
-      time_scheme_(""),
-      integrator_(nullptr),
-      scratch_space_(nullptr),
-      bfield_method_(nullptr),
-      integration_field_list_(),
-      primitive_field_list_(),
-      lazy_passive_list_(),
-      store_fluxes_for_corrections_(false)
-  { }
+  EnzoMethodMHDVlct(CkMigrateMessage* m)
+      : Method(m),
+        time_scheme_(""),
+        integrator_(nullptr),
+        scratch_space_(nullptr),
+        bfield_method_(nullptr),
+        integration_field_list_(),
+        primitive_field_list_(),
+        lazy_passive_list_(),
+        store_fluxes_for_corrections_(false) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Delete EnzoMethodMHDVlct object
   ~EnzoMethodMHDVlct();
 
-  /// Apply the method to advance a block one timestep 
-  virtual void compute( Block * block) throw();
+  /// Apply the method to advance a block one timestep
+  virtual void compute(Block* block) throw();
 
-  virtual std::string name () throw () 
-  { return "mhd_vlct"; }
+  virtual std::string name() throw() { return "mhd_vlct"; }
 
   /// Compute maximum timestep for this method
-  virtual double timestep ( Block * block) throw();
+  virtual double timestep(Block* block) throw();
 
-protected: // methods
-
+protected:  // methods
   /// Completes a handful of sanity-checks that are to be performed after the
   /// simulation is entirely initialized.
   ///
@@ -138,9 +131,8 @@ protected: // methods
   /// Constructs a map containing the field data for each integration quantity
   /// This includes all passively advected scalars (as densities) included in
   /// passive_list
-  EnzoEFltArrayMap get_integration_map_(Block * block,
-                                        const str_vec_t *passive_list)
-    const noexcept;
+  EnzoEFltArrayMap get_integration_map_(
+      Block* block, const str_vec_t* passive_list) const noexcept;
 
   /// Saves the fluxes (for a given dimension, `dim`), computed at the faces
   /// between the active and the ghost zones to `block->data()->flux_data()`
@@ -160,9 +152,10 @@ protected: // methods
   ///     and z directions, respectively.
   /// @param[in]  cell_width is the width of a cell along the dimension `dim`
   /// @param[in]  dt is the value of the current timestep
-  void save_fluxes_for_corrections_
-  (Block * block, const EnzoEFltArrayMap &flux_map, int dim, double cell_width,
-   double dt) const noexcept;
+  void save_fluxes_for_corrections_(Block* block,
+                                    const EnzoEFltArrayMap& flux_map, int dim,
+                                    double cell_width,
+                                    double dt) const noexcept;
 
   /// Returns a pointer to the scratch space struct. If the scratch space has
   /// not already been allocated, it will be allocated now.
@@ -174,27 +167,26 @@ protected: // methods
   /// @param[in] field_shape Gives the shape, including ghost-zones, of a hydro
   ///     cell-centered field, ordered as (mz,my,mx)
   /// @param[in] passive_list A list of keys for passively advected scalars.
-  EnzoVlctScratchSpace* get_scratch_ptr_(const std::array<int,3>& field_shape,
-					 const str_vec_t& passive_list)
-    noexcept;
+  EnzoVlctScratchSpace* get_scratch_ptr_(
+      const std::array<int, 3>& field_shape,
+      const str_vec_t& passive_list) noexcept;
 
-protected: // attributes
-
+protected:  // attributes
   /// Specifies the time_integration approach
   std::string time_scheme_;
 
   /// Holds arguments used to initialize the integrator_ attribute (this is
   /// more easy to pup than the integrator_ machinery)
-  EnzoMHDIntegratorStageArgPack *integrator_arg_pack_;
+  EnzoMHDIntegratorStageArgPack* integrator_arg_pack_;
 
   /// Holds most of the mhd machinery
-  EnzoMHDIntegratorStageCommands *integrator_;
+  EnzoMHDIntegratorStageCommands* integrator_;
 
   /// Pointer to lazily initialized struct holding scratch-space
-  EnzoVlctScratchSpace *scratch_space_;
+  EnzoVlctScratchSpace* scratch_space_;
 
   /// Pointer to the BfieldMethod handler
-  EnzoBfieldMethod *bfield_method_;
+  EnzoBfieldMethod* bfield_method_;
 
   /// Names of the integration fields (only includes the field names for
   /// actively advected quantities). These also serve as the keys to the
@@ -212,16 +204,12 @@ protected: // attributes
   bool store_fluxes_for_corrections_;
 };
 
-
-
-struct EnzoVlctScratchSpace{
-
+struct EnzoVlctScratchSpace {
   /// @class    EnzoVlctScratchSpace
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Holds scratch space arrays for EnzoMethodMHDVlct
 
 public:
-
   /// Create a new EnzoVlctScratchSpace object
   ///
   /// @param[in] shape Gives the shape, including ghost-zones, of a hydro
@@ -241,43 +229,44 @@ public:
   ///     scalars that should be included in each arraymap.
   /// @param[in] dual_energy Indicates whether the dual energy formalism is in
   ///     use (which specifies if relevant scratch-space should be allocated).
-  EnzoVlctScratchSpace(const std::array<int,3>& shape,
+  EnzoVlctScratchSpace(const std::array<int, 3>& shape,
                        const str_vec_t& integration_key_list,
                        const str_vec_t& primitive_key_list,
                        const str_vec_t& integ_updater_keys,
-                       const str_vec_t& passive_list,
-		       bool dual_energy) noexcept
-    : interface_vel_arr((dual_energy) ? EFlt3DArray(shape[0],shape[1],shape[2])
-			: EFlt3DArray())
-  {
+                       const str_vec_t& passive_list, bool dual_energy) noexcept
+      : interface_vel_arr((dual_energy)
+                              ? EFlt3DArray(shape[0], shape[1], shape[2])
+                              : EFlt3DArray()) {
     // define function to setup the arraymaps
     auto setup = [&shape, &passive_list](const std::string& name,
-                                         const std::array<int,3>& centering,
-                                         const str_vec_t& main_keys){
-      str_vec_t all_keys(main_keys); // deepcopy of main_keys
+                                         const std::array<int, 3>& centering,
+                                         const str_vec_t& main_keys) {
+      str_vec_t all_keys(main_keys);  // deepcopy of main_keys
       all_keys.insert(all_keys.end(), passive_list.begin(), passive_list.end());
-      std::array<int,3> cur_shape(shape); // deepcopy of shape
-      for (std::size_t i = 0; i<3; i++){ cur_shape[i] += centering[i]; }
+      std::array<int, 3> cur_shape(shape);  // deepcopy of shape
+      for (std::size_t i = 0; i < 3; i++) {
+        cur_shape[i] += centering[i];
+      }
       return EnzoEFltArrayMap(name, all_keys, cur_shape);
     };
 
-    temp_integration_map = setup("temp_integration", {0,0,0},
-                                 integration_key_list);
-    xflux_map = setup("xflux", { 0, 0,-1}, integration_key_list);
-    yflux_map = setup("yflux", { 0,-1, 0}, integration_key_list);
+    temp_integration_map =
+        setup("temp_integration", {0, 0, 0}, integration_key_list);
+    xflux_map = setup("xflux", {0, 0, -1}, integration_key_list);
+    yflux_map = setup("yflux", {0, -1, 0}, integration_key_list);
     zflux_map = setup("zflux", {-1, 0, 0}, integration_key_list);
-    dUcons_map = setup("dUcons", {0,0,0}, integ_updater_keys);
-    primitive_map = setup("primitive", {0,0,0}, primitive_key_list);
-    priml_map = setup("priml", {0,0,0}, primitive_key_list);
-    primr_map = setup("primr", {0,0,0}, primitive_key_list);
+    dUcons_map = setup("dUcons", {0, 0, 0}, integ_updater_keys);
+    primitive_map = setup("primitive", {0, 0, 0}, primitive_key_list);
+    priml_map = setup("priml", {0, 0, 0}, primitive_key_list);
+    primr_map = setup("primr", {0, 0, 0}, primitive_key_list);
   }
 
-public: // attributes
+public:  // attributes
   /// Array used to store interface velocity values that are computed by the
   /// Riemann Solver(to use in the calculation of the internal energy source
   /// term). If not using the dual energy formalism, this isn't doesn't
   /// allocate memory.
-  const CelloView<enzo_float,3> interface_vel_arr;
+  const CelloView<enzo_float, 3> interface_vel_arr;
 
   /// Map for storing the integration quantities at the half timestep
   EnzoEFltArrayMap temp_integration_map;

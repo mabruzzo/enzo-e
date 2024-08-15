@@ -9,9 +9,7 @@
 
 //======================================================================
 
-MappingArray::MappingArray(int nx, int ny, int nz)
-  :  CkArrayMap()
-{
+MappingArray::MappingArray(int nx, int ny, int nz) : CkArrayMap() {
   nx_ = nx;
   ny_ = ny;
   nz_ = nz;
@@ -19,8 +17,7 @@ MappingArray::MappingArray(int nx, int ny, int nz)
 
 //----------------------------------------------------------------------
 
-int MappingArray::procNum(int, const CkArrayIndex &idx) {
-
+int MappingArray::procNum(int, const CkArrayIndex& idx) {
   int v3[3];
 
   v3[0] = idx.data()[0];
@@ -30,11 +27,11 @@ int MappingArray::procNum(int, const CkArrayIndex &idx) {
   Index in;
   in.set_values(v3);
 
-  int ix,iy,iz;
-  in.array    (&ix,&iy,&iz);
+  int ix, iy, iz;
+  in.array(&ix, &iy, &iz);
 
-  int index = ((long long) CkNumPes())*(ix + nx_*(iy + ny_*iz)) / (nx_*ny_*nz_);
-  
+  int index = ((long long)CkNumPes()) * (ix + nx_ * (iy + ny_ * iz)) /
+              (nx_ * ny_ * nz_);
+
   return index;
 }
-

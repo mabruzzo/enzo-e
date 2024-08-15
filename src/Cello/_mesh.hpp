@@ -3,7 +3,7 @@
 /// @file     _mesh.hpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     Thu Mar 11 17:20:03 PST 2010
-/// @brief    Private include file for the \ref Mesh component 
+/// @brief    Private include file for the \ref Mesh component
 
 #ifndef _MESH_HPP
 #define _MESH_HPP
@@ -13,22 +13,23 @@
 //----------------------------------------------------------------------
 
 // index for child blocks
-#define IC3(ic3)  ( ((ic3[0]+2)%2) + 2*( ((ic3[1]+2)%2) + 2*( ((ic3[2]+2)%2) )))
+#define IC3(ic3)                                                               \
+  (((ic3[0] + 2) % 2) + 2 * (((ic3[1] + 2) % 2) + 2 * (((ic3[2] + 2) % 2))))
 
 // number of children
-#define NUM_CHILDREN(rank) (1<<(rank))
+#define NUM_CHILDREN(rank) (1 << (rank))
 
 // index for neighbors (axis,face)
-#define IN(axis,face)  ((face) + 2*(axis))
+#define IN(axis, face) ((face) + 2 * (axis))
 
 // index for face (ix,iy,iz)
-#define IF3(if3)  ((if3[0]+1) + 3*((if3[1]+1) + 3*(if3[2]+1)))
+#define IF3(if3) ((if3[0] + 1) + 3 * ((if3[1] + 1) + 3 * (if3[2] + 1)))
 
 // index for child ic3[] face if3[]
-#define ICF3(ic3,if3)  (IF3(if3) + 27*IC3(ic3))
+#define ICF3(ic3, if3) (IF3(if3) + 27 * IC3(ic3))
 
 // number of neighbors
-#define NN(rank) (2*(rank))
+#define NN(rank) (2 * (rank))
 
 //----------------------------------------------------------------------
 // Enums
@@ -74,17 +75,12 @@ enum phase_type {
 
 // #define PHASE_COUNT (phase_exit + 1)
 // #define PHASE_COUNT 100
-extern const char * phase_name[];
+extern const char* phase_name[];
 
 /// @enum     adapt_type
 /// @brief    Mesh adaptation type: refine, coarsen, or stay the same
 
-enum adapt_type {
-  adapt_unknown,
-  adapt_coarsen,
-  adapt_same,
-  adapt_refine
-};
+enum adapt_type { adapt_unknown, adapt_coarsen, adapt_same, adapt_refine };
 
 //----------------------------------------------------------------------
 // System includes
@@ -124,4 +120,3 @@ enum adapt_type {
 #include "mesh_RefineParticleCount.hpp"
 
 #endif /* _MESH_HPP */
-

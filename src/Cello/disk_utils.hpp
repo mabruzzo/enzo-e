@@ -7,22 +7,20 @@
 
 // it may be better to place these functions in the view component
 #include "_view.hpp"
-#include <utility> // std::pair
-#include <set>     // std::set
+#include <utility>  // std::pair
+#include <set>      // std::set
 
-namespace disk_utils{
+namespace disk_utils {
 
-
-namespace detail{ // helper functions not meant to be used elsewhere
+namespace detail {  // helper functions not meant to be used elsewhere
 
 /// helper function that actually writes ``view`` to an open HDF5 file
 ///
 /// This assumes that ``file`` has been opened and that the appropriate group
 /// has been created (and has already been opened)
-template<typename T>
-void dump_view_to_hdf5_(FileHdf5& file, const std::string &view_name,
-                        CelloView<T,3> view)
-{
+template <typename T>
+void dump_view_to_hdf5_(FileHdf5& file, const std::string& view_name,
+                        CelloView<T, 3> view) {
   const int type = cello::get_type_enum<T>();
 
   // for simplicity, we are going to take some steps to ensure that view
@@ -33,27 +31,27 @@ void dump_view_to_hdf5_(FileHdf5& file, const std::string &view_name,
   ny = view.shape(1);
   nx = view.shape(2);
 
-  if (ny == 1){
+  if (ny == 1) {
     // I'm not totally sure why we run into problems when this happens
     ERROR("disk_utils::dump_view_to_hdf5_",
           "Something goes wrong when view.shape(1) is 1.");
   }
 
   // allocate a contiguous view
-  CelloView<T,3> view_copy(nz,ny,nx);
+  CelloView<T, 3> view_copy(nz, ny, nx);
   // copy data into arr_copy
   view.copy_to(view_copy);
 
-  file.mem_create(nx,ny,nz, nx,ny,nz, 0,0,0);
+  file.mem_create(nx, ny, nz, nx, ny, nz, 0, 0, 0);
 
-  file.data_create(view_name.c_str(), type, nz,ny,nx,1, nz,ny,nx,1);
+  file.data_create(view_name.c_str(), type, nz, ny, nx, 1, nz, ny, nx, 1);
   file.data_write(view_copy.data());
   file.data_close();
 
   file.mem_close();
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline std::string default_dump_group_name() { return "/data-dump"; }
 
@@ -64,10 +62,10 @@ inline std::string default_dump_group_name() { return "/data-dump"; }
 /// @param[in] fname is the file name where data will be saved
 /// @param[in] pairs is a vector of (view-name, view) pairs that will be
 ///     saved to disk. No view-name should be duplicated
-template<typename T>
-void dump_views_to_hdf5(const std::string& fname,
-                        const std::vector<std::pair<std::string,
-                                                    CelloView<T,3>>> &pairs){
+template <typename T>
+void dump_views_to_hdf5(
+    const std::string& fname,
+    const std::vector<std::pair<std::string, CelloView<T, 3>>>& pairs) {
   // create the output file
   FileHdf5 file("./", fname);
   file.file_create();
@@ -80,11 +78,11 @@ void dump_views_to_hdf5(const std::string& fname,
   // initialze set to ensure names aren't duplicated
   std::set<std::string> name_set;
 
-  for (const auto &pair: pairs){
-    const std::string &view_name = pair.first;
-    CelloView<T,3> view = pair.second;
+  for (const auto& pair : pairs) {
+    const std::string& view_name = pair.first;
+    CelloView<T, 3> view = pair.second;
 
-    if (name_set.find(view_name) != name_set.end()){
+    if (name_set.find(view_name) != name_set.end()) {
       ERROR1("disk_utils::dump_views_to_hdf5",
              "More than 1 view was specified with the name %s",
              view_name.c_str());
@@ -108,10 +106,10 @@ void dump_views_to_hdf5(const std::string& fname,
 ///
 /// @param[in] fname is the file name where data will be saved
 /// @param[in] view is the view that is saved to disk
-template<typename T>
-void dump_view_to_hdf5(const std::string& fname, CelloView<T,3> view){
-  std::vector<std::pair<std::string, CelloView<T,3>>> tmp_v = {{"data", view}};
+template <typename T>
+void dump_view_to_hdf5(const std::string& fname, CelloView<T, 3> view) {
+  std::vector<std::pair<std::string, CelloView<T, 3>>> tmp_v = {{"data", view}};
   dump_views_to_hdf5(fname, tmp_v);
 }
 
-} // namespace disk_utils
+}  // namespace disk_utils

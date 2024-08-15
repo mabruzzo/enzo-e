@@ -12,32 +12,24 @@
 #include <sys/time.h>
 
 class Timer {
-
   /// @class    Timer
   /// @ingroup  Performance
   /// @brief    [\ref Performance] Simple class for timing code sections
 
-public: // interface
-
+public:  // interface
   /// Create the Timer object
-  Timer() throw()
-  : time_(0),
-    is_running_(false),
-    t1_(),t2_(),tz_()
-  {
-  }
+  Timer() throw() : time_(0), is_running_(false), t1_(), t2_(), tz_() {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
-    WARNING("Timer::pup","skipping");
+    WARNING("Timer::pup", "skipping");
     //    return;
 
     // NOTE: change this function whenever attributes change
     p | time_;
     p | is_running_;
-    
+
     p | t1_.tv_sec;
     p | t1_.tv_usec;
     p | t2_.tv_sec;
@@ -46,51 +38,43 @@ public: // interface
   }
 
   /// Start the timer
-  void start() throw()
-  { 
+  void start() throw() {
     is_running_ = true;
     gettimeofday(&t1_, &tz_);
   }
 
   /// Stop the timer
-  float stop() throw()
-  { 
+  float stop() throw() {
     if (is_running_) {
       gettimeofday(&t2_, &tz_);
-      time_ += (t2_.tv_sec-t1_.tv_sec) + 1e-6*(t2_.tv_usec-t1_.tv_usec);
+      time_ += (t2_.tv_sec - t1_.tv_sec) + 1e-6 * (t2_.tv_usec - t1_.tv_usec);
       is_running_ = false;
     }
     return time_;
   }
 
   /// Clear the timer
-  void clear() throw()
-  { 
+  void clear() throw() {
     stop();
     gettimeofday(&t1_, &tz_);
     time_ = 0.0;
   }
 
-
   /// Return the value of the timer
-  float value() const throw()
-  {
+  float value() const throw() {
     if (is_running_) {
-      gettimeofday((struct timeval *) &t2_, 
-		   (struct timezone *)&tz_);
-      return time_ + 
-	(t2_.tv_sec-t1_.tv_sec) + 1e-6*(t2_.tv_usec-t1_.tv_usec);
+      gettimeofday((struct timeval*)&t2_, (struct timezone*)&tz_);
+      return time_ + (t2_.tv_sec - t1_.tv_sec) +
+             1e-6 * (t2_.tv_usec - t1_.tv_usec);
     } else {
       return time_;
     }
   }
 
-  
   // /// Display the timer information
   // void print () const throw();
 
-private: // attributes
-
+private:  // attributes
   /// The accumulated time
   float time_;
   /// Whether the timer is currently running
@@ -98,8 +82,6 @@ private: // attributes
   /// Struct values for gettimeofday()
   struct timeval t1_, t2_;
   struct timezone tz_;
-
 };
 
 #endif /* PERFORMANCE_TIMER_HPP */
-

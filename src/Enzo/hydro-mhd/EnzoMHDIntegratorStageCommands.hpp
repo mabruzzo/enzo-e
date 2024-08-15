@@ -30,7 +30,7 @@ struct EnzoMHDIntegratorStageArgPack {
   double theta_limiter;
   std::string mhd_choice;
 
-  void pup(PUP::er &p) {
+  void pup(PUP::er& p) {
     p | rsolver;
     p | recon_names;
     p | theta_limiter;
@@ -38,9 +38,7 @@ struct EnzoMHDIntegratorStageArgPack {
   }
 };
 
-
 class EnzoMHDIntegratorStageCommands {
-
   /// @class    EnzoMHDIntegratorStageCommands
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Provides commands to evolve Hydro/MHD quantities
@@ -106,15 +104,13 @@ public:
   };
 
 public:
-
   /// Create a new EnzoMHDIntegratorStageCommands object
   EnzoMHDIntegratorStageCommands(const EnzoMHDIntegratorStageArgPack& args);
 
   /// Delete EnzoMHDIntegratorStageCommands object
   ~EnzoMHDIntegratorStageCommands();
 
-  EnzoBfieldMethod* construct_bfield_method(int nstages) const noexcept
-  {
+  EnzoBfieldMethod* construct_bfield_method(int nstages) const noexcept {
     if (mhd_choice_ == bfield_choice::constrained_transport) {
       return new EnzoBfieldMethodCT(nstages);
     }
@@ -125,24 +121,28 @@ public:
   /// in the different integration_map arguments passed to compute_update_stage
   /// and each of the flux_maps. The order of keys in the flux_maps MUST match
   /// the order of keys in the list.
-  str_vec_t integration_quantity_keys() const noexcept
-  { return riemann_solver_->integration_quantity_keys(); }
+  str_vec_t integration_quantity_keys() const noexcept {
+    return riemann_solver_->integration_quantity_keys();
+  }
 
   /// gives the list of expected keys (for actively advected quantities) held
   /// in `primitive_map`, `priml_map`, and `primr_map`. The order of keys in
   /// the latter 2 cases MUST match the order of keys in the list
-  str_vec_t primitive_quantity_keys() const noexcept
-  { return riemann_solver_->primitive_quantity_keys(); }
+  str_vec_t primitive_quantity_keys() const noexcept {
+    return riemann_solver_->primitive_quantity_keys();
+  }
 
   /// gives the list of expected keys (for actively advected quantities) held
   /// in `dUcons_map`. This ALWAYS matches the list returned by
   /// integration_quantity_keys, or is a subset of that list.
-  str_vec_t dUcons_map_keys() const noexcept
-  { return integration_quan_updater_->integration_keys(); }
+  str_vec_t dUcons_map_keys() const noexcept {
+    return integration_quan_updater_->integration_keys();
+  }
 
   /// query whether the integrator is configured for pure hydrodynamics
-  bool is_pure_hydro() const noexcept
-  { return mhd_choice_ == bfield_choice::no_bfield; }
+  bool is_pure_hydro() const noexcept {
+    return mhd_choice_ == bfield_choice::no_bfield;
+  }
 
   /// main workhorse: actually execute a single stage of the MHD integrator.
   ///
@@ -216,23 +216,17 @@ public:
   /// @note This function expects that calling the `contiguous_arrays()`
   /// instance method for `prim_map_l`, `prim_map_r`, and any map contained
   /// in `flux_map` will return `true`.
-  void compute_update_stage
-  (EnzoEFltArrayMap tstep_begin_integration_map,
-   EnzoEFltArrayMap cur_stage_integration_map,
-   EnzoEFltArrayMap out_integration_map,
-   EnzoEFltArrayMap primitive_map,
-   EnzoEFltArrayMap priml_map,
-   EnzoEFltArrayMap primr_map,
-   std::array<EnzoEFltArrayMap, 3> flux_maps_xyz,
-   EnzoEFltArrayMap dUcons_map,
-   const EnzoEFltArrayMap accel_map,
-   EFlt3DArray interface_vel_arr,
-   const str_vec_t& passive_list,
-   EnzoBfieldMethod* bfield_method,
-   unsigned short stage_index,
-   double cur_dt,
-   int stale_depth,
-   const std::array<enzo_float,3> cell_widths_xyz) const noexcept;
+  void compute_update_stage(
+      EnzoEFltArrayMap tstep_begin_integration_map,
+      EnzoEFltArrayMap cur_stage_integration_map,
+      EnzoEFltArrayMap out_integration_map, EnzoEFltArrayMap primitive_map,
+      EnzoEFltArrayMap priml_map, EnzoEFltArrayMap primr_map,
+      std::array<EnzoEFltArrayMap, 3> flux_maps_xyz,
+      EnzoEFltArrayMap dUcons_map, const EnzoEFltArrayMap accel_map,
+      EFlt3DArray interface_vel_arr, const str_vec_t& passive_list,
+      EnzoBfieldMethod* bfield_method, unsigned short stage_index,
+      double cur_dt, int stale_depth,
+      const std::array<enzo_float, 3> cell_widths_xyz) const noexcept;
 
   /// return the amount that stale_depth increases during a given stage
   ///
@@ -249,12 +243,10 @@ public:
   /// @note
   /// Multiplication by the courant factor is handled by the Method object
   double timestep(EnzoEFltArrayMap integration_map,
-                  CelloView<const enzo_float, 3> pressure,
-                  const double dx, const double dy, const double dz)
-    const noexcept;
+                  CelloView<const enzo_float, 3> pressure, const double dx,
+                  const double dy, const double dz) const noexcept;
 
 protected:
-
   /// returns the bfield_choice enum that matches the input string
   static bfield_choice parse_bfield_choice_(std::string choice) noexcept;
 
@@ -262,8 +254,8 @@ protected:
     int max_size = static_cast<int>(reconstructors_.size());
 
     ASSERT1("EnzoMHDIntegratorStageCommands::staling_from_stage",
-            "stage_index must satisfy 0 <= stage_index < %d\n",
-            max_size, (stage_index >= 0) && (stage_index < max_size));
+            "stage_index must satisfy 0 <= stage_index < %d\n", max_size,
+            (stage_index >= 0) && (stage_index < max_size));
   }
 
   /// Computes the fluxes along a given dimension, `dim`, and accumulate the
@@ -317,14 +309,15 @@ protected:
   /// @param[in]     stale_depth indicates the current stale depth (before
   ///     performing reconstruction)
   /// @param[in]     passive_list A list of keys for passively advected scalars.
-  void compute_flux_
-  (const int dim, const double cur_dt, const enzo_float cell_width,
-   EnzoEFltArrayMap &primitive_map,
-   EnzoEFltArrayMap &priml_map, EnzoEFltArrayMap &primr_map,
-   EnzoEFltArrayMap &flux_map, EnzoEFltArrayMap &dUcons_map,
-   const EFlt3DArray* const interface_velocity_arr_ptr,
-   EnzoReconstructor &reconstructor, EnzoBfieldMethod *bfield_method,
-   const int stale_depth, const str_vec_t& passive_list) const noexcept;
+  void compute_flux_(const int dim, const double cur_dt,
+                     const enzo_float cell_width,
+                     EnzoEFltArrayMap& primitive_map,
+                     EnzoEFltArrayMap& priml_map, EnzoEFltArrayMap& primr_map,
+                     EnzoEFltArrayMap& flux_map, EnzoEFltArrayMap& dUcons_map,
+                     const EFlt3DArray* const interface_velocity_arr_ptr,
+                     EnzoReconstructor& reconstructor,
+                     EnzoBfieldMethod* bfield_method, const int stale_depth,
+                     const str_vec_t& passive_list) const noexcept;
 
   /// Computes source terms and accumulate the changes to the integration
   /// quantities in `dUcons_map``dU_cons` accordingly.
@@ -359,27 +352,26 @@ protected:
   /// @note
   /// The interface of this method will almost certainly need to be updated as
   /// additional source terms get introduced.
-  void compute_source_terms_
-  (const double cur_dt, const bool full_timestep,
-   const EnzoEFltArrayMap &orig_integration_map,
-   const EnzoEFltArrayMap &primitive_map,
-   const EnzoEFltArrayMap &accel_map,
-   EnzoEFltArrayMap &dU_cons, const int stale_depth) const noexcept;
+  void compute_source_terms_(const double cur_dt, const bool full_timestep,
+                             const EnzoEFltArrayMap& orig_integration_map,
+                             const EnzoEFltArrayMap& primitive_map,
+                             const EnzoEFltArrayMap& accel_map,
+                             EnzoEFltArrayMap& dU_cons,
+                             const int stale_depth) const noexcept;
 
 private:
   /// Pointer to the Riemann solver
-  const EnzoRiemann *riemann_solver_;
+  const EnzoRiemann* riemann_solver_;
 
   // vector of pointers to reconstructors (the different choices correspond to
   // different stages)
   std::vector<std::unique_ptr<EnzoReconstructor>> reconstructors_;
 
   /// Pointer to the integration quantity updater
-  const EnzoIntegrationQuanUpdate *integration_quan_updater_;
+  const EnzoIntegrationQuanUpdate* integration_quan_updater_;
 
   /// Indicates how magnetic fields are handled
   bfield_choice mhd_choice_;
-
 };
 
 #endif /* ENZO_MHD_INTEGRATOR_STAGE_COMMANDS_HPP */

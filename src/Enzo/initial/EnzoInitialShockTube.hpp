@@ -17,8 +17,7 @@ class EnzoInitialShockTube : public Initial {
   /// problem for the VLCT method from Ryu and Jones (95) and Stone et al. (08).
   /// Assumes an adiabatic ideal gas, with gamma = 5/3
 
-public: // interface
-
+public:  // interface
   /// Constructor
   EnzoInitialShockTube(int cycle, double time, ParameterGroup p);
 
@@ -26,36 +25,35 @@ public: // interface
   PUPable_decl(EnzoInitialShockTube);
 
   /// CHARM++ migration constructor
-  EnzoInitialShockTube(CkMigrateMessage *m)
-    : Initial (m), setup_name_(""), aligned_ax_(0),
-      axis_velocity_(0.), trans_velocity_(0.), flipped_initialize_(false)
-  {  }
+  EnzoInitialShockTube(CkMigrateMessage* m)
+      : Initial(m),
+        setup_name_(""),
+        aligned_ax_(0),
+        axis_velocity_(0.),
+        trans_velocity_(0.),
+        flipped_initialize_(false) {}
 
   /// Destructor
-  virtual ~EnzoInitialShockTube() throw()
-  {  }
+  virtual ~EnzoInitialShockTube() throw() {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Initialize the block
-  virtual void enforce_block
-  ( Block * block, const Hierarchy * hierarchy ) throw();
+  virtual void enforce_block(Block* block, const Hierarchy* hierarchy) throw();
 
-protected: // functions
-
+protected:  // functions
   /// Allocate and determine the slices along the ax_aligned_ dimension in for
   /// block that corresponds to the left and right states. If one of the slices
   /// is not present in the current block, then the corresponding slice is not
   /// allocated
-  void prep_aligned_slices_(Block *block, CSlice **l_slice, CSlice **r_slice);
+  void prep_aligned_slices_(Block* block, CSlice** l_slice, CSlice** r_slice);
 
   /// sets the subarray of arr given by the slice along ax_aligned_ and the
   /// full extents of the other dimensions to val.
-  void initializer_helper_(CSlice &slice, enzo_float val, EFlt3DArray &arr);
+  void initializer_helper_(CSlice& slice, enzo_float val, EFlt3DArray& arr);
 
-private: // attributes
-
+private:  // attributes
   /// indicates the type of shock tube to set up
   std::string setup_name_;
 

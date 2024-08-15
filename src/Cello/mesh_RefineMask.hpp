@@ -13,47 +13,36 @@ class Value;
 class Parameters;
 
 class RefineMask : public Refine {
-
   /// @class    RefineMask
   /// @ingroup  Mesh
-  /// @brief    [\ref Mesh] 
+  /// @brief    [\ref Mesh]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  RefineMask(Parameters * parameters,
-	     const std::string parameter_name,
-	     int max_level,
-	     bool include_ghosts,
-	     std::string output) throw();
+  RefineMask(Parameters* parameters, const std::string parameter_name,
+             int max_level, bool include_ghosts, std::string output) throw();
 
   /// Destructor
   ~RefineMask();
-  
+
   /// default constructor
   // RefineMask () throw() : Refine() {};
 
   PUPable_decl(RefineMask);
 
-  RefineMask(CkMigrateMessage *m)
-    : Refine (m),
-      value_(NULL)
-  { }
+  RefineMask(CkMigrateMessage* m) : Refine(m), value_(NULL) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Evaluate the refinement criteria, updating the refinement field
-  virtual int apply (Block * block) throw();
+  virtual int apply(Block* block) throw();
 
-  virtual std::string name () const { return "mask"; };
+  virtual std::string name() const { return "mask"; };
 
-private: // functions
-
-private: // attributes
-
-  Value * value_;
+private:  // functions
+private:  // attributes
+  Value* value_;
 };
 
 #endif /* MESH_REFINE_MASK_HPP */
-

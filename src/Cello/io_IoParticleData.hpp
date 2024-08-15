@@ -12,58 +12,50 @@ class ParticleData;
 class ParticleDescr;
 
 class IoParticleData : public Io {
-
   /// @class    IoParticleData
   /// @ingroup  Io
-  /// @brief    [\ref Io] Class for linking between ParticleData and Output classes
+  /// @brief    [\ref Io] Class for linking between ParticleData and Output
+  /// classes
 
-public: // interface
-
+public:  // interface
   /// Constructor
   IoParticleData() throw();
 
   /// Destructor
-  virtual ~IoParticleData() throw()
-  {}
+  virtual ~IoParticleData() throw() {}
 
   /// CHARM++ PUP::able declaration
   PUPable_decl(IoParticleData);
 
   /// CHARM++ migration constructor
-  IoParticleData(CkMigrateMessage *m) : Io(m) {}
+  IoParticleData(CkMigrateMessage* m) : Io(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Set ParticleIndex
-  void set_particle_index (int particle_index) throw()
-  { particle_index_ = particle_index;};
+  void set_particle_index(int particle_index) throw() {
+    particle_index_ = particle_index;
+  };
 
   /// Set ParticleData
-  void set_particle_data (ParticleData * particle_data) throw()
-  {
+  void set_particle_data(ParticleData* particle_data) throw() {
     particle_data_ = particle_data;
   };
 
   /// Return the ith metadata item associated with the object
-  virtual void meta_value 
-  (int index, 
-   void ** buffer, std::string * name, int * type,
-   int * nxd=0, int * nyd=0, int * nzd=0) throw();
+  virtual void meta_value(int index, void** buffer, std::string* name,
+                          int* type, int* nxd = 0, int* nyd = 0,
+                          int* nzd = 0) throw();
 
-protected: // functions
-
+protected:  // functions
   /// Current ParticleData
-  ParticleData * particle_data_;
+  ParticleData* particle_data_;
 
   /// Index of the particle in the ParticleData
   int particle_index_;
 
-
-private: // attributes
-
-
+private:  // attributes
 };
 
 #endif /* IO_IO_PARTICLE_DATA_HPP */
-

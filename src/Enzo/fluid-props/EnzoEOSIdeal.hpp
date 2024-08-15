@@ -34,13 +34,13 @@ struct EnzoEOSIdeal {
   /// "aggregate". The signature of such a factory method might resemble:
   ///  ``EnzoEOSIdeal EnzoEOSIdeal::build(enzo_float gamma);``
 
-public: // attributes
+public:  // attributes
   // make sure to keep the associated pup function synchronized
 
   /// stores the adiabtic index
   enzo_float gamma;
 
-public: // public interface common to all EOS types
+public:  // public interface common to all EOS types
   constexpr static const char* name() noexcept { return "ideal"; }
 
   constexpr static bool is_barotropic() noexcept { return false; }
@@ -53,21 +53,18 @@ public: // public interface common to all EOS types
   }
 
 private:
-
   /// computes the sound speed squared
-  FORCE_INLINE enzo_float sound_speed_sq_(const enzo_float density,
-                                          const enzo_float pressure) const
-    noexcept
-  { return gamma * pressure / density; }
+  FORCE_INLINE enzo_float sound_speed_sq_(
+      const enzo_float density, const enzo_float pressure) const noexcept {
+    return gamma * pressure / density;
+  }
 
 public:
-
   /// static method used to build the EnzoEOSIdeal object
   ///
   /// this is a static method (not a constructor) in order to ensure that this
   /// struct is considered an aggregate
-  static EnzoEOSIdeal construct(double gamma) noexcept
-  {
+  static EnzoEOSIdeal construct(double gamma) noexcept {
     ASSERT("EnzoEOSIdeal::construct", "gamma should exceed 1.0", gamma > 1.0);
     return {gamma};
   }
@@ -76,20 +73,22 @@ public:
   FORCE_INLINE enzo_float get_gamma() const noexcept { return gamma; }
 
   /// computes the specific internal energy
-  FORCE_INLINE enzo_float specific_eint(const enzo_float density,
-                                        const enzo_float pressure) const
-    noexcept
-  { return pressure / ( (gamma - 1.0) * density); }
+  FORCE_INLINE enzo_float specific_eint(
+      const enzo_float density, const enzo_float pressure) const noexcept {
+    return pressure / ((gamma - 1.0) * density);
+  }
 
   /// computes the internal energy density
   FORCE_INLINE enzo_float eint_dens(const enzo_float density,
-                                    const enzo_float pressure) const noexcept
-  { return pressure / (gamma - 1.0); }
+                                    const enzo_float pressure) const noexcept {
+    return pressure / (gamma - 1.0);
+  }
 
   /// computes the adiabatic sound speed
-  FORCE_INLINE enzo_float sound_speed(const enzo_float density,
-                                      const enzo_float pressure) const noexcept
-  { return std::sqrt(sound_speed_sq_(density, pressure)); }
+  FORCE_INLINE enzo_float sound_speed(
+      const enzo_float density, const enzo_float pressure) const noexcept {
+    return std::sqrt(sound_speed_sq_(density, pressure));
+  }
 
   /// computes the fast magnetosonic speed
   ///
@@ -108,34 +107,33 @@ public:
   /// @note
   /// This method has been implemented so that it will return the correct
   /// answer when all components of the magnetic field are set to 0.
-  template<int fixed_cos2 = -1>
-  inline enzo_float fast_magnetosonic_speed(const enzo_float density,
-                                            const enzo_float pressure,
-                                            const enzo_float bfield_i,
-                                            const enzo_float bfield_j,
-                                            const enzo_float bfield_k)
-    const noexcept
-  {
-    const enzo_float B2 = enzo_utils::squared_mag_vec3D(bfield_i, bfield_j,
-                                                        bfield_k);
+  template <int fixed_cos2 = -1>
+  inline enzo_float fast_magnetosonic_speed(
+      const enzo_float density, const enzo_float pressure,
+      const enzo_float bfield_i, const enzo_float bfield_j,
+      const enzo_float bfield_k) const noexcept {
+    const enzo_float B2 =
+        enzo_utils::squared_mag_vec3D(bfield_i, bfield_j, bfield_k);
     const enzo_float cs2 = sound_speed_sq_(density, pressure);
 
     // the following branch is evaluated at compile-time
     if (fixed_cos2 == 0) {
-      enzo_float va2 = B2/density;
-      return std::sqrt(va2+cs2);
+      enzo_float va2 = B2 / density;
+      return std::sqrt(va2 + cs2);
     } else if (fixed_cos2 == 1) {
       // TODO: we can simplify the returned value, but that will affect the
       //   exact outputs in some of our tests
-      enzo_float va2 = B2/density;
-      return std::sqrt(0.5*(va2+cs2+std::sqrt(std::pow(cs2+va2,2) -
-                                              4.*cs2*va2*fixed_cos2)));
+      enzo_float va2 = B2 / density;
+      return std::sqrt(0.5 * (va2 + cs2 +
+                              std::sqrt(std::pow(cs2 + va2, 2) -
+                                        4. * cs2 * va2 * fixed_cos2)));
     } else {
-      const enzo_float inv_density = 1.0/density;
+      const enzo_float inv_density = 1.0 / density;
       const enzo_float va2 = B2 * inv_density;
-      const enzo_float va2_cos2 = (bfield_i*bfield_i) * inv_density;
-      return std::sqrt(0.5*(va2+cs2+std::sqrt(std::pow(cs2+va2,2) -
-                                              4.*cs2*va2_cos2)));
+      const enzo_float va2_cos2 = (bfield_i * bfield_i) * inv_density;
+      return std::sqrt(
+          0.5 * (va2 + cs2 +
+                 std::sqrt(std::pow(cs2 + va2, 2) - 4. * cs2 * va2_cos2)));
     }
   }
 };
@@ -144,7 +142,7 @@ public:
 ///
 /// We have explicitly chosen not to making this a method of the EOS class
 /// to try to avoid issues with copying instances to a GPU
-inline void pup(PUP::er &p, EnzoEOSIdeal& eos) noexcept {
+inline void pup(PUP::er& p, EnzoEOSIdeal& eos) noexcept {
   // make sure to keep this synchronized with the attributes EnzoEOSIdeal
   p | eos.gamma;
 }

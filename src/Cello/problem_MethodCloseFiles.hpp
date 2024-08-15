@@ -9,27 +9,22 @@
 #define PROBLEM_METHOD_CLOSE_FILES_HPP
 
 class MethodCloseFiles : public Method {
-
   /// @class    MethodCloseFiles
   /// @ingroup  Problem
   /// @brief    [\ref Problem] Close any open files
 
-public: // interface
-
+public:  // interface
   /// Constructor
   MethodCloseFiles(ParameterGroup p) throw();
 
   /// Charm++ PUP::able declarations
   PUPable_decl(MethodCloseFiles);
-    
+
   /// Charm++ PUP::able migration constructor
-  MethodCloseFiles (CkMigrateMessage *m)
-    : Method (m)
-  {}
+  MethodCloseFiles(CkMigrateMessage* m) : Method(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
+  void pup(PUP::er& p) {
     // NOTE: change this function whenever attributes change
     TRACEPUP;
     Method::pup(p);
@@ -37,31 +32,24 @@ public: // interface
     p | seconds_delay_;
     p | group_size_;
   };
-  
-public: // virtual methods
 
-  /// Apply the method 
-  virtual void compute( Block * block) throw();
+public:  // virtual methods
+  /// Apply the method
+  virtual void compute(Block* block) throw();
 
-  virtual std::string name () throw () 
-  { return "close_files"; }
+  virtual std::string name() throw() { return "close_files"; }
 
-private: // functions
-
+private:  // functions
   void throttle_stagger_();
   void throttle_delay_();
-  
-private: // attributes
 
+private:  // attributes
   double seconds_stagger_;
   double seconds_delay_;
   int group_size_;
-  
-public: // static attributes
 
+public:  // static attributes
   static CmiNodeLock node_lock;
-
 };
 
 #endif /* PROBLEM_METHOD_CLOSE_FILES_HPP */
-

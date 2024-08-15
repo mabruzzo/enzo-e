@@ -18,8 +18,6 @@
 // Essentially, this file is the one-and-only place where we will include
 // enzo.def.h
 
-
-
 // first make sure to include the header for every (sub)component of the
 // Enzo-layer that that holds a definition referenced inside of enzo.ci
 // - in the future, it could make sense to declare separate charm++ modules

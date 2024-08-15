@@ -9,8 +9,8 @@
 
 #include <array>
 #include <limits>
-#include <memory> // std::shared_ptr, std::default_delete
-#include <utility> // std::in_place_type_t
+#include <memory>   // std::shared_ptr, std::default_delete
+#include <utility>  // std::in_place_type_t
 #include <variant>
 #include <vector>
 
@@ -19,159 +19,158 @@
 
 namespace detail {
 
-  inline int int_coerce_(std::size_t arg) noexcept{
-    if (arg > static_cast<std::size_t>(std::numeric_limits<int>::max())){
-      ERROR1("coerce_to_int_", "Can't convert %zu to int", arg);
-    }
-    return static_cast<int>(arg);
+inline int int_coerce_(std::size_t arg) noexcept {
+  if (arg > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+    ERROR1("coerce_to_int_", "Can't convert %zu to int", arg);
   }
-
-//----------------------------------------------------------------------
-
-  template<typename T>
-  inline void confirm_shared_shape_(const char* func_name,
-                                    const std::vector<CelloView<T,3>> &arrays){
-    if (arrays.size() > 0){
-      int ref_mz = arrays[0].shape(0);
-      int ref_my = arrays[0].shape(1);
-      int ref_mx = arrays[0].shape(2);
-      for (std::size_t i = 1; i < arrays.size(); i++){
-        int mz = arrays[i].shape(0);
-        int my = arrays[i].shape(1);
-        int mx = arrays[i].shape(2);
-
-        ASSERT8(func_name,
-                ("The shapes, (mz, my, mx), of arrays[%zu] and arrays[%zu] are "
-                 "(%d, %d, %d) and (%d, %d, %d). The shapes must be the same"),
-                0, i,
-                ref_mz, ref_my, ref_mx, mz, my, mx,
-                ((ref_mz == mz) && (ref_my == my) && (ref_mx == mx)));
-      }
-    }
-  }
-
-//----------------------------------------------------------------------
-
-  template<typename T>
-  struct SharedBuffer_{
-
-    SharedBuffer_() = default;
-
-    SharedBuffer_(const std::vector<T> &v) noexcept
-      : arr_(std::shared_ptr<T>(new T[v.size()](), std::default_delete<T[]>())),
-        length_(v.size())
-    { for (std::size_t i = 0; i < length_; i++) { arr_.get()[i] = v[i]; } }
-
-    const T& operator[](std::size_t i) const noexcept { return arr_.get()[i]; }
-    T& operator[](std::size_t i) noexcept { return arr_.get()[i]; }
-    std::size_t size() const noexcept {return length_;}
-
-  private:
-    std::shared_ptr<T> arr_;
-    std::size_t length_;
-  };
-
-//----------------------------------------------------------------------
-
-  template<typename T>
-  class ArrOfPtrsViewCollec_{
-    /// equivalent to an array of pointers (where each pointer is a CelloView)
-    /// - we track the arrays lifetime with a std::shared_ptr to makes copies
-    ///   cheaper. The disadvantage to this should be minimal since we don't
-    ///   allow the "array" to be directly mutated after construction (note:
-    ///   the "pointers" can't be mutated but the elements at the "pointer"
-    ///   addresses can be mutated)
-
-  public:
-
-    ArrOfPtrsViewCollec_() = default;
-
-    ArrOfPtrsViewCollec_(const std::vector<CelloView<T,3>> &arrays) noexcept
-      : arrays_(arrays)
-    { confirm_shared_shape_("ArrOfPtrsViewCollec_", arrays); }
-
-    const CelloView<T,3> operator[](std::size_t index) const noexcept
-    { return arrays_[index]; }
-
-    std::size_t size() const noexcept { return arrays_.size(); }
-
-    constexpr bool contiguous_items() const {return false;}
-
-    const CelloView<T, 4> get_backing_array() const noexcept{
-      ERROR("ArrOfPtrsViewCollec_::get_backing_array",
-            "This is an invalid method call");
-    }
-
-    // There might be some benefit to not directly constructing subarrays and
-    // lazily evaluating them later
-    ArrOfPtrsViewCollec_<T> subarray_collec(const CSlice &slc_z,
-                                            const CSlice &slc_y,
-                                            const CSlice &slc_x) const noexcept
-    {
-      std::vector<CelloView<T,3>> temp;
-      for (std::size_t i = 0; i < arrays_.size(); i++){
-        temp.push_back(arrays_[i].subarray(slc_z, slc_y, slc_x));
-      }
-      return ArrOfPtrsViewCollec_<T>(temp);
-    }
-
-  private:
-    // ordered list of arrays
-    SharedBuffer_<CelloView<T,3>> arrays_;
-  };
-
-//----------------------------------------------------------------------
-
-  template<typename T>
-  class SingleAddressViewCollec_{
-    /// Implements an ordered collection of arrays with a single 4D CelloView.
-    /// (the location of all of the contents are specified by a single address)
-
-  public:
-    SingleAddressViewCollec_() = default;
-
-    SingleAddressViewCollec_(const std::size_t n_arrays,
-                             const std::array<int,3>& shape) noexcept
-      : backing_array_(int_coerce_(n_arrays), shape[0], shape[1], shape[2])
-    { }
-  
-    const CelloView<T,3> operator[](std::size_t index) const noexcept
-    { return backing_array_.subarray(int_coerce_(index)); }
-
-    std::size_t size() const noexcept
-    { return (backing_array_.is_null()) ? 0 : backing_array_.shape(0); }
-
-    constexpr bool contiguous_items() const {return true;}
-
-    const CelloView<T, 4> get_backing_array() const noexcept
-    { return backing_array_; }
-
-    SingleAddressViewCollec_<T> subarray_collec(const CSlice &slc_z,
-                                                const CSlice &slc_y,
-                                                const CSlice &slc_x) const
-      noexcept
-    {
-      SingleAddressViewCollec_<T> out;
-      out.backing_array_ = backing_array_.subarray(CSlice(0, nullptr),
-                                                   slc_z, slc_y, slc_x);
-      return out;
-    }
-
-
-    /// This is primarily intended to help implement casts from ViewCollec<T>
-    /// to ViewCollec<const T>
-    SingleAddressViewCollec_(CelloView<T, 4> backing_array)
-      : backing_array_(backing_array)
-    { }
-
-  private:
-    /// this holds the individual array elements
-    CelloView<T, 4> backing_array_;
-  };
+  return static_cast<int>(arg);
 }
 
-template<typename T>
-class ViewCollec{
+//----------------------------------------------------------------------
+
+template <typename T>
+inline void confirm_shared_shape_(const char* func_name,
+                                  const std::vector<CelloView<T, 3>>& arrays) {
+  if (arrays.size() > 0) {
+    int ref_mz = arrays[0].shape(0);
+    int ref_my = arrays[0].shape(1);
+    int ref_mx = arrays[0].shape(2);
+    for (std::size_t i = 1; i < arrays.size(); i++) {
+      int mz = arrays[i].shape(0);
+      int my = arrays[i].shape(1);
+      int mx = arrays[i].shape(2);
+
+      ASSERT8(func_name,
+              ("The shapes, (mz, my, mx), of arrays[%zu] and arrays[%zu] are "
+               "(%d, %d, %d) and (%d, %d, %d). The shapes must be the same"),
+              0, i, ref_mz, ref_my, ref_mx, mz, my, mx,
+              ((ref_mz == mz) && (ref_my == my) && (ref_mx == mx)));
+    }
+  }
+}
+
+//----------------------------------------------------------------------
+
+template <typename T>
+struct SharedBuffer_ {
+  SharedBuffer_() = default;
+
+  SharedBuffer_(const std::vector<T>& v) noexcept
+      : arr_(std::shared_ptr<T>(new T[v.size()](), std::default_delete<T[]>())),
+        length_(v.size()) {
+    for (std::size_t i = 0; i < length_; i++) {
+      arr_.get()[i] = v[i];
+    }
+  }
+
+  const T& operator[](std::size_t i) const noexcept { return arr_.get()[i]; }
+  T& operator[](std::size_t i) noexcept { return arr_.get()[i]; }
+  std::size_t size() const noexcept { return length_; }
+
+private:
+  std::shared_ptr<T> arr_;
+  std::size_t length_;
+};
+
+//----------------------------------------------------------------------
+
+template <typename T>
+class ArrOfPtrsViewCollec_ {
+  /// equivalent to an array of pointers (where each pointer is a CelloView)
+  /// - we track the arrays lifetime with a std::shared_ptr to makes copies
+  ///   cheaper. The disadvantage to this should be minimal since we don't
+  ///   allow the "array" to be directly mutated after construction (note:
+  ///   the "pointers" can't be mutated but the elements at the "pointer"
+  ///   addresses can be mutated)
+
+public:
+  ArrOfPtrsViewCollec_() = default;
+
+  ArrOfPtrsViewCollec_(const std::vector<CelloView<T, 3>>& arrays) noexcept
+      : arrays_(arrays) {
+    confirm_shared_shape_("ArrOfPtrsViewCollec_", arrays);
+  }
+
+  const CelloView<T, 3> operator[](std::size_t index) const noexcept {
+    return arrays_[index];
+  }
+
+  std::size_t size() const noexcept { return arrays_.size(); }
+
+  constexpr bool contiguous_items() const { return false; }
+
+  const CelloView<T, 4> get_backing_array() const noexcept {
+    ERROR("ArrOfPtrsViewCollec_::get_backing_array",
+          "This is an invalid method call");
+  }
+
+  // There might be some benefit to not directly constructing subarrays and
+  // lazily evaluating them later
+  ArrOfPtrsViewCollec_<T> subarray_collec(const CSlice& slc_z,
+                                          const CSlice& slc_y,
+                                          const CSlice& slc_x) const noexcept {
+    std::vector<CelloView<T, 3>> temp;
+    for (std::size_t i = 0; i < arrays_.size(); i++) {
+      temp.push_back(arrays_[i].subarray(slc_z, slc_y, slc_x));
+    }
+    return ArrOfPtrsViewCollec_<T>(temp);
+  }
+
+private:
+  // ordered list of arrays
+  SharedBuffer_<CelloView<T, 3>> arrays_;
+};
+
+//----------------------------------------------------------------------
+
+template <typename T>
+class SingleAddressViewCollec_ {
+  /// Implements an ordered collection of arrays with a single 4D CelloView.
+  /// (the location of all of the contents are specified by a single address)
+
+public:
+  SingleAddressViewCollec_() = default;
+
+  SingleAddressViewCollec_(const std::size_t n_arrays,
+                           const std::array<int, 3>& shape) noexcept
+      : backing_array_(int_coerce_(n_arrays), shape[0], shape[1], shape[2]) {}
+
+  const CelloView<T, 3> operator[](std::size_t index) const noexcept {
+    return backing_array_.subarray(int_coerce_(index));
+  }
+
+  std::size_t size() const noexcept {
+    return (backing_array_.is_null()) ? 0 : backing_array_.shape(0);
+  }
+
+  constexpr bool contiguous_items() const { return true; }
+
+  const CelloView<T, 4> get_backing_array() const noexcept {
+    return backing_array_;
+  }
+
+  SingleAddressViewCollec_<T> subarray_collec(
+      const CSlice& slc_z, const CSlice& slc_y,
+      const CSlice& slc_x) const noexcept {
+    SingleAddressViewCollec_<T> out;
+    out.backing_array_ =
+        backing_array_.subarray(CSlice(0, nullptr), slc_z, slc_y, slc_x);
+    return out;
+  }
+
+  /// This is primarily intended to help implement casts from ViewCollec<T>
+  /// to ViewCollec<const T>
+  SingleAddressViewCollec_(CelloView<T, 4> backing_array)
+      : backing_array_(backing_array) {}
+
+private:
+  /// this holds the individual array elements
+  CelloView<T, 4> backing_array_;
+};
+}  // namespace detail
+
+template <typename T>
+class ViewCollec {
   /// @class    ViewCollec
   /// @ingroup  View
   /// @brief    [\ref View] represents a collection of CelloViews of a
@@ -185,34 +184,30 @@ class ViewCollec{
   /// in a single 4D Contiguous View (see SingleAddressViewCollec_) or an
   /// array of 3D CelloViews (see ArrOfPtrsViewCollec_)
 
-public: // interface
-
+public:  // interface
   typedef T value_type;
   typedef typename std::add_const<T>::type const_value_type;
   typedef typename std::remove_const<T>::type nonconst_value_type;
 
   friend class ViewCollec<const_value_type>;
 
-
-private: // attributes
-
+private:  // attributes
   std::variant<detail::SingleAddressViewCollec_<T>,
-               detail::ArrOfPtrsViewCollec_<T>> collec_;
+               detail::ArrOfPtrsViewCollec_<T>>
+      collec_;
 
-public: /// public interface
+public:  /// public interface
   /// default constructor
   ViewCollec() = default;
 
   /// construct a container of arrays without wrapping existing arrays
-  ViewCollec(std::size_t n_arrays, const std::array<int,3>& shape) noexcept
-    : collec_(std::in_place_type_t<detail::SingleAddressViewCollec_<T>>(),
-              n_arrays, shape)
-  { }
+  ViewCollec(std::size_t n_arrays, const std::array<int, 3>& shape) noexcept
+      : collec_(std::in_place_type_t<detail::SingleAddressViewCollec_<T>>(),
+                n_arrays, shape) {}
 
   /// construct from vector of arrays
   ViewCollec(const std::vector<CelloView<T, 3>>& v) noexcept
-    : collec_(std::in_place_type_t<detail::ArrOfPtrsViewCollec_<T>>(), v)
-  { }
+      : collec_(std::in_place_type_t<detail::ArrOfPtrsViewCollec_<T>>(), v) {}
 
   /// conversion constructor that facilitates implicit casts from
   /// ViewCollec<nonconst_value_type> to ViewCollec<const_value_type>
@@ -221,25 +216,24 @@ public: /// public interface
   /// This is only defined for instances of ViewCollec for which T is const-
   /// qualified. If it were defined in cases where T is not const-qualified,
   /// then it would duplicate the copy-constructor.
-  template<class = std::enable_if<std::is_same<T, const_value_type>::value>>
-  ViewCollec(const ViewCollec<nonconst_value_type> &other) {
-
+  template <class = std::enable_if<std::is_same<T, const_value_type>::value>>
+  ViewCollec(const ViewCollec<nonconst_value_type>& other) {
     using ContigT = detail::SingleAddressViewCollec_<nonconst_value_type>;
     using ArrOfPtrsT = detail::ArrOfPtrsViewCollec_<nonconst_value_type>;
 
     if (std::holds_alternative<ContigT>(other.collec_)) {
       // first, we extract the 4D contiguous view
       const CelloView<nonconst_value_type, 4> tmp =
-        std::get<ContigT>(other.collec_).get_backing_array();
+          std::get<ContigT>(other.collec_).get_backing_array();
 
       // now, we cast that 4D view (to one holding the const-qualified type)
-      CelloView<const_value_type,4> casted_view = tmp;
+      CelloView<const_value_type, 4> casted_view = tmp;
 
       // finally, we use the casted view to construct
       // detail::SingleAddressViewCollec_ & store it inside this->collec_
       // (it would be btter to use collec_.emplace, but I can't get it to work)
-      this->collec_ = detail::SingleAddressViewCollec_<const_value_type>
-        (casted_view);
+      this->collec_ =
+          detail::SingleAddressViewCollec_<const_value_type>(casted_view);
 
     } else if (std::holds_alternative<ArrOfPtrsT>(other.collec_)) {
       // this performs heap-allocations (which is a little horrendous in the
@@ -259,7 +253,7 @@ public: /// public interface
       // (since we are already branching, between backends, I highly doubt that
       // this translates to a performance hit)
 
-      std::vector<CelloView<const_value_type,3>> tmp;
+      std::vector<CelloView<const_value_type, 3>> tmp;
       const std::size_t size = other.size();
       tmp.reserve(size);
       for (std::size_t i = 0; i < other.size(); i++) {
@@ -276,13 +270,13 @@ public: /// public interface
   ~ViewCollec() = default;
 
   /// copy/move constructors & assignment operations
-  ViewCollec(const ViewCollec& other)  = default;
-  ViewCollec& operator=(const ViewCollec &other) = default;
-  ViewCollec (ViewCollec&& other) = default;
+  ViewCollec(const ViewCollec& other) = default;
+  ViewCollec& operator=(const ViewCollec& other) = default;
+  ViewCollec(ViewCollec&& other) = default;
   ViewCollec& operator=(ViewCollec&& other) = default;
 
   /// swaps the contents of `a` with `b`
-  friend void swap(ViewCollec<T>& a, ViewCollec<T>& b) noexcept{
+  friend void swap(ViewCollec<T>& a, ViewCollec<T>& b) noexcept {
     a.collec_.swap(b.collec_);
   }
 
@@ -292,11 +286,11 @@ public: /// public interface
   }
 
   /// Returns a shallow copy of the specified array
-  const CelloView<T,3> operator[](std::size_t i) const noexcept {
+  const CelloView<T, 3> operator[](std::size_t i) const noexcept {
     std::size_t n_elements = size();
     ASSERT2("ViewCollec::operator[]",
-            "Can't retrieve value at %zu when size() is %zu",
-            i, n_elements, i < n_elements);
+            "Can't retrieve value at %zu when size() is %zu", i, n_elements,
+            i < n_elements);
     return std::visit([=](auto&& arg) { return arg[i]; }, collec_);
   }
 
@@ -315,7 +309,7 @@ public: /// public interface
   /// @note
   /// The program will abort if this method is called on an object for which
   /// the `contiguous_items()` method returns `false`.
-  const CelloView<T,4> get_backing_array() const noexcept {
+  const CelloView<T, 4> get_backing_array() const noexcept {
     return std::visit([](auto&& arg) { return arg.get_backing_array(); },
                       collec_);
   }
@@ -328,8 +322,7 @@ public: /// public interface
   /// @note
   /// The program will fail if this method is invoked and the collection holds
   /// zero elements.
-  int array_shape(unsigned int dim) const noexcept
-  {
+  int array_shape(unsigned int dim) const noexcept {
     if (size() == 0) {
       ERROR("ViewCollec::array_shape", "Invalid when size() == 0");
     } else if (dim > 3) {
@@ -342,17 +335,15 @@ public: /// public interface
   ///
   /// @param slc_z, slc_y, slc_x Instance of CSlice that specify that are
   ///    passed to the `subarray` method of each contained array.
-  ViewCollec<T> subarray_collec(const CSlice &slc_z,
-                                const CSlice &slc_y,
-                                const CSlice &slc_x) const noexcept
-  {
+  ViewCollec<T> subarray_collec(const CSlice& slc_z, const CSlice& slc_y,
+                                const CSlice& slc_x) const noexcept {
     ViewCollec<T> out;
-    auto fn = [&out, &slc_z, &slc_y, &slc_x](auto&& arg)
-      { out.collec_ = arg.subarray_collec(slc_z,slc_y,slc_x); };
+    auto fn = [&out, &slc_z, &slc_y, &slc_x](auto&& arg) {
+      out.collec_ = arg.subarray_collec(slc_z, slc_y, slc_x);
+    };
     std::visit(fn, collec_);
     return out;
   }
-
 };
 
 #endif /* VIEW_C_ARR_COLLEC_HPP */

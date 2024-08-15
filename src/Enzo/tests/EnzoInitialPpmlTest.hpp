@@ -9,29 +9,23 @@
 #define ENZO_PPML_TEST_HPP
 
 class EnzoInitialPpmlTest : public Initial {
-
   /// @class    EnzoInitialPpmlTest
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Initializer for the PpmlTest problem
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  EnzoInitialPpmlTest (int cycle, double time,
-		       const EnzoConfig * enzo_config) throw ();
+  EnzoInitialPpmlTest(int cycle, double time,
+                      const EnzoConfig* enzo_config) throw();
 
   /// CHARM++ PUP::able declaration
   PUPable_decl(EnzoInitialPpmlTest);
 
-    /// CHARM++ migration constructor
-  EnzoInitialPpmlTest(CkMigrateMessage *m)
-    : Initial (m)
-  {  }
-
+  /// CHARM++ migration constructor
+  EnzoInitialPpmlTest(CkMigrateMessage* m) : Initial(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
+  void pup(PUP::er& p) {
     TRACEPUP;
 
     Initial::pup(p);
@@ -39,22 +33,15 @@ public: // interface
     // NOTE: update this member function whenever class attributes change
   }
 
-  virtual ~EnzoInitialPpmlTest() throw()
-  {  } 
+  virtual ~EnzoInitialPpmlTest() throw() {}
 
-public: // virtual functions
-
+public:  // virtual functions
   /// Initialize a Block
-  virtual void enforce_block
-  ( Block * block, const Hierarchy * hierarchy ) throw();
+  virtual void enforce_block(Block* block, const Hierarchy* hierarchy) throw();
 
-private: // functions
-
-private: // attributes
-
+private:  // functions
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
-
 };
 
 #endif /* ENZO_PPML_TEST_HPP */
-

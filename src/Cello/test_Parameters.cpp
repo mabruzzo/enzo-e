@@ -8,7 +8,7 @@
 
 #include <fstream>
 
-#include "main.hpp" 
+#include "main.hpp"
 #include "test.hpp"
 
 #include "parameters.hpp"
@@ -18,18 +18,17 @@
 /// @def      CLOSE
 /// @brief    Local definition for testing whether two scalars are close
 #define MACH_EPS cello::machine_epsilon(default_precision)
-#define CLOSE(a,b) ( cello::err_rel(a,b) < 2*MACH_EPS )
+#define CLOSE(a, b) (cello::err_rel(a, b) < 2 * MACH_EPS)
 
 //----------------------------------------------------------------------
 
-void generate_input()
-{
+void generate_input() {
   std::fstream fp;
 
-  fp.open ("test.in",std::fstream::out);
+  fp.open("test.in", std::fstream::out);
 
   // Groups
-  // 
+  //
   // Logical:
   // Integer:
   // Float:
@@ -44,7 +43,7 @@ void generate_input()
   // Logical_expr
   // Logical_expr:var_logical
   // List
-  
+
   fp << "Logical {\n";
   fp << "  logical_1_true  = true;\n";
   fp << "  logical_2_false = false;\n";
@@ -129,11 +128,9 @@ void generate_input()
   fp << "}\n";
 
   fp.close();
-
 }
 
-void check_parameters(Parameters * parameters)
-{
+void check_parameters(Parameters* parameters) {
   //--------------------------------------------------
   unit_func("group_push");
   //--------------------------------------------------
@@ -180,12 +177,12 @@ void check_parameters(Parameters * parameters)
   unit_func("value_logical");
   //--------------------------------------------------
 
-  parameters->group_set(0,"Logical");
-  
-  unit_assert (parameters->value_logical("logical_1_true")  == true);
-  unit_assert (parameters->value_logical("logical_2_false") == false);
-  unit_assert (parameters->value_logical("none",true) == true);
-  unit_assert (parameters->value_logical("none",false) == false);
+  parameters->group_set(0, "Logical");
+
+  unit_assert(parameters->value_logical("logical_1_true") == true);
+  unit_assert(parameters->value_logical("logical_2_false") == false);
+  unit_assert(parameters->value_logical("none", true) == true);
+  unit_assert(parameters->value_logical("none", false) == false);
 
   unit_assert(parameters->value_logical("Logical:logical_1_true") == true);
   unit_assert(parameters->value_logical("Logical:logical_2_false") == false);
@@ -194,35 +191,35 @@ void check_parameters(Parameters * parameters)
   unit_func("set_logical");
   //--------------------------------------------------
 
-  parameters->set_logical("logical_1_true",false);
-  unit_assert (parameters->value_logical("Logical:logical_1_true") == false);
-  unit_assert (parameters->value_logical("logical_1_true") == false);
-  parameters->set_logical("logical_1_true",true);
-  unit_assert (parameters->value_logical("Logical:logical_1_true") == true);
-  unit_assert (parameters->value_logical("logical_1_true") == true);
+  parameters->set_logical("logical_1_true", false);
+  unit_assert(parameters->value_logical("Logical:logical_1_true") == false);
+  unit_assert(parameters->value_logical("logical_1_true") == false);
+  parameters->set_logical("logical_1_true", true);
+  unit_assert(parameters->value_logical("Logical:logical_1_true") == true);
+  unit_assert(parameters->value_logical("logical_1_true") == true);
 
-  parameters->set_logical("Logical:logical_1_true",false);
-  unit_assert (parameters->value_logical("Logical:logical_1_true") == false);
-  unit_assert (parameters->value_logical("logical_1_true") == false);
-  parameters->set_logical("Logical:logical_1_true",true);
-  unit_assert (parameters->value_logical("Logical:logical_1_true") == true);
-  unit_assert (parameters->value_logical("logical_1_true") == true);
+  parameters->set_logical("Logical:logical_1_true", false);
+  unit_assert(parameters->value_logical("Logical:logical_1_true") == false);
+  unit_assert(parameters->value_logical("logical_1_true") == false);
+  parameters->set_logical("Logical:logical_1_true", true);
+  unit_assert(parameters->value_logical("Logical:logical_1_true") == true);
+  unit_assert(parameters->value_logical("logical_1_true") == true);
 
-  parameters->set_logical("none_l1",true);
-  unit_assert (parameters->value_logical("none_l1") == true);
+  parameters->set_logical("none_l1", true);
+  unit_assert(parameters->value_logical("none_l1") == true);
 
-  parameters->set_logical("none_l2",false);
-  unit_assert (parameters->value_logical("none_l2") == false);
+  parameters->set_logical("none_l2", false);
+  unit_assert(parameters->value_logical("none_l2") == false);
 
   //--------------------------------------------------
   unit_func("value_integer");
   //--------------------------------------------------
 
-  parameters->group_set(0,"Integer");
-  
-  unit_assert (parameters->value_integer("integer_1_1")  == 1);
-  unit_assert (parameters->value_integer("integer_2_m37") == -37);
-  unit_assert (parameters->value_integer("none",58) == 58);
+  parameters->group_set(0, "Integer");
+
+  unit_assert(parameters->value_integer("integer_1_1") == 1);
+  unit_assert(parameters->value_integer("integer_2_m37") == -37);
+  unit_assert(parameters->value_integer("none", 58) == 58);
 
   // int i,id;
   // parameters->value("integer_1_1",parameter_integer,&i);
@@ -237,28 +234,28 @@ void check_parameters(Parameters * parameters)
   unit_func("set_integer");
   //--------------------------------------------------
 
-  parameters->set_integer("integer_1_1",2);
-  unit_assert (parameters->value_integer("integer_1_1") == 2);
-  parameters->set_integer("integer_1_1",1);
+  parameters->set_integer("integer_1_1", 2);
+  unit_assert(parameters->value_integer("integer_1_1") == 2);
+  parameters->set_integer("integer_1_1", 1);
 
-  parameters->set_integer("none1",3);
-  unit_assert (parameters->value_integer("none1") == 3);
+  parameters->set_integer("none1", 3);
+  unit_assert(parameters->value_integer("none1") == 3);
 
-  parameters->set_integer("none2",4);
-  unit_assert (parameters->value_integer("none2") == 4);
+  parameters->set_integer("none2", 4);
+  unit_assert(parameters->value_integer("none2") == 4);
 
   //--------------------------------------------------
   unit_func("value_float");
   //--------------------------------------------------
 
-  parameters->group_set(0,"Float");
-  
-  unit_assert (parameters->value_float("float_1_1p5")  == 1.5);
-  unit_assert (parameters->value_float("test_m37_25") == -37.25);
-  unit_assert (parameters->value_float("none",58.75) == 58.75);
+  parameters->group_set(0, "Float");
+
+  unit_assert(parameters->value_float("float_1_1p5") == 1.5);
+  unit_assert(parameters->value_float("test_m37_25") == -37.25);
+  unit_assert(parameters->value_float("none", 58.75) == 58.75);
 
   // double d,dd;
-  
+
   // parameters->value("float_1_1p5",parameter_float,&d);
   // unit_assert (d  == 1.5);
   // parameters->value("test_37_25",parameter_float,&d);
@@ -273,12 +270,12 @@ void check_parameters(Parameters * parameters)
   unit_func("set_float");
   //--------------------------------------------------
 
-  parameters->set_float("float_1_1p5",27.0);
-  unit_assert (parameters->value_float("float_1_1p5") == 27.0);
-  parameters->set_float("float_1_1p5",1.5);
+  parameters->set_float("float_1_1p5", 27.0);
+  unit_assert(parameters->value_float("float_1_1p5") == 27.0);
+  parameters->set_float("float_1_1p5", 1.5);
 
-  parameters->set_float("none_s",1.5);
-  unit_assert (parameters->value_float("none_s") == 1.5);
+  parameters->set_float("none_s", 1.5);
+  unit_assert(parameters->value_float("none_s") == 1.5);
 
   // Constant float expressions
   // subgroups
@@ -287,51 +284,56 @@ void check_parameters(Parameters * parameters)
   unit_func("value_float");
   //--------------------------------------------------
 
-  parameters->group_set(0,"Float");
+  parameters->group_set(0, "Float");
 
-  parameters->group_set(1,"group_float_1");
+  parameters->group_set(1, "group_float_1");
 
-  unit_assert(parameters->value_float("num1") == 24.5+6.125);
-  unit_assert(parameters->value_float("num2") == 24.5-6.125);
-  unit_assert(parameters->value_float("num3") == 24.5*6.125);
-  unit_assert(parameters->value_float("num4") == 24.5/6.125);
+  unit_assert(parameters->value_float("num1") == 24.5 + 6.125);
+  unit_assert(parameters->value_float("num2") == 24.5 - 6.125);
+  unit_assert(parameters->value_float("num3") == 24.5 * 6.125);
+  unit_assert(parameters->value_float("num4") == 24.5 / 6.125);
 
-  unit_assert(parameters->value_float("Float:group_float_1:num1") == 24.5+6.125);
-  unit_assert(parameters->value_float("Float:group_float_1:num2") == 24.5-6.125);
-  unit_assert(parameters->value_float("Float:group_float_1:num3") == 24.5*6.125);
-  unit_assert(parameters->value_float("Float:group_float_1:num4") == 24.5/6.125);
+  unit_assert(parameters->value_float("Float:group_float_1:num1") ==
+              24.5 + 6.125);
+  unit_assert(parameters->value_float("Float:group_float_1:num2") ==
+              24.5 - 6.125);
+  unit_assert(parameters->value_float("Float:group_float_1:num3") ==
+              24.5 * 6.125);
+  unit_assert(parameters->value_float("Float:group_float_1:num4") ==
+              24.5 / 6.125);
 
-  parameters->group_set(1,"const_float_2");
+  parameters->group_set(1, "const_float_2");
 
-  unit_assert(parameters->value_float("num1") == 24.5 + 6.125*2.0);
-  unit_assert(parameters->value_float("num2") == 24.5*3.0 - 6.125);
-  unit_assert(parameters->value_float("num3") == (24.5 + 6.125*2.0 - (24.5*3.0 - 6.125)));
+  unit_assert(parameters->value_float("num1") == 24.5 + 6.125 * 2.0);
+  unit_assert(parameters->value_float("num2") == 24.5 * 3.0 - 6.125);
+  unit_assert(parameters->value_float("num3") ==
+              (24.5 + 6.125 * 2.0 - (24.5 * 3.0 - 6.125)));
 
-  parameters->group_set(1,"const_float_3");
+  parameters->group_set(1, "const_float_3");
 
-  unit_assert(parameters->value_float("num1") == pow(2.0,3.0));
-  unit_assert(parameters->value_float("num2") == pow(2.0 , 3.0) * 4.0);
-  unit_assert(parameters->value_float("num3") == pow(2.0 , 3.0) + 4.0);
-  unit_assert(parameters->value_float("num4") == 3.0 * pow(2.0 , 3.0));
-  unit_assert(parameters->value_float("num5") == 3.0 + pow(2.0 , 3.0));
-  unit_assert(parameters->value_float("num6") == pow(4.0 , pow (2.0 , 3.0)));
-  
-  parameters->group_set(1,"const_float_4");
+  unit_assert(parameters->value_float("num1") == pow(2.0, 3.0));
+  unit_assert(parameters->value_float("num2") == pow(2.0, 3.0) * 4.0);
+  unit_assert(parameters->value_float("num3") == pow(2.0, 3.0) + 4.0);
+  unit_assert(parameters->value_float("num4") == 3.0 * pow(2.0, 3.0));
+  unit_assert(parameters->value_float("num5") == 3.0 + pow(2.0, 3.0));
+  unit_assert(parameters->value_float("num6") == pow(4.0, pow(2.0, 3.0)));
 
-  unit_assert(CLOSE(parameters->value_float("num1"),4.0*M_PI));
+  parameters->group_set(1, "const_float_4");
+
+  unit_assert(CLOSE(parameters->value_float("num1"), 4.0 * M_PI));
 
   //--------------------------------------------------
   unit_func("value_string");
   //--------------------------------------------------
 
-  parameters->group_set(0,"String");
+  parameters->group_set(0, "String");
 
-  unit_assert(parameters->group_depth()==1);
-  unit_assert(parameters->group(0)=="String");
+  unit_assert(parameters->group_depth() == 1);
+  unit_assert(parameters->group(0) == "String");
 
   unit_assert(parameters->value_string("str1") == "testing");
-  unit_assert(parameters->value_string("str2","blah") == "one");
-  unit_assert(parameters->value_string("none","blah") == "blah");
+  unit_assert(parameters->value_string("str2", "blah") == "one");
+  unit_assert(parameters->value_string("none", "blah") == "blah");
 
   // const char *s, *sd = "blah";
   // parameters->value("str1",parameter_string,&s);
@@ -347,144 +349,146 @@ void check_parameters(Parameters * parameters)
   unit_func("set_string");
   //--------------------------------------------------
 
-  parameters->set_string("str1","yahoo");
-  unit_assert (parameters->value_string("str1") == "yahoo");
-  parameters->set_string("str1","testing");
+  parameters->set_string("str1", "yahoo");
+  unit_assert(parameters->value_string("str1") == "yahoo");
+  parameters->set_string("str1", "testing");
 
-  parameters->set_string("none_str","hello");
-  unit_assert (parameters->value_string("none_str") == "hello");
+  parameters->set_string("none_str", "hello");
+  unit_assert(parameters->value_string("none_str") == "hello");
 
   //--------------------------------------------------
   unit_func("evaluate_float");
   //--------------------------------------------------
 
-  double x[] = { 1, 2, 3};
-  double y[] = {5 , 4, 3};
+  double x[] = {1, 2, 3};
+  double y[] = {5, 4, 3};
   double z[] = {8, 9, 10};
   double t = -1;
-  double values_float[] = {0,0,0};
-  double deflts_float[] = {-1,-2,-3};
+  double values_float[] = {0, 0, 0};
+  double deflts_float[] = {-1, -2, -3};
 
-  parameters->group_set(0,"Float_expr");
-  parameters->group_set(1,"var_float_1");
+  parameters->group_set(0, "Float_expr");
+  parameters->group_set(1, "var_float_1");
 
-  parameters->evaluate_float("num1",3,values_float,deflts_float,x,y,z,t);
-  unit_assert (values_float[0]==x[0]);
-  unit_assert (values_float[1]==x[1]);
-  unit_assert (values_float[2]==x[2]);
+  parameters->evaluate_float("num1", 3, values_float, deflts_float, x, y, z, t);
+  unit_assert(values_float[0] == x[0]);
+  unit_assert(values_float[1] == x[1]);
+  unit_assert(values_float[2] == x[2]);
 
-  
-  parameters->evaluate_float("num2",3,values_float,deflts_float,x,y,z,t);
-  unit_assert (values_float[0]==x[0]-3.0);
-  unit_assert (values_float[1]==x[1]-3.0);
-  unit_assert (values_float[2]==x[2]-3.0);
+  parameters->evaluate_float("num2", 3, values_float, deflts_float, x, y, z, t);
+  unit_assert(values_float[0] == x[0] - 3.0);
+  unit_assert(values_float[1] == x[1] - 3.0);
+  unit_assert(values_float[2] == x[2] - 3.0);
 
-  parameters->evaluate_float("num3",3,values_float,deflts_float,x,y,z,t);
-  unit_assert (values_float[0]==x[0]+y[0]+z[0]+t);
-  unit_assert (values_float[1]==x[1]+y[1]+z[1]+t);
-  unit_assert (values_float[2]==x[2]+y[2]+z[2]+t);
+  parameters->evaluate_float("num3", 3, values_float, deflts_float, x, y, z, t);
+  unit_assert(values_float[0] == x[0] + y[0] + z[0] + t);
+  unit_assert(values_float[1] == x[1] + y[1] + z[1] + t);
+  unit_assert(values_float[2] == x[2] + y[2] + z[2] + t);
 
-  parameters->group_set(1,"var_float_2");
+  parameters->group_set(1, "var_float_2");
 
-  parameters->evaluate_float("num1",3,values_float,deflts_float,x,y,z,t);
-  unit_assert (CLOSE(values_float[0],sin(x[0])));
-  unit_assert (CLOSE(values_float[1],sin(x[1])));
-  unit_assert (CLOSE(values_float[2],sin(x[2])));
+  parameters->evaluate_float("num1", 3, values_float, deflts_float, x, y, z, t);
+  unit_assert(CLOSE(values_float[0], sin(x[0])));
+  unit_assert(CLOSE(values_float[1], sin(x[1])));
+  unit_assert(CLOSE(values_float[2], sin(x[2])));
 
-  parameters->evaluate_float("num2",3,values_float,deflts_float,x,y,z,t);
-  unit_assert (CLOSE(values_float[0],atan(y[0]/3.0+3*t)));
-  unit_assert (CLOSE(values_float[1],atan(y[1]/3.0+3*t)));
-  unit_assert (CLOSE(values_float[2],atan(y[2]/3.0+3*t)));
+  parameters->evaluate_float("num2", 3, values_float, deflts_float, x, y, z, t);
+  unit_assert(CLOSE(values_float[0], atan(y[0] / 3.0 + 3 * t)));
+  unit_assert(CLOSE(values_float[1], atan(y[1] / 3.0 + 3 * t)));
+  unit_assert(CLOSE(values_float[2], atan(y[2] / 3.0 + 3 * t)));
 
   //--------------------------------------------------
   unit_func("evaluate_logical");
   //--------------------------------------------------
 
   bool values_logical[] = {false, false, false};
-  bool deflts_logical[] = {true, false,true};
+  bool deflts_logical[] = {true, false, true};
 
-  parameters->group_set(0,"Logical_expr");
-  parameters->group_set(1,"var_logical");
+  parameters->group_set(0, "Logical_expr");
+  parameters->group_set(1, "var_logical");
 
-  parameters->evaluate_logical("num1",3,values_logical,deflts_logical,x,y,z,t);
-  unit_assert (values_logical[0] == (x[0] < y[0]));
-  unit_assert (values_logical[1] == (x[1] < y[1]));
-  unit_assert (values_logical[2] == (x[2] < y[2]));
+  parameters->evaluate_logical("num1", 3, values_logical, deflts_logical, x, y,
+                               z, t);
+  unit_assert(values_logical[0] == (x[0] < y[0]));
+  unit_assert(values_logical[1] == (x[1] < y[1]));
+  unit_assert(values_logical[2] == (x[2] < y[2]));
 
-  parameters->evaluate_logical("num2",3,values_logical,deflts_logical,x,y,z,t);
-  unit_assert (values_logical[0] == (x[0] + y[0] >= t + 3.0));
-  unit_assert (values_logical[1] == (x[1] + y[1] >= t + 3.0));
-  unit_assert (values_logical[2] == (x[2] + y[2] >= t + 3.0));
+  parameters->evaluate_logical("num2", 3, values_logical, deflts_logical, x, y,
+                               z, t);
+  unit_assert(values_logical[0] == (x[0] + y[0] >= t + 3.0));
+  unit_assert(values_logical[1] == (x[1] + y[1] >= t + 3.0));
+  unit_assert(values_logical[2] == (x[2] + y[2] >= t + 3.0));
 
-  parameters->evaluate_logical("num3",3,values_logical,deflts_logical,x,y,z,t);
-  unit_assert (values_logical[0] == (x[0] == y[0]));
-  unit_assert (values_logical[1] == (x[1] == y[1]));
-  unit_assert (values_logical[2] == (x[2] == y[2]));
+  parameters->evaluate_logical("num3", 3, values_logical, deflts_logical, x, y,
+                               z, t);
+  unit_assert(values_logical[0] == (x[0] == y[0]));
+  unit_assert(values_logical[1] == (x[1] == y[1]));
+  unit_assert(values_logical[2] == (x[2] == y[2]));
 
   //--------------------------------------------------
   // Lists
   //--------------------------------------------------
 
-  parameters->group_set(0,"List");
+  parameters->group_set(0, "List");
 
   unit_func("list_length");
 
   unit_assert(parameters->list_length("num1") == 6);
   unit_func("list_value_float");
-  unit_assert(parameters->list_value_float(0,"num1") == 1.0);
+  unit_assert(parameters->list_value_float(0, "num1") == 1.0);
   unit_func("list_value_logical");
-  unit_assert(parameters->list_value_logical(1,"num1") == true);
+  unit_assert(parameters->list_value_logical(1, "num1") == true);
   unit_func("list_value_integer");
-  unit_assert(parameters->list_value_integer(2,"num1") == -37);
+  unit_assert(parameters->list_value_integer(2, "num1") == -37);
   unit_func("list_value_string");
-  unit_assert(parameters->list_value_string(3,"num1") == "string");
+  unit_assert(parameters->list_value_string(3, "num1") == "string");
 
   //--------------------------------------------------
   unit_func("list_evaluate_float");
   //--------------------------------------------------
 
-  parameters->list_evaluate_float
-    (4,"num1",3,values_float, deflts_float,x,y,z,t);
-  unit_assert (values_float[0] == (x[0]-y[0]+2.0*z[0]));
-  unit_assert (values_float[1] == (x[1]-y[1]+2.0*z[1]));
-  unit_assert (values_float[2] == (x[2]-y[2]+2.0*z[2]));
+  parameters->list_evaluate_float(4, "num1", 3, values_float, deflts_float, x,
+                                  y, z, t);
+  unit_assert(values_float[0] == (x[0] - y[0] + 2.0 * z[0]));
+  unit_assert(values_float[1] == (x[1] - y[1] + 2.0 * z[1]));
+  unit_assert(values_float[2] == (x[2] - y[2] + 2.0 * z[2]));
 
   //--------------------------------------------------
   unit_func("list_evaluate_logical");
   //--------------------------------------------------
 
-  parameters->list_evaluate_logical
-    (5,"num1",3,values_logical, deflts_logical,x,y,z,t);
-  unit_assert (values_logical[0] == (x[0]+y[0]+t > 0 ));
-  unit_assert (values_logical[1] == (x[1]+y[1]+t > 0 ));
-  unit_assert (values_logical[2] == (x[2]+y[2]+t > 0 ));
+  parameters->list_evaluate_logical(5, "num1", 3, values_logical,
+                                    deflts_logical, x, y, z, t);
+  unit_assert(values_logical[0] == (x[0] + y[0] + t > 0));
+  unit_assert(values_logical[1] == (x[1] + y[1] + t > 0));
+  unit_assert(values_logical[2] == (x[2] + y[2] + t > 0));
 
   //--------------------------------------------------
   unit_func("set_list elements");
   //--------------------------------------------------
 
-  parameters->set_list_length ("list",5);
-  parameters->set_list_integer(0,"list",12);
-  parameters->set_list_float  (1,"list",24.0);
-  parameters->set_list_logical(2,"list",true);
-  parameters->set_list_logical(3,"list",false);
-  parameters->set_list_string (4,"list","a string");
+  parameters->set_list_length("list", 5);
+  parameters->set_list_integer(0, "list", 12);
+  parameters->set_list_float(1, "list", 24.0);
+  parameters->set_list_logical(2, "list", true);
+  parameters->set_list_logical(3, "list", false);
+  parameters->set_list_string(4, "list", "a string");
 
-  unit_assert(parameters->list_length("list")==5);
-  unit_assert(parameters->list_value_integer(0,"list")==12);
-  unit_assert(parameters->list_value_float  (1,"list")==24.0);
-  unit_assert(parameters->list_value_logical(2,"list")==true);
-  unit_assert(parameters->list_value_logical(3,"list")==false);
-  unit_assert(parameters->list_value_string (4,"list") == "a string");
+  unit_assert(parameters->list_length("list") == 5);
+  unit_assert(parameters->list_value_integer(0, "list") == 12);
+  unit_assert(parameters->list_value_float(1, "list") == 24.0);
+  unit_assert(parameters->list_value_logical(2, "list") == true);
+  unit_assert(parameters->list_value_logical(3, "list") == false);
+  unit_assert(parameters->list_value_string(4, "list") == "a string");
 
   //--------------------------------------------------
   unit_func("append_list elements");
 
   unit_assert(parameters->list_length("num2") == 4);
-  unit_assert(parameters->list_value_float(0,"num2") == 9.0);
-  unit_assert(parameters->list_value_float(1,"num2") == 11.0);
-  unit_assert(parameters->list_value_float(2,"num2") == 13.0);
-  unit_assert(parameters->list_value_float(3,"num2") == 15.0);
+  unit_assert(parameters->list_value_float(0, "num2") == 9.0);
+  unit_assert(parameters->list_value_float(1, "num2") == 11.0);
+  unit_assert(parameters->list_value_float(2, "num2") == 13.0);
+  unit_assert(parameters->list_value_float(3, "num2") == 15.0);
 
   //--------------------------------------------------
 
@@ -499,33 +503,27 @@ void check_parameters(Parameters * parameters)
   struct {
     std::string group;
     int count;
-  } child_count[NUM_GROUPS] = {
-    {"Float",       4 + 3},
-    {"Float_expr",  2},
-    {"Integer",     2 + 2},
-    {"List",        3},
-    {"Logical",     2 + 2},
-    {"Logical_expr",1},
-    {"String",      2 + 1},
-    {"Duplicate",   1}
-  };
+  } child_count[NUM_GROUPS] = {{"Float", 4 + 3},   {"Float_expr", 2},
+                               {"Integer", 2 + 2}, {"List", 3},
+                               {"Logical", 2 + 2}, {"Logical_expr", 1},
+                               {"String", 2 + 1},  {"Duplicate", 1}};
 
   parameters->group_clear();
   int num_groups = parameters->group_count();
-  unit_assert (num_groups == NUM_GROUPS);
+  unit_assert(num_groups == NUM_GROUPS);
 
-  for (int i=0; i<NUM_GROUPS; i++) {
-    parameters->group_set(0,child_count[i].group);
-    unit_assert (parameters->group_count() == child_count[i].count);
+  for (int i = 0; i < NUM_GROUPS; i++) {
+    parameters->group_set(0, child_count[i].group);
+    unit_assert(parameters->group_count() == child_count[i].count);
   }
-      
+
   // Duplicate assignments should take latter value
 
-  unit_func ("duplicates");
+  unit_func("duplicates");
 
-  parameters->group_set(0,"Duplicate");
+  parameters->group_set(0, "Duplicate");
 
-  unit_assert (parameters->value_float ("duplicate",0.0) == 2.0);
+  unit_assert(parameters->value_float("duplicate", 0.0) == 2.0);
 
   //--------------------------------------------------
   unit_func("write");
@@ -540,17 +538,14 @@ void check_parameters(Parameters * parameters)
   // loop parameters2
   //    test p2 subset p1
   // pass iff p1 subset p2 && p2 subset p1
-
 }
 
 //======================================================================
 
-PARALLEL_MAIN_BEGIN
-{
-
+PARALLEL_MAIN_BEGIN {
   PARALLEL_INIT;
 
-  unit_init (CkMyPe(), CkNumPes());
+  unit_init(CkMyPe(), CkNumPes());
 
   unit_class("Parameters");
 
@@ -560,9 +555,9 @@ PARALLEL_MAIN_BEGIN
   // test parameter
   //----------------------------------------------------------------------
 
-  Parameters * parameters1 = new Parameters;
-  Parameters * parameters2 = new Parameters;
-  Parameters * parameters3 = new Parameters;
+  Parameters* parameters1 = new Parameters;
+  Parameters* parameters2 = new Parameters;
+  Parameters* parameters3 = new Parameters;
 
   generate_input();
 
@@ -570,18 +565,17 @@ PARALLEL_MAIN_BEGIN
   unit_func("read");
   //--------------------------------------------------
 
-  parameters1->read ( "test.in" );
+  parameters1->read("test.in");
 
   check_parameters(parameters1);
 
-  parameters1->write ( "test1.out", param_write_cello );
-
+  parameters1->write("test1.out", param_write_cello);
 
   parameters2->read("test1.out");
 
   check_parameters(parameters2);
 
-  parameters2->write ("test2.out");
+  parameters2->write("test2.out");
 
   parameters3->read("test2.out");
 
@@ -596,7 +590,4 @@ PARALLEL_MAIN_BEGIN
   exit_();
 }
 
-
-
 PARALLEL_MAIN_END
-

@@ -17,9 +17,7 @@ class EnzoBlock;
 class IoEnzoBlock;
 
 class EnzoMsgCheck : public CMessage_EnzoMsgCheck {
-
-public: // interface
-
+public:  // interface
   friend class EnzoBlock;
   friend class IoEnzoWriter;
   friend class IoEnzoReader;
@@ -31,61 +29,55 @@ public: // interface
   virtual ~EnzoMsgCheck();
 
   /// Copy constructor
-  EnzoMsgCheck(const EnzoMsgCheck & enzo_msg_check) throw()
-    : CMessage_EnzoMsgCheck() // do NOT call copy constructor on base
+  EnzoMsgCheck(const EnzoMsgCheck& enzo_msg_check) throw()
+      : CMessage_EnzoMsgCheck()  // do NOT call copy constructor on base
   {
     ++counter[cello::index_static()];
     copy_(enzo_msg_check);
-    cello::hex_string(tag_,TAG_LEN); // add new tag for new message
+    cello::hex_string(tag_, TAG_LEN);  // add new tag for new message
   }
 
-  EnzoMsgCheck & operator = (const EnzoMsgCheck & enzo_msg_check)
-  {
+  EnzoMsgCheck& operator=(const EnzoMsgCheck& enzo_msg_check) {
     copy_(enzo_msg_check);
     return *this;
   }
 
   /// Set the DataMsg object
-  void set_data_msg (DataMsg * data_msg);
+  void set_data_msg(DataMsg* data_msg);
 
   /// Copy data from this message into the provided Data object
-  void update (Data * data);
+  void update(Data* data);
 
   /// Copy Block data from message into the provided Block
-  void update (EnzoBlock * block);
+  void update(EnzoBlock* block);
 
   /// Return the Index of the sending Block
   Index index_send();
 
   /// Set the sending index
-  void set_index_send (Index index);
+  void set_index_send(Index index);
 
   /// Set the Block whose data this message will be holding
-  void set_block (Block * block);
+  void set_block(Block* block);
 
   /// Clear the Block data in this message
   void del_block();
 
-  void print (const char * msg);
+  void print(const char* msg);
 
-  const char * tag() { return tag_;}
+  const char* tag() { return tag_; }
 
-  std::string block_name() const  { return block_name_; }
-  int block_level() const  { return block_level_; }
+  std::string block_name() const { return block_name_; }
+  int block_level() const { return block_level_; }
 
-  double * block_lower() { return block_lower_; }
-  double * block_upper() { return block_upper_; }
-  int * block_size() { return block_size_; }
+  double* block_lower() { return block_lower_; }
+  double* block_upper() { return block_upper_; }
+  int* block_size() { return block_size_; }
 
-  void set_parameters (Index index_this,
-                       Index index_next,
-                       std::string name_this,
-                       std::string name_next,
-                       long long index_block,
-                       bool is_first,
-                       bool is_last)
-  {
-    index_this_ =  index_this;
+  void set_parameters(Index index_this, Index index_next, std::string name_this,
+                      std::string name_next, long long index_block,
+                      bool is_first, bool is_last) {
+    index_this_ = index_this;
     index_next_ = index_next;
     name_this_ = name_this;
     name_next_ = name_next;
@@ -94,16 +86,11 @@ public: // interface
     is_last_ = is_last;
   }
 
-  void get_parameters (Index & index_this,
-                       Index & index_next,
-                       std::string & name_this,
-                       std::string & name_next,
-                       long long & index_block,
-                       bool & is_first,
-                       bool & is_last,
-                       std::string & name_dir)
-  {
-    index_this =  index_this_;
+  void get_parameters(Index& index_this, Index& index_next,
+                      std::string& name_this, std::string& name_next,
+                      long long& index_block, bool& is_first, bool& is_last,
+                      std::string& name_dir) {
+    index_this = index_this_;
     index_next = index_next_;
     name_this = name_this_;
     name_next = name_next_;
@@ -113,71 +100,65 @@ public: // interface
     name_dir = name_dir_;
   }
 
-  void set_adapt (const Adapt & adapt) {
+  void set_adapt(const Adapt& adapt) {
     int size = adapt.data_size();
-    ASSERT2 ("EnzoMsgCheck::set_adapt()",
-             "ADAPT_BUFFER_SIZE %d is too small for Adapt object of size %d",
-             sizeof(int)*ADAPT_BUFFER_SIZE,size,
-             size <= sizeof(int)*ADAPT_BUFFER_SIZE);
-    adapt.save_data((char *)((int*)adapt_buffer_));
+    ASSERT2("EnzoMsgCheck::set_adapt()",
+            "ADAPT_BUFFER_SIZE %d is too small for Adapt object of size %d",
+            sizeof(int) * ADAPT_BUFFER_SIZE, size,
+            size <= sizeof(int) * ADAPT_BUFFER_SIZE);
+    adapt.save_data((char*)((int*)adapt_buffer_));
   }
 
-  void get_adapt (Adapt & adapt) {
-    adapt.load_data((char *)((int*)adapt_buffer_));
+  void get_adapt(Adapt& adapt) {
+    adapt.load_data((char*)((int*)adapt_buffer_));
   }
-  void set_name_dir (std::string name_dir)
-  { name_dir_ = name_dir; }
+  void set_name_dir(std::string name_dir) { name_dir_ = name_dir; }
 
-  void set_io_block(IoEnzoBlock * io_block) { io_block_ = io_block; }
-  IoEnzoBlock * io_block() { return io_block_; }
+  void set_io_block(IoEnzoBlock* io_block) { io_block_ = io_block; }
+  IoEnzoBlock* io_block() { return io_block_; }
 
-public: // static methods
-
+public:  // static methods
   /// Pack data to serialize
-  static void * pack (EnzoMsgCheck*);
+  static void* pack(EnzoMsgCheck*);
 
   /// Unpack data to de-serialize
-  static EnzoMsgCheck * unpack(void *);
+  static EnzoMsgCheck* unpack(void*);
 
-protected: // methods
-
+protected:  // methods
   int size_();
-  char * load_(char *);
-  char * save_(char *);
+  char* load_(char*);
+  char* save_(char*);
 
-  void copy_(const EnzoMsgCheck & enzo_msg_check)
-  {
-    is_local_      = enzo_msg_check.is_local_;
-    index_send_    = enzo_msg_check.index_send_;
-    data_msg_      = enzo_msg_check.data_msg_;
-    buffer_        = nullptr;
-    block_name_    = enzo_msg_check.block_name_;
-    block_level_   = enzo_msg_check.block_level_;
-    for (int i=0; i<3; i++) {
-      block_lower_[i]    = enzo_msg_check.block_lower_[i];
-      block_upper_[i]    = enzo_msg_check.block_upper_[i];
-      block_size_[i]     = enzo_msg_check.block_size_[i];
+  void copy_(const EnzoMsgCheck& enzo_msg_check) {
+    is_local_ = enzo_msg_check.is_local_;
+    index_send_ = enzo_msg_check.index_send_;
+    data_msg_ = enzo_msg_check.data_msg_;
+    buffer_ = nullptr;
+    block_name_ = enzo_msg_check.block_name_;
+    block_level_ = enzo_msg_check.block_level_;
+    for (int i = 0; i < 3; i++) {
+      block_lower_[i] = enzo_msg_check.block_lower_[i];
+      block_upper_[i] = enzo_msg_check.block_upper_[i];
+      block_size_[i] = enzo_msg_check.block_size_[i];
     }
-    strncpy(tag_,enzo_msg_check.tag_,TAG_LEN);
-    io_block_    = enzo_msg_check.io_block_;
-    index_this_  = enzo_msg_check.index_this_;
-    index_next_  = enzo_msg_check.index_next_;
-    name_this_   = enzo_msg_check.name_this_;
-    name_next_   = enzo_msg_check.name_next_;
+    strncpy(tag_, enzo_msg_check.tag_, TAG_LEN);
+    io_block_ = enzo_msg_check.io_block_;
+    index_this_ = enzo_msg_check.index_this_;
+    index_next_ = enzo_msg_check.index_next_;
+    name_this_ = enzo_msg_check.name_this_;
+    name_next_ = enzo_msg_check.name_next_;
     index_block_ = enzo_msg_check.index_block_;
-    is_first_    = enzo_msg_check.is_first_;
-    is_last_     = enzo_msg_check.is_last_;
-    name_dir_    = enzo_msg_check.name_dir_;
-    std::copy_n ( enzo_msg_check.adapt_buffer_, ADAPT_BUFFER_SIZE,
-                  adapt_buffer_);
-    index_file_  = enzo_msg_check.index_file_;
+    is_first_ = enzo_msg_check.is_first_;
+    is_last_ = enzo_msg_check.is_last_;
+    name_dir_ = enzo_msg_check.name_dir_;
+    std::copy_n(enzo_msg_check.adapt_buffer_, ADAPT_BUFFER_SIZE, adapt_buffer_);
+    index_file_ = enzo_msg_check.index_file_;
 
     index_order_ = enzo_msg_check.index_order_;
     count_order_ = enzo_msg_check.count_order_;
   }
 
-protected: // attributes
-
+protected:  // attributes
   /// Whether destination is local or remote
   bool is_local_;
 
@@ -185,16 +166,16 @@ protected: // attributes
   Index index_send_;
 
   /// Associated Block data to output if any
-  DataMsg * data_msg_;
+  DataMsg* data_msg_;
 
   /// Saved Charm++ buffers for deleting after unpack()
-  void * buffer_;
+  void* buffer_;
 
   /// Random hex tag for tracking messages for debugging
-  char tag_[TAG_LEN+1];
+  char tag_[TAG_LEN + 1];
 
   /// Data for the Block
-  IoEnzoBlock * io_block_;
+  IoEnzoBlock* io_block_;
 
   /// Block meta-data
   std::string block_name_;
@@ -231,4 +212,3 @@ protected: // attributes
 };
 
 #endif /* CHARM_ENZO_MSG_CHECK_HPP */
-

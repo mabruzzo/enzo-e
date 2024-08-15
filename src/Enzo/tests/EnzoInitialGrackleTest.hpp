@@ -9,13 +9,11 @@
 #define ENZO_ENZO_INITIAL_GRACKLE_TEST_HPP
 
 class EnzoInitialGrackleTest : public Initial {
-
   /// @class    EnzoInitialGrackleTest
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Initialization routine for Grackle test problem
 
-public: // interface
-
+public:  // interface
   /// CHARM++ constructor
   EnzoInitialGrackleTest(int cycle, double time, ParameterGroup p) noexcept;
 
@@ -23,28 +21,26 @@ public: // interface
   PUPable_decl(EnzoInitialGrackleTest);
 
   /// CHARM++ migration constructor
-  EnzoInitialGrackleTest(CkMigrateMessage *m)
-    : Initial(m),
-      min_max_H_number_density_{},
-      min_max_metallicity_{},
-      min_max_temperature_{}
-  {  }
+  EnzoInitialGrackleTest(CkMigrateMessage* m)
+      : Initial(m),
+        min_max_H_number_density_{},
+        min_max_metallicity_{},
+        min_max_temperature_{} {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Initialize the block
 
-  virtual void enforce_block
-  (   Block * block, const Hierarchy * hierarchy ) throw();
+  virtual void enforce_block(Block* block, const Hierarchy* hierarchy) throw();
 
   // Destructor
-  virtual ~EnzoInitialGrackleTest() throw() {};
+  virtual ~EnzoInitialGrackleTest() throw(){};
 
 private:
-  std::array<double,2> min_max_H_number_density_;
-  std::array<double,2> min_max_metallicity_;
-  std::array<double,2> min_max_temperature_;
+  std::array<double, 2> min_max_H_number_density_;
+  std::array<double, 2> min_max_metallicity_;
+  std::array<double, 2> min_max_temperature_;
 };
 
 #endif /* ENZO_ENZO_INITIAL_GRACKLE_TEST_HPP */

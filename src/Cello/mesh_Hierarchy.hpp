@@ -14,32 +14,29 @@ class Simulation;
 class CProxy_Block;
 
 class Hierarchy {
-
   /// @class    Hierarchy
   /// @ingroup  Mesh
   /// @brief    [\ref Mesh] Adaptive mesh refinement hierarchy
 
   friend class IoHierarchy;
 
-public: // interface
-
+public:  // interface
   /// Empty constructor for Charm++ pup()
   Hierarchy() throw()
-  : factory_(NULL),
-    refinement_(0),
-    min_level_(0),
-    max_level_(0),
-    refined_regions_lower_(),
-    refined_regions_upper_(),
-    num_blocks_(0),
-    num_blocks_level_(),
-    block_vec_(),
-    num_particles_(0), 
-    num_zones_total_(0), 
-    num_zones_real_(0), 
-    block_array_()
-  {
-    for (int axis=0; axis<3; axis++) {
+      : factory_(NULL),
+        refinement_(0),
+        min_level_(0),
+        max_level_(0),
+        refined_regions_lower_(),
+        refined_regions_upper_(),
+        num_blocks_(0),
+        num_blocks_level_(),
+        block_vec_(),
+        num_particles_(0),
+        num_zones_total_(0),
+        num_zones_real_(0),
+        block_array_() {
+    for (int axis = 0; axis < 3; axis++) {
       root_size_[axis] = 0;
       lower_[axis] = 0.0;
       upper_[axis] = 0.0;
@@ -47,63 +44,57 @@ public: // interface
       periodicity_[axis] = 0;
     }
   }
-  
+
   /// Initialize a Hierarchy object
-  Hierarchy (const Factory * factory, 
-	     int refinement,
-	     int min_level,
-	     int max_level) throw ();
+  Hierarchy(const Factory* factory, int refinement, int min_level,
+            int max_level) throw();
 
   /// Delete the Hierarchy object
-  virtual ~Hierarchy() throw ();
+  virtual ~Hierarchy() throw();
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   //----------------------------------------------------------------------
 
   /// Set domain lower extent
-  void set_lower(double x, double y, double z) throw ();
+  void set_lower(double x, double y, double z) throw();
 
   /// Set domain upper extent
-  void set_upper(double x, double y, double z) throw ();
+  void set_upper(double x, double y, double z) throw();
 
   /// Set root-level grid size
-  void set_root_size(int nx, int ny, int nz) throw ();
+  void set_root_size(int nx, int ny, int nz) throw();
 
   /// Set root-level grid size
-  void set_blocking(int nbx, int nby, int nbz) throw ();
+  void set_blocking(int nbx, int nby, int nbz) throw();
 
   //----------------------------------------------------------------------
 
   /// Return the minimum refinement level (0 for unigrid)
-  int min_level() const
-  { return min_level_; }
+  int min_level() const { return min_level_; }
 
   /// Return the maximum refinement level (0 for unigrid)
-  int max_level() const
-  { return max_level_; }
-  
+  int max_level() const { return max_level_; }
+
   /// Return domain lower extent
-  void lower(double * x, double * y = 0, double * z = 0) const throw ();
+  void lower(double* x, double* y = 0, double* z = 0) const throw();
 
   /// Return domain upper extent
-  void upper(double * x, double * y = 0, double * z = 0) const throw ();
+  void upper(double* x, double* y = 0, double* z = 0) const throw();
 
   /// Return root-level grid size
-  void root_size(int * nx, int * ny = 0, int * nz = 0) const throw ();
+  void root_size(int* nx, int* ny = 0, int* nz = 0) const throw();
 
   /// Set the periodicity of boundary conditions for domain axes
-  inline void set_periodicity (int px, int py=0, int pz=0)
-  {
+  inline void set_periodicity(int px, int py = 0, int pz = 0) {
     periodicity_[0] = px;
     periodicity_[1] = py;
     periodicity_[2] = pz;
   }
 
   /// Return the periodicity of the boundary conditions for domain axes
-  void get_periodicity (int * px, int * py=0, int * pz=0) const throw()
-  {
+  void get_periodicity(int* px, int* py = 0, int* pz = 0) const throw() {
     if (px) (*px) = periodicity_[0];
     if (py) (*py) = periodicity_[1];
     if (pz) (*pz) = periodicity_[2];
@@ -115,17 +106,17 @@ public: // interface
   /// If the domain is not periodic along a given axis `i`, then `npi[i] = x[i]`
   ///
   /// Each argument is expected to be an array of length `cello::rank()`
-  void get_nearest_periodic_image(const double * x, const double *y,
-				                          double * npi) const throw();
+  void get_nearest_periodic_image(const double* x, const double* y,
+                                  double* npi) const throw();
 
-  /// For a position `x`, this sets `folded_x` to the periodic image of `x` 
+  /// For a position `x`, this sets `folded_x` to the periodic image of `x`
   /// which is in the domain.
   ///
-  /// If the domain is not periodic along a given axis `i`, 
+  /// If the domain is not periodic along a given axis `i`,
   /// then `folded_x[i] = x[i]`
   ///
   /// Both arguments are expected to be an array of length `cello::rank()`.
-  void get_folded_position(const double * x, double * folded_x) const throw();
+  void get_folded_position(const double* x, double* folded_x) const throw();
 
   //----------------------------------------------------------------------
 
@@ -133,102 +124,95 @@ public: // interface
   void deallocate_blocks() throw();
 
   /// Return pointer to the Block CHARM++ chare array
-  CProxy_Block block_array() const throw()
-  { return block_array_;}
+  CProxy_Block block_array() const throw() { return block_array_; }
 
   /// Return pointer to the Block CHARM++ chare array
-  void set_block_array(CProxy_Block block_array) throw()
-  { block_array_ = block_array;}
+  void set_block_array(CProxy_Block block_array) throw() {
+    block_array_ = block_array;
+  }
 
   /// Increment (decrement) number of mesh blocks
   void increment_block_count(int count, int level);
 
   /// Add Block to the list of blocks (block_vec_ and block_map_)
-  void insert_block (Block * block)
-  {
-    block_vec_.push_back(block);
-  }
-  
+  void insert_block(Block* block) { block_vec_.push_back(block); }
+
   /// Remove Block from the list of blocks (block_vec_) and return
   /// true iff Block is found in the list
-  bool delete_block (Block * block)
-  {
+  bool delete_block(Block* block) {
     const int n = block_vec_.size();
     bool found = false;
-    for (int i=0; i<n; i++) {
-      if (found) block_vec_[i-1] = block_vec_[i];
-      if (block_vec_[i] == block) found=true;
+    for (int i = 0; i < n; i++) {
+      if (found) block_vec_[i - 1] = block_vec_[i];
+      if (block_vec_[i] == block) found = true;
     }
-    if (found) block_vec_.resize(n-1);
+    if (found) block_vec_.resize(n - 1);
     return found;
   }
-  
+
   /// Increment (decrement) number of particles
   void increment_particle_count(int64_t count);
 
   /// Increment (decrement) number of real_zones
-  void increment_real_zone_count(int64_t count)
-  { num_zones_real_ += count; }
+  void increment_real_zone_count(int64_t count) { num_zones_real_ += count; }
 
   /// Increment (decrement) number of total_zones
-  void increment_total_zone_count(int64_t count)
-  { num_zones_total_ += count; }
+  void increment_total_zone_count(int64_t count) { num_zones_total_ += count; }
 
   /// Return the number of blocks on this process
-  size_t num_blocks() const throw()
-  {  return num_blocks_;  }
+  size_t num_blocks() const throw() { return num_blocks_; }
 
   /// Return the number of blocks on this process for the given level
-  size_t num_blocks(int level) const throw()
-  {  return num_blocks_level_.at(level-min_level_);  }
+  size_t num_blocks(int level) const throw() {
+    return num_blocks_level_.at(level - min_level_);
+  }
 
   /// Return the ith block in this pe
-  Block * block (int index_block)
-  { return block_vec_.at(index_block); }
+  Block* block(int index_block) { return block_vec_.at(index_block); }
 
   /// Return the number of particles on this process
-  int64_t num_particles() const throw()
-  {  return num_particles_;  }
+  int64_t num_particles() const throw() { return num_particles_; }
 
   /// Return the number of real zones on this process
-  int64_t num_zones_real() const throw()
-  {  return num_zones_real_;  }
+  int64_t num_zones_real() const throw() { return num_zones_real_; }
 
   /// Return the number of total zones on this process
-  int64_t num_zones_total() const throw()
-  {  return num_zones_total_;  }
+  int64_t num_zones_total() const throw() { return num_zones_total_; }
 
-  CProxy_Block new_block_proxy (bool allocate_data) throw();
+  CProxy_Block new_block_proxy(bool allocate_data) throw();
 
-  void create_block_array () throw();
+  void create_block_array() throw();
 
-  void create_subblock_array () throw();
+  void create_subblock_array() throw();
 
   // Getter/Setter functions for refined_regions_lower/upper members.
   void refined_region_lower(int region_lower[3], int level) throw();
   void refined_region_upper(int region_upper[3], int level) throw();
-  std::vector< std::vector<int> > refined_region_lower() {return refined_regions_lower_;}
-  std::vector< std::vector<int> > refined_region_upper() {return refined_regions_upper_;}
-  void set_refined_regions_lower(std::vector< std::vector<int> > lower) throw() {
+  std::vector<std::vector<int> > refined_region_lower() {
+    return refined_regions_lower_;
+  }
+  std::vector<std::vector<int> > refined_region_upper() {
+    return refined_regions_upper_;
+  }
+  void set_refined_regions_lower(std::vector<std::vector<int> > lower) throw() {
     refined_regions_lower_ = lower;
   }
-  void set_refined_regions_upper(std::vector< std::vector<int> > upper) throw() {
+  void set_refined_regions_upper(std::vector<std::vector<int> > upper) throw() {
     refined_regions_upper_ = upper;
   }
 
   /// Return the number of root-level Blocks along each rank
   /// in the given level (default level is root)
-  void root_blocks (int * nbx, int * nby=0, int * nbz=0, int level=0) const throw();
+  void root_blocks(int* nbx, int* nby = 0, int* nbz = 0, int level = 0) const
+      throw();
 
   /// Return the factory object associated with the Hierarchy
-  const Factory * factory () const throw()
-  { return factory_; }
+  const Factory* factory() const throw() { return factory_; }
 
-protected: // attributes
-
+protected:  // attributes
   /// Factory for creating Simulations, Hierarchies, Patches and Blocks
   /// [abstract factory design pattern]
-  Factory * factory_;
+  Factory* factory_;
 
   /// Refinement of the hierarchy [ used for Charm++ pup() of Tree ]
   int refinement_;
@@ -241,11 +225,11 @@ protected: // attributes
 
   // Lower limits of regions of blocks, at different levels, which should
   // refine to create the next nested grid at initialization.
-  std::vector< std::vector<int> > refined_regions_lower_;
+  std::vector<std::vector<int> > refined_regions_lower_;
 
   // Upper limits of regions of blocks, at different levels, which should
   // refine to create the next nested grid at initialization.
-  std::vector< std::vector<int> > refined_regions_upper_;
+  std::vector<std::vector<int> > refined_regions_upper_;
 
   /// Maximum number of refinement levels
 
@@ -254,20 +238,20 @@ protected: // attributes
 
   /// Current number of blocks on this process per refinement level
   std::vector<int> num_blocks_level_;
-  
+
   /// Pointers to Blocks on this process
-  std::vector<Block *> block_vec_;
+  std::vector<Block*> block_vec_;
 
   /// Current number of particles on this process
   int64_t num_particles_;
 
   /// Current number of total_zones on this process
-  int64_t num_zones_total_; 
+  int64_t num_zones_total_;
 
   /// Current number of real_zones on this process
-  int64_t num_zones_real_; 
-  
-  /// Array of Blocks 
+  int64_t num_zones_real_;
+
+  /// Array of Blocks
   CProxy_Block block_array_;
 
   /// Size of the root grid
@@ -285,16 +269,12 @@ protected: // attributes
   /// Periodicity of boundary conditions on faces
   int periodicity_[3];
 
-public: // static attributes
-
+public:  // static attributes
   /// Current number of blocks on this node
   static int num_blocks_node;
 
   /// Current number of particles on this node
   static int64_t num_particles_node;
-
 };
 
-
 #endif /* MESH_HIERARCHY_HPP */
-

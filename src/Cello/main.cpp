@@ -22,12 +22,13 @@
 // without including the entire enzo-layer in the binary
 
 #include "simulation.hpp"
-void Block::restart_enter_()
-{ ERROR("Block::restart_enter", "invalid call"); }
-void Simulation::p_restart_enter (std::string name_dir)
-{ ERROR("Simulation::p_restart_enter", "invalid call"); }
-void Simulation::r_restart_start (CkReductionMsg * msg)
-{ ERROR("Simulation::p_restart_start", "invalid call"); }
+void Block::restart_enter_() { ERROR("Block::restart_enter", "invalid call"); }
+void Simulation::p_restart_enter(std::string name_dir) {
+  ERROR("Simulation::p_restart_enter", "invalid call");
+}
+void Simulation::r_restart_start(CkReductionMsg* msg) {
+  ERROR("Simulation::p_restart_start", "invalid call");
+}
 #endif
 
 //----------------------------------------------------------------------
@@ -43,15 +44,16 @@ extern CProxy_EnzoSimulation proxy_simulation;
 #endif
 
 #ifdef DEBUG_MAIN
-#  define TRACE_MAIN(MSG) CkPrintf ("DEBUG_MAIN %s\n",MSG); fflush(stdout);
+#define TRACE_MAIN(MSG)                                                        \
+  CkPrintf("DEBUG_MAIN %s\n", MSG);                                            \
+  fflush(stdout);
 #else
-#  define TRACE_MAIN(MSG) /* ... */
+#define TRACE_MAIN(MSG) /* ... */
 #endif
 
 //----------------------------------------------------------------------
 
-void Main::p_exit(int count)
-{
+void Main::p_exit(int count) {
   DEBUG("Main::p_exit");
   count_exit_++;
   unit_finalize();
@@ -61,17 +63,15 @@ void Main::p_exit(int count)
   }
 }
 
-void Main::exit_()
-{
-
+void Main::exit_() {
 #ifdef CHARM_ENZO
 
-  EnzoSimulation * simulation = enzo::simulation();
+  EnzoSimulation* simulation = enzo::simulation();
 
   const int in = cello::index_static();
   if (EnzoMsgCheck::counter[in] != 0) {
-    CkPrintf ("%d Main::exit_() EnzoMsgCheck::counter = %ld != 0\n",
-              CkMyPe(),EnzoMsgCheck::counter[in]);
+    CkPrintf("%d Main::exit_() EnzoMsgCheck::counter = %ld != 0\n", CkMyPe(),
+             EnzoMsgCheck::counter[in]);
   }
 
   if (simulation) {
@@ -81,58 +81,53 @@ void Main::exit_()
 #endif
 
   if (Monitor::instance()) {
-    Monitor::instance()->print ("","END CELLO");
+    Monitor::instance()->print("", "END CELLO");
   }
 
   PARALLEL_EXIT;
 }
 
-
 //----------------------------------------------------------------------
 
-void Main::p_checkpoint_output(int count, std::string dir_name)
-{
-  
+void Main::p_checkpoint_output(int count, std::string dir_name) {
   TRACE_MAIN("DEBUG MAIN p_checkpoint_output");
-  
+
   count_checkpoint_++;
   if (count_checkpoint_ >= count) {
     count_checkpoint_ = 0;
     // Write parameter file
 
 #ifdef CHARM_ENZO
-    strncpy(dir_checkpoint_,dir_name.c_str(),255);
-    Simulation * simulation = cello::simulation();
+    strncpy(dir_checkpoint_, dir_name.c_str(), 255);
+    Simulation* simulation = cello::simulation();
     simulation->set_checkpoint(dir_checkpoint_);
-#endif    
+#endif
 
 #ifdef CHARM_ENZO
-    CkPrintf ("Calling CkStartCheckpoint\n");
-    CkCallback callback(CkIndex_EnzoSimulation::r_write_checkpoint_output(),proxy_simulation);
-    CkStartCheckpoint (dir_checkpoint_,callback,false,1);
+    CkPrintf("Calling CkStartCheckpoint\n");
+    CkCallback callback(CkIndex_EnzoSimulation::r_write_checkpoint_output(),
+                        proxy_simulation);
+    CkStartCheckpoint(dir_checkpoint_, callback, false, 1);
     // "OLD" CHARM++ (version < 7.0.0) USE:
-    //CkStartCheckpoint (dir_checkpoint_,callback);
+    // CkStartCheckpoint (dir_checkpoint_,callback);
 #endif
   }
   // --------------------------------------------------
 }
 
-
 //----------------------------------------------------------------------
 
-void Main::p_output_enter()
-{
+void Main::p_output_enter() {
 #ifdef CHARM_ENZO
 
   cello::block_array().p_output_enter();
-  
+
 #endif
 }
 
 //----------------------------------------------------------------------
 
-void Main::p_output_exit()
-{
+void Main::p_output_exit() {
 #ifdef CHARM_ENZO
   cello::block_array().p_output_exit();
 #endif
@@ -140,8 +135,7 @@ void Main::p_output_exit()
 
 //----------------------------------------------------------------------
 
-void Main::p_compute_enter()
-{
+void Main::p_compute_enter() {
 #ifdef CHARM_ENZO
   cello::block_array().p_compute_enter();
 #endif
@@ -149,8 +143,7 @@ void Main::p_compute_enter()
 
 //----------------------------------------------------------------------
 
-void Main::p_compute_continue()
-{
+void Main::p_compute_continue() {
 #ifdef CHARM_ENZO
   cello::block_array().p_compute_continue();
 #endif
@@ -158,8 +151,7 @@ void Main::p_compute_continue()
 
 //----------------------------------------------------------------------
 
-void Main::p_compute_exit()
-{
+void Main::p_compute_exit() {
 #ifdef CHARM_ENZO
   cello::block_array().p_compute_exit();
 #endif
@@ -167,8 +159,7 @@ void Main::p_compute_exit()
 
 //----------------------------------------------------------------------
 
-void Main::p_stopping_enter()
-{
+void Main::p_stopping_enter() {
 #ifdef CHARM_ENZO
   cello::block_array().p_stopping_enter();
 #endif
@@ -176,8 +167,7 @@ void Main::p_stopping_enter()
 
 //----------------------------------------------------------------------
 
-void Main::p_stopping_balance()
-{
+void Main::p_stopping_balance() {
 #ifdef CHARM_ENZO
   cello::block_array().p_stopping_load_balance();
 #endif
@@ -185,8 +175,7 @@ void Main::p_stopping_balance()
 
 //----------------------------------------------------------------------
 
-void Main::p_stopping_exit()
-{
+void Main::p_stopping_exit() {
 #ifdef CHARM_ENZO
   cello::block_array().p_stopping_exit();
 #endif
@@ -194,41 +183,35 @@ void Main::p_stopping_exit()
 
 //----------------------------------------------------------------------
 
-void Main::p_text_file_write
-(int nd, char * dir,
- int nf, char * file,
- int nl, char * line, int count)
-{
+void Main::p_text_file_write(int nd, char* dir, int nf, char* file, int nl,
+                             char* line, int count) {
   // Open file if first call. Increment count by number of pe's
   std::string full_file = std::string(dir) + "/" + file;
 
-  FILE * fp_text   = fp_text_[full_file];
-  Sync * sync_text = sync_text_[full_file];
-  
-  if (fp_text_[full_file] == NULL) {
+  FILE* fp_text = fp_text_[full_file];
+  Sync* sync_text = sync_text_[full_file];
 
+  if (fp_text_[full_file] == NULL) {
     // Create subdirectory if any
     std::filesystem::path directory(dir);
-    if (! std::filesystem::is_directory(directory)) {
-      ASSERT1 ("Main::p_text_file_write()",
-	       "Error creating directory %s",
-	       dir,
-	       (std::filesystem::create_directory(directory)));
+    if (!std::filesystem::is_directory(directory)) {
+      ASSERT1("Main::p_text_file_write()", "Error creating directory %s", dir,
+              (std::filesystem::create_directory(directory)));
     }
-    
-    fp_text   = fp_text_[full_file] = fopen(full_file.c_str(),"w");
+
+    fp_text = fp_text_[full_file] = fopen(full_file.c_str(), "w");
     sync_text = sync_text_[full_file] = new Sync;
-    
+
     sync_text->set_stop(CkNumPes());
   }
 
   // First call from any Block on a processor includes count
   // minus one for CkNumPes() above
   if (count > 0) {
-    sync_text->inc_stop(count-1);
+    sync_text->inc_stop(count - 1);
   }
 
-  fprintf (fp_text,"%s",line);
+  fprintf(fp_text, "%s", line);
 
   if (sync_text->next()) {
     //    text_file_close_();
@@ -241,8 +224,7 @@ void Main::p_text_file_write
 
 //----------------------------------------------------------------------
 
-void Main::p_exit()
-{
+void Main::p_exit() {
 #ifdef CHARM_ENZO
   cello::block_array().p_exit();
 #endif
@@ -250,8 +232,7 @@ void Main::p_exit()
 
 //----------------------------------------------------------------------
 
-void Main::p_adapt_enter()
-{
+void Main::p_adapt_enter() {
   TRACE_MAIN("p_adapt_enter");
 #ifdef CHARM_ENZO
   cello::block_array().p_adapt_enter();
@@ -260,8 +241,7 @@ void Main::p_adapt_enter()
 
 //----------------------------------------------------------------------
 
-void Main::p_initial_exit()
-{
+void Main::p_initial_exit() {
 #ifdef CHARM_ENZO
   cello::block_array().p_initial_exit();
 #endif
@@ -269,8 +249,7 @@ void Main::p_initial_exit()
 
 //----------------------------------------------------------------------
 
-void Main::p_adapt_end()
-{
+void Main::p_adapt_end() {
   TRACE_MAIN("p_adapt_end");
 #ifdef CHARM_ENZO
   cello::block_array().p_adapt_end();
@@ -279,18 +258,16 @@ void Main::p_adapt_end()
 
 //----------------------------------------------------------------------
 
-void Main::p_adapt_update()
-{
+void Main::p_adapt_update() {
   TRACE_MAIN("p_adapt_update");
 #ifdef CHARM_ENZO
   cello::block_array().p_adapt_update();
-#endif  
+#endif
 }
 
 //----------------------------------------------------------------------
 
-void Main::p_adapt_called()
-{
+void Main::p_adapt_called() {
   TRACE_MAIN("p_adapt_called");
 #ifdef CHARM_ENZO
   cello::block_array().p_adapt_called();
@@ -299,8 +276,7 @@ void Main::p_adapt_called()
 
 //----------------------------------------------------------------------
 
-void Main::p_adapt_exit()
-{
+void Main::p_adapt_exit() {
   TRACE_MAIN("p_adapt_exit");
 #ifdef CHARM_ENZO
   cello::block_array().p_adapt_exit();
@@ -310,12 +286,11 @@ void Main::p_adapt_exit()
 //----------------------------------------------------------------------
 
 #if defined(CHARM_ENZO)
-#  include "main_enzo.def.h"
+#include "main_enzo.def.h"
 #elif defined(CHARM_SIMULATION)
-#  include "main_simulation.def.h"
+#include "main_simulation.def.h"
 #elif defined(CHARM_MESH)
-#  include "main_mesh.def.h"
+#include "main_mesh.def.h"
 #else
-#  include "main.def.h"
+#include "main.def.h"
 #endif
-

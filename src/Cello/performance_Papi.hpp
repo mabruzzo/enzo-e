@@ -9,19 +9,16 @@
 #define PERFORMANCE_PAPI_HPP
 
 class Papi {
-
   /// @class    Papi
   /// @ingroup  Groupname
   /// @brief    [\ref Performance] Class for accessing PAPI events
 
-public: // interface
-
+public:  // interface
   /// Constructor
   Papi(bool warnings = false) throw();
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
     // NOTE: change this function whenever attributes change
     // p | is_initialized_;
@@ -43,7 +40,7 @@ public: // interface
   int num_events() const throw();
 
   /// Return the name of the ith event counter
-  std::string event_name (int index_event) const throw();
+  std::string event_name(int index_event) const throw();
 
   /// Add a new counter, returning the id
   int add_event(std::string event) throw();
@@ -55,17 +52,14 @@ public: // interface
   void stop_events() throw();
 
   /// Return array to events
-  int event_values (long long * values) const throw();
+  int event_values(long long* values) const throw();
 
-
-private: // attributes
-
+private:  // attributes
   /// Whether PAPI is initialized
   bool is_initialized_;
 
   /// Whether counting has started
   bool is_started_;
-
 
   /// PAPI event set
   int event_set_;
@@ -78,8 +72,6 @@ private: // attributes
 
   /// Whether to print warnings
   bool warnings_;
-
 };
 
 #endif /* PERFORMANCE_PAPI_HPP */
-

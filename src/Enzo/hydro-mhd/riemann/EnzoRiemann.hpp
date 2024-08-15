@@ -24,24 +24,21 @@
 // Component dependencies
 //----------------------------------------------------------------------
 
-#include "Cello/view.hpp" // CelloView
-#include "Enzo/enzo.hpp" // enzo_float, EFltArrayMap
-
+#include "Cello/view.hpp"  // CelloView
+#include "Enzo/enzo.hpp"   // enzo_float, EFltArrayMap
 
 // The conventional approach of having EnzoRiemann inherit from PUP::able
 // (and making this library into a charm++ module) complicates the build-system
 // to some extent. Instead, we have defined the global ``operator|``
 // function to encapsulate the PUP functionality
 
-class EnzoRiemann
-{
+class EnzoRiemann {
   /// @class    EnzoRiemann
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulate approximate Riemann Solvers
 
-public: // interface
-
-  struct FactoryArgs{
+public:  // interface
+  struct FactoryArgs {
     /// @class    EnzoRiemannFactoryArgs
     /// @ingroup  Enzo
     /// @brief    [\ref Enzo] Stores arguments for EnzoRiemann's factory method
@@ -56,23 +53,25 @@ public: // interface
   };
 
   /// Factory method for constructing the EnzoRiemann object.
-  static EnzoRiemann* construct_riemann(const FactoryArgs& factory_args)
-    noexcept;
+  static EnzoRiemann* construct_riemann(
+      const FactoryArgs& factory_args) noexcept;
 
   /// friend function that implements CHARM++ Pack / Unpack functionality
-  friend inline void operator|(PUP::er &p, EnzoRiemann*& riemann_ptr){
+  friend inline void operator|(PUP::er& p, EnzoRiemann*& riemann_ptr) {
     bool is_nullptr = (riemann_ptr == nullptr);
-    p|is_nullptr;
-    if (!is_nullptr){
+    p | is_nullptr;
+    if (!is_nullptr) {
       FactoryArgs factory_args;
-      if (!p.isUnpacking()){ factory_args = riemann_ptr->factory_args_; }
+      if (!p.isUnpacking()) {
+        factory_args = riemann_ptr->factory_args_;
+      }
 
       // NOTE: change this function when the members of FactoryArgs change
       p | factory_args.solver;
       p | factory_args.mhd;
       p | factory_args.internal_energy;
 
-      if (p.isUnpacking()){
+      if (p.isUnpacking()) {
         riemann_ptr = EnzoRiemann::construct_riemann(factory_args);
       }
     } else {
@@ -81,12 +80,10 @@ public: // interface
   }
 
   EnzoRiemann(const FactoryArgs& factory_args) noexcept
-    : factory_args_(factory_args)
-  {}
+      : factory_args_(factory_args) {}
 
   /// Virtual destructor
-  virtual ~EnzoRiemann()
-  {}
+  virtual ~EnzoRiemann() {}
 
   /// Computes the Riemann Fluxes for each conserved field along a given
   /// dimension, dim
@@ -122,29 +119,28 @@ public: // interface
   /// @note This function expects that calling the `contiguous_arrays()`
   /// instance method for `prim_map_l`, `prim_map_r`, and `flux_map` will
   /// return `true` in each case.
-  virtual void solve
-  (const EnzoEFltArrayMap &prim_map_l, const EnzoEFltArrayMap &prim_map_r,
-   EnzoEFltArrayMap &flux_map, const int dim, const int stale_depth,
-   const str_vec_t &passive_list,
-   const CelloView<enzo_float,3> * const interface_velocity) const = 0;
+  virtual void solve(
+      const EnzoEFltArrayMap& prim_map_l, const EnzoEFltArrayMap& prim_map_r,
+      EnzoEFltArrayMap& flux_map, const int dim, const int stale_depth,
+      const str_vec_t& passive_list,
+      const CelloView<enzo_float, 3>* const interface_velocity) const = 0;
 
   /// Return the expected keys (and key-order) that the `solve` method expects
   /// the `flux_map` argument to have (i.e. these correspond to the fluxes of
   /// the actively advected quantities that the solver computes)
   virtual const std::vector<std::string> integration_quantity_keys()
-    const noexcept = 0;
+      const noexcept = 0;
 
   /// Return the expected keys (and key-order) that the `solve` method expects
   /// the `priml_map` and `primr_map` arguments to have (i.e. these are the
   /// keys for the primitives that are required to compute the flux)
   virtual const std::vector<std::string> primitive_quantity_keys()
-    const noexcept = 0;
+      const noexcept = 0;
 
 private:
-
   /// debugging method (checks that the order of keys matches expectations
-  void check_key_order_(const EnzoEFltArrayMap &map, bool prim,
-			const str_vec_t &passive_list) const noexcept;
+  void check_key_order_(const EnzoEFltArrayMap& map, bool prim,
+                        const str_vec_t& passive_list) const noexcept;
 
 private:
   /// this is only stored to facilitate (de-)serialization

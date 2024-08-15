@@ -26,4 +26,3 @@
 #include "error_Error.hpp"
 
 #endif /* _ERROR_HPP */
-

@@ -16,46 +16,39 @@
 
 //-------------------------------------------------------------------------------------------
 
-EnzoMethodThresholdAccretion::EnzoMethodThresholdAccretion
-(ParameterGroup p)
-  : EnzoMethodAccretion(p)
-{
-
-}
+EnzoMethodThresholdAccretion::EnzoMethodThresholdAccretion(ParameterGroup p)
+    : EnzoMethodAccretion(p) {}
 
 //---------------------------------------------------------------------------------------------
 
-void EnzoMethodThresholdAccretion::pup (PUP::er &p)
-{
+void EnzoMethodThresholdAccretion::pup(PUP::er& p) {
   // NOTE: Change this function whenever attributes change
 
   TRACEPUP;
 
-  EnzoMethodAccretion::pup(p); // call parent class pup
+  EnzoMethodAccretion::pup(p);  // call parent class pup
 
   return;
 }
 
 //---------------------------------------------------------------------------------------------
 
-void EnzoMethodThresholdAccretion::compute (Block * block) throw()
-{
-
+void EnzoMethodThresholdAccretion::compute(Block* block) throw() {
   if (cello::is_initial_cycle(InitCycleKind::fresh_or_noncharm_restart)) {
     do_checks_(block);
   }
 
   if (block->is_leaf()) {
     this->compute_(block);
-  }
-  else block->compute_done();
+  } else
+    block->compute_done();
 
   return;
 }
 
 //----------------------------------------------------------------------------------------------
 
-void EnzoMethodThresholdAccretion::compute_(Block * block)
+void EnzoMethodThresholdAccretion::compute_(Block* block)
 
 {
   // Only need to do anything if there are sink particles on this block.
@@ -66,70 +59,67 @@ void EnzoMethodThresholdAccretion::compute_(Block * block)
   // Get density threshold in code units for this cycle (value will change in
   // cosmological simultions.
   const double density_threshold =
-    physical_density_threshold_cgs_ / enzo::units()->density();
+      physical_density_threshold_cgs_ / enzo::units()->density();
 
   if (num_particles > 0) {
-
     // Get pointer to density field data
     Field field = block->data()->field();
-    enzo_float * density = (enzo_float*) field.values("density");
+    enzo_float* density = (enzo_float*)field.values("density");
 
-    // Set accretion radius to be accretion_radius_cells_ multipled by minimum cell width
+    // Set accretion radius to be accretion_radius_cells_ multipled by minimum
+    // cell width
     double hx, hy, hz;
     block->cell_width(&hx, &hy, &hz);
-    const double min_cell_width = std::min(hx,std::min(hy,hz));
+    const double min_cell_width = std::min(hx, std::min(hy, hz));
     const double accretion_radius = accretion_radius_cells_ * min_cell_width;
 
     // Also need the field dimensions
     int mx, my, mz;
-    field.dimensions (0, &mx, &my, &mz);
+    field.dimensions(0, &mx, &my, &mz);
 
     // Loop over batches
     const int nb = particle.num_batches(it);
-    for (int ib=0; ib < nb; ib++){
-
+    for (int ib = 0; ib < nb; ib++) {
       // Loop over particles in this batch
-      const int np = particle.num_particles(it,ib);
-      for (int ip=0; ip < np; ip++){
+      const int np = particle.num_particles(it, ib);
+      for (int ip = 0; ip < np; ip++) {
+        // Create an EnzoSinkParticle object
+        EnzoSinkParticle sp = EnzoSinkParticle(block, ib, ip, accretion_radius);
 
-	// Create an EnzoSinkParticle object
-	EnzoSinkParticle sp =  EnzoSinkParticle(block,ib,ip,accretion_radius);
+        // Loop over all cells which contain the accretion zone
+        for (int k = sp.min_ind_z(); k <= sp.max_ind_z(); k++) {
+          for (int j = sp.min_ind_y(); j <= sp.max_ind_y(); j++) {
+            for (int i = sp.min_ind_x(); i <= sp.max_ind_x(); i++) {
+              // Check if cell is in accretion zone
+              if (sp.cell_in_accretion_zone(i, j, k)) {
+                const int index = INDEX(i, j, k, mx, my);
+                if (density[index] > density_threshold) {
+                  const enzo_float density_change =
+                      std::min(density[index] - density_threshold,
+                               max_mass_fraction_ * density[index]);
 
-	// Loop over all cells which contain the accretion zone
-	for (int k = sp.min_ind_z(); k <= sp.max_ind_z(); k++){
-	  for (int j = sp.min_ind_y(); j <= sp.max_ind_y(); j++){
-	    for (int i = sp.min_ind_x(); i <= sp.max_ind_x(); i++){
+                  // Update sink particle data and source fields due to
+                  // accretion from this cell
+                  sp.update(density_change, index);
 
-	      // Check if cell is in accretion zone
-	      if (sp.cell_in_accretion_zone(i, j, k)){
-		const int index = INDEX(i,j,k,mx,my);
-		if (density[index] > density_threshold){
+                }  // if density is above threshold
+              }  // if cell is in accretion zone
+            }
+          }
+        }  // Triple loop over cells containing accretion zone
 
-		  const enzo_float density_change =
-		    std::min(density[index] - density_threshold,
-			     max_mass_fraction_ * density[index]);
+        // Write the sink particle data to the particle attribute array
+        sp.write_particle_data();
 
-		  // Update sink particle data and source fields due to accretion
-		  // from this cell
-		  sp.update(density_change, index);
-
-		} // if density is above threshold
-	      } // if cell is in accretion zone
-	    }
-	  }
-	} // Triple loop over cells containing accretion zone
-
-	// Write the sink particle data to the particle attribute array
-	sp.write_particle_data();
-
-      } // Loop over particles in this batch
-    } // Loop over batches
-  } // if (num_particles > 0)
+      }  // Loop over particles in this batch
+    }  // Loop over batches
+  }  // if (num_particles > 0)
 
   // Start the refresh
-  EnzoBlock * enzo_block = enzo::block(block);
+  EnzoBlock* enzo_block = enzo::block(block);
   cello::refresh(ir_accretion_)->set_active(enzo_block->is_leaf());
-  enzo_block->refresh_start(ir_accretion_, CkIndex_EnzoBlock::p_method_accretion_end());
+  enzo_block->refresh_start(ir_accretion_,
+                            CkIndex_EnzoBlock::p_method_accretion_end());
 
   return;
 }

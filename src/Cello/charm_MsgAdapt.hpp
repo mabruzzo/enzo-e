@@ -18,34 +18,21 @@ class FieldFace;
 class ParticleData;
 
 class MsgAdapt : public CMessage_MsgAdapt {
-
-public: // interface
-
+public:  // interface
   friend class Block;
 
   static long counter[CONFIG_NODE_SIZE];
 
-  MsgAdapt
-  (
-   int adapt_step,
-   Index index,
-   int ic3[3],
-   int of3[3],
-   int level_now,
-   int level_min,
-   int level_max,
-   bool can_coarsen
-   )
-    :
-    adapt_step_(adapt_step),
-    index_(index),
-    level_now_(level_now),
-    level_min_(level_min),
-    level_max_(level_max),
-    can_coarsen_(can_coarsen),
-    buffer_(nullptr)
-  {
-    cello::hex_string(tag_,TAG_LEN); // add new tag for new message
+  MsgAdapt(int adapt_step, Index index, int ic3[3], int of3[3], int level_now,
+           int level_min, int level_max, bool can_coarsen)
+      : adapt_step_(adapt_step),
+        index_(index),
+        level_now_(level_now),
+        level_min_(level_min),
+        level_max_(level_max),
+        can_coarsen_(can_coarsen),
+        buffer_(nullptr) {
+    cello::hex_string(tag_, TAG_LEN);  // add new tag for new message
     ic3_[0] = ic3[0];
     ic3_[1] = ic3[1];
     ic3_[2] = ic3[2];
@@ -55,46 +42,40 @@ public: // interface
     ofv_[0][0] = of3[0];
     ofv_[1][0] = of3[1];
     ofv_[2][0] = of3[2];
-    ++counter[cello::index_static()]; 
+    ++counter[cello::index_static()];
   }
 
-  void add_face(int of3[3])
-  {
+  void add_face(int of3[3]) {
     ofv_[0].push_back(of3[0]);
     ofv_[1].push_back(of3[1]);
     ofv_[2].push_back(of3[2]);
   }
 
-    virtual ~MsgAdapt();
+  virtual ~MsgAdapt();
 
   /// Copy constructor
-  MsgAdapt(const MsgAdapt & data_msg) throw()
-  {
-    ++counter[cello::index_static()]; 
+  MsgAdapt(const MsgAdapt& data_msg) throw() {
+    ++counter[cello::index_static()];
   };
 
   /// Assignment operator
-  MsgAdapt & operator= (const MsgAdapt & data_msg) throw()
-  { return *this; }
+  MsgAdapt& operator=(const MsgAdapt& data_msg) throw() { return *this; }
 
-  const char * tag() { return tag_;}
+  const char* tag() { return tag_; }
 
-public: // static methods
-
+public:  // static methods
   /// Pack data to serialize
-  static void * pack (MsgAdapt*);
-  
+  static void* pack(MsgAdapt*);
+
   /// Unpack data to de-serialize
-  static MsgAdapt * unpack(void *);
+  static MsgAdapt* unpack(void*);
 
-  void print (const char * msg);
-  
-protected: // methods
+  void print(const char* msg);
 
-  MsgAdapt() { }
+protected:  // methods
+  MsgAdapt() {}
 
-protected: // attributes
-
+protected:  // attributes
   int adapt_step_;
   Index index_;
   int ic3_[3];
@@ -104,10 +85,9 @@ protected: // attributes
   int level_max_;
   bool can_coarsen_;
   /// Saved Charm++ buffer for deleting after unpack()
-  void * buffer_;
+  void* buffer_;
   /// Random hex tag for tracking messages for debugging
-  char tag_[TAG_LEN+1];
-
+  char tag_[TAG_LEN + 1];
 };
 
 #endif /* CHARM_MSG_HPP */

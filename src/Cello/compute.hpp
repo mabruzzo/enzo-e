@@ -27,6 +27,4 @@
 #include "_data.hpp"
 #include "_simulation.hpp"
 
-
 #endif /* COMPUTE_HPP */
-

@@ -17,4 +17,3 @@
 
 #include "_parallel.hpp"
 #endif /* PARALLEL_HPP */
-

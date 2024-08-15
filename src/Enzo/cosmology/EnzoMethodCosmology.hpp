@@ -9,50 +9,37 @@
 #define ENZO_ENZO_METHOD_COSMOLOGY_HPP
 
 class EnzoMethodCosmology : public Method {
-
   /// @class    EnzoMethodCosmology
   /// @ingroup  Enzo
-  /// @brief    [\ref Enzo] 
+  /// @brief    [\ref Enzo]
 
-public: // interface
-
+public:  // interface
   /// Constructor
   EnzoMethodCosmology() throw();
 
   /// Charm++ PUP::able declarations
   PUPable_decl(EnzoMethodCosmology);
-  
+
   /// Charm++ PUP::able migration constructor
-  EnzoMethodCosmology (CkMigrateMessage *m)
-    : Method (m)
-  {}
+  EnzoMethodCosmology(CkMigrateMessage* m) : Method(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
-    Method::pup(p);
-  }
-  
-public: // virtual methods
-  
-  /// Apply the method to advance a block one timestep 
-  virtual void compute( Block * block) throw();
+  void pup(PUP::er& p) { Method::pup(p); }
 
-  virtual std::string name () throw () 
-  { return "cosmology"; }
+public:  // virtual methods
+  /// Apply the method to advance a block one timestep
+  virtual void compute(Block* block) throw();
+
+  virtual std::string name() throw() { return "cosmology"; }
 
   /// Compute maximum timestep for this method
-  virtual double timestep ( Block * block) throw()
-  { return std::numeric_limits<double>::max(); }
+  virtual double timestep(Block* block) throw() {
+    return std::numeric_limits<double>::max();
+  }
 
-private: // methods
-
-
-private: // attributes
-
+private:  // methods
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
-
 };
 
 #endif /* ENZO_ENZO_METHOD_COSMOLOGY_HPP */
-

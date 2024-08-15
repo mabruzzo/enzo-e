@@ -11,66 +11,50 @@
 #include "charm_simulation.hpp"
 
 // KEEP CONSISTENT WITH _comm.hpp: phase_type
-const char * phase_name[] = {
-  "unknown",
-  "initial_enter",
-  "initial_exit",
-  "adapt_enter",
-  "adapt_called",
-  "adapt_next",
-  "adapt_end",
-  "adapt_exit",
-  "compute_enter",
-  "compute_continue",
-  "compute_exit",
-  "refresh_enter",
-  "refresh_exit",
-  "stopping_enter",
-  "stopping_exit",
-  "output_enter",
-  "output_exit",
-  "restart",
-  "balance",
-  "exit"
-};
+const char* phase_name[] = {
+    "unknown",       "initial_enter",    "initial_exit",  "adapt_enter",
+    "adapt_called",  "adapt_next",       "adapt_end",     "adapt_exit",
+    "compute_enter", "compute_continue", "compute_exit",  "refresh_enter",
+    "refresh_exit",  "stopping_enter",   "stopping_exit", "output_enter",
+    "output_exit",   "restart",          "balance",       "exit"};
 
 // #define TRACE_BLOCK
 
-Block::Block ( process_type ip_source, MsgType msg_type )
-  : CBase_Block(),
-    data_(NULL),
-    child_data_(NULL),
-    level_next_(0),
-    cycle_(0),
-    time_(0.0),
-    dt_(0.0),
-    stop_(false),
-    index_initial_(0),
-    children_(),
-    sync_coarsen_(),
-    sync_count_(),
-    sync_max_(),
-    adapt_(),
-    child_face_level_curr_(),
-    child_face_level_next_(),
-    count_coarsen_(0),
-    adapt_step_(0),
-    adapt_ready_(false),
-    adapt_balanced_(false),
-    adapt_changed_(0),
-    coarsened_(false),
-    is_leaf_((thisIndex.level() >= 0)),
-    age_(0),
-    ip_next_(-1),
-    name_(""),
-    index_method_(-1),
-    index_solver_(),
-    refresh_(),
-    index_(thisIndex)
-{
+Block::Block(process_type ip_source, MsgType msg_type)
+    : CBase_Block(),
+      data_(NULL),
+      child_data_(NULL),
+      level_next_(0),
+      cycle_(0),
+      time_(0.0),
+      dt_(0.0),
+      stop_(false),
+      index_initial_(0),
+      children_(),
+      sync_coarsen_(),
+      sync_count_(),
+      sync_max_(),
+      adapt_(),
+      child_face_level_curr_(),
+      child_face_level_next_(),
+      count_coarsen_(0),
+      adapt_step_(0),
+      adapt_ready_(false),
+      adapt_balanced_(false),
+      adapt_changed_(0),
+      coarsened_(false),
+      is_leaf_((thisIndex.level() >= 0)),
+      age_(0),
+      ip_next_(-1),
+      name_(""),
+      index_method_(-1),
+      index_solver_(),
+      refresh_(),
+      index_(thisIndex) {
 #ifdef TRACE_BLOCK
 
-  CkPrintf ("%d TRACE_BLOCK %s Block::Block(ip)\n",  CkMyPe(),name(thisIndex).c_str());
+  CkPrintf("%d TRACE_BLOCK %s Block::Block(ip)\n", CkMyPe(),
+           name(thisIndex).c_str());
 
 #endif
 
@@ -79,24 +63,18 @@ Block::Block ( process_type ip_source, MsgType msg_type )
   init_refresh_();
   usesAtSync = true;
 
-  thisIndex.array(array_,array_+1,array_+2);
-
+  thisIndex.array(array_, array_ + 1, array_ + 2);
 }
 
 //----------------------------------------------------------------------
 
-void Block::p_set_msg_refine(MsgRefine * msg)
-{
+void Block::p_set_msg_refine(MsgRefine* msg) {
   performance_start_(perf_block);
 
-  init_refine_ (msg->index_,
-	msg->nx_, msg->ny_, msg->nz_,
-	msg->num_field_blocks_,
-	msg->num_adapt_steps_,
-	msg->cycle_, msg->time_,  msg->dt_,
-	0, NULL, msg->refresh_type_,
-	msg->num_face_level_, msg->face_level_,
-        msg->adapt_parent_);
+  init_refine_(msg->index_, msg->nx_, msg->ny_, msg->nz_,
+               msg->num_field_blocks_, msg->num_adapt_steps_, msg->cycle_,
+               msg->time_, msg->dt_, 0, NULL, msg->refresh_type_,
+               msg->num_face_level_, msg->face_level_, msg->adapt_parent_);
 
   init_adapt_(msg->adapt_parent_);
 
@@ -106,13 +84,13 @@ void Block::p_set_msg_refine(MsgRefine * msg)
 
 #ifdef TRACE_BLOCK
   {
-  CkPrintf ("%d %s index TRACE_BLOCK p_set_msg_refine(MsgRefine) done\n",
-            CkMyPe(),name(msg->index_).c_str());
+    CkPrintf("%d %s index TRACE_BLOCK p_set_msg_refine(MsgRefine) done\n",
+             CkMyPe(), name(msg->index_).c_str());
   }
 #endif
 
 #ifdef TRACE_REFINE
-  CkPrintf ("TRACE_REFINE %s\n",name().c_str());
+  CkPrintf("TRACE_REFINE %s\n", name().c_str());
   fflush(stdout);
 #endif
   delete msg;
@@ -120,18 +98,11 @@ void Block::p_set_msg_refine(MsgRefine * msg)
 
 //----------------------------------------------------------------------
 
-void Block::init_refine_
-(
- Index index,
- int nx, int ny, int nz,
- int num_field_blocks,
- int num_adapt_steps,
- int cycle, double time, double dt,
- int narray, char * array, int refresh_type,
- int num_face_level, int * face_level,
- Adapt * adapt)
-{
-
+void Block::init_refine_(Index index, int nx, int ny, int nz,
+                         int num_field_blocks, int num_adapt_steps, int cycle,
+                         double time, double dt, int narray, char* array,
+                         int refresh_type, int num_face_level, int* face_level,
+                         Adapt* adapt) {
   index_ = index;
   cycle_ = cycle;
   time_ = time;
@@ -143,29 +114,27 @@ void Block::init_refine_
 
   // Enable Charm++ AtSync() dynamic load balancing
 
-  Simulation * simulation = cello::simulation();
+  Simulation* simulation = cello::simulation();
 
-  Monitor * monitor = (simulation != NULL) ? simulation->monitor() : NULL;
+  Monitor* monitor = (simulation != NULL) ? simulation->monitor() : NULL;
 
   if ((monitor != NULL) && monitor->is_verbose()) {
-    char buffer [80];
-    snprintf (buffer,sizeof(buffer),"Block() %s %d (%x %x %x) created",
-              name().c_str(), index.level(),index[0],index[1],index[2]);
-    monitor->print("Adapt",buffer);
+    char buffer[80];
+    snprintf(buffer, sizeof(buffer), "Block() %s %d (%x %x %x) created",
+             name().c_str(), index.level(), index[0], index[1], index[2]);
+    monitor->print("Adapt", buffer);
   }
-  int ibx,iby,ibz;
-  index.array(&ibx,&iby,&ibz);
+  int ibx, iby, ibz;
+  index.array(&ibx, &iby, &ibz);
 
-  double xm,ym,zm;
-  lower(&xm,&ym,&zm);
-  double xp,yp,zp;
-  upper(&xp,&yp,&zp);
+  double xm, ym, zm;
+  lower(&xm, &ym, &zm);
+  double xp, yp, zp;
+  upper(&xp, &yp, &zp);
 
   // Allocate block data
 
-  data_ = new Data  (nx, ny, nz,
-		     num_field_blocks,
-		     xm,xp, ym,yp, zm,zp);
+  data_ = new Data(nx, ny, nz, num_field_blocks, xm, xp, ym, yp, zm, zp);
 
   data_->allocate();
 
@@ -173,7 +142,7 @@ void Block::init_refine_
 
   // Update state
 
-  set_state (cycle,time,dt,stop_);
+  set_state(cycle, time, dt, stop_);
 
   sync_coarsen_.reset();
   sync_coarsen_.set_stop(cello::num_children());
@@ -181,15 +150,15 @@ void Block::init_refine_
   // Initialize neighbor face levels
 
   if (num_face_level == 0) {
+    child_face_level_curr_.resize(cello::num_children() * 27);
 
-    child_face_level_curr_.resize(cello::num_children()*27);
-
-    adapt_.reset_face_level (Adapt::LevelType::curr);
+    adapt_.reset_face_level(Adapt::LevelType::curr);
 
     // Compute and set the face levels of
     int if3[3], na3[3], face_levels[27] = {};
-    size_array(na3,na3+1,na3+2);
-    ItFace it_face = this->it_face(cello::config()->adapt_min_face_rank, index_);
+    size_array(na3, na3 + 1, na3 + 2);
+    ItFace it_face =
+        this->it_face(cello::config()->adapt_min_face_rank, index_);
     while (it_face.next(if3)) {
       Index neighbor_index = index_.index_neighbor(if3, na3);
       bool refine = refine_during_initialization(neighbor_index);
@@ -198,14 +167,12 @@ void Block::init_refine_
     adapt_.copy_face_level(Adapt::LevelType::curr, face_levels);
 
   } else {
+    child_face_level_curr_.resize(cello::num_children() * num_face_level);
 
-    child_face_level_curr_.resize(cello::num_children()*num_face_level);
-
-    adapt_.copy_face_level(Adapt::LevelType::curr,face_level);
-
+    adapt_.copy_face_level(Adapt::LevelType::curr, face_level);
   }
 
-  for (size_t i=0; i<child_face_level_curr_.size(); i++)
+  for (size_t i = 0; i < child_face_level_curr_.size(); i++)
     child_face_level_curr_[i] = 0;
 
   initialize_child_face_levels_();
@@ -216,28 +183,25 @@ void Block::init_refine_
   const int level = this->level();
 
   int na3[3];
-  size_array(na3,na3+1,na3+2);
+  size_array(na3, na3 + 1, na3 + 2);
 
-  int ic3[3] = {0,0,0};
-  if (level > 0) index_.child(level,ic3,ic3+1,ic3+2);
+  int ic3[3] = {0, 0, 0};
+  if (level > 0) index_.child(level, ic3, ic3 + 1, ic3 + 2);
 
   if (narray != 0) {
-
     // Create field face of refined data from parent
-    int if3[3] = {0,0,0};
+    int if3[3] = {0, 0, 0};
     int g3[3];
-    cello::field_descr()->ghost_depth(0,g3,g3+1,g3+2);
-    Refresh * refresh = new Refresh;
+    cello::field_descr()->ghost_depth(0, g3, g3 + 1, g3 + 2);
+    Refresh* refresh = new Refresh;
     refresh->add_all_data();
 
-    FieldFace * field_face = create_face
-      (if3, ic3, g3, refresh_fine, refresh);
+    FieldFace* field_face = create_face(if3, ic3, g3, refresh_fine, refresh);
 
     // Copy refined field data
-    field_face -> array_to_face (array, data()->field());
+    field_face->array_to_face(array, data()->field());
 
     delete field_face;
-
   }
 
   if (simulation) simulation->data_insert_block(this);
@@ -248,38 +212,34 @@ void Block::init_refine_
   }
 
   if (level > 0) {
-
-    control_sync_quiescence (CkIndex_Main::p_adapt_end());
-
+    control_sync_quiescence(CkIndex_Main::p_adapt_end());
   }
 
   // Do not migrate the root Block (0,0,0) level (0)
-  setMigratable(! index_.is_root());
+  setMigratable(!index_.is_root());
 }
 
 //----------------------------------------------------------------------
 
-void Block::initialize()
-{
+void Block::initialize() {
 #ifdef TRACE_BLOCK
-  CkPrintf ("TRACE_BLOCK %s initialize()\n",name().c_str());
+  CkPrintf("TRACE_BLOCK %s initialize()\n", name().c_str());
   fflush(stdout);
 #endif
 
   const bool initial_new = cello::config()->initial_new;
 
-  if (! initial_new) {
-    if (cello::is_initial_cycle(cycle_,InitCycleKind::fresh) && level() <= 0) {
-      CkCallback callback (CkIndex_Block::r_end_initialize(NULL), thisProxy);
-      contribute(0,0,CkReduction::concat,callback);
+  if (!initial_new) {
+    if (cello::is_initial_cycle(cycle_, InitCycleKind::fresh) && level() <= 0) {
+      CkCallback callback(CkIndex_Block::r_end_initialize(NULL), thisProxy);
+      contribute(0, 0, CkReduction::concat, callback);
     }
   }
 }
 
 //----------------------------------------------------------------------
 
-void Block::pup(PUP::er &p)
-{
+void Block::pup(PUP::er& p) {
   TRACEPUP;
 
   CBase_Block::pup(p);
@@ -290,19 +250,19 @@ void Block::pup(PUP::er &p)
   p | *data_;
 
   // child_data_ may be NULL
-  bool allocated=(child_data_ != NULL);
-  p|allocated;
+  bool allocated = (child_data_ != NULL);
+  p | allocated;
   if (allocated) {
-    if (up) child_data_=new Data;
+    if (up) child_data_ = new Data;
     // child_data_ guaranteed to be non-NULL: adding check for
     // Coverity static analysis
-    if (child_data_) p|*child_data_;
+    if (child_data_) p | *child_data_;
   } else {
     child_data_ = NULL;
   }
 
   p | index_;
-  PUParray(p,array_,3);
+  PUParray(p, array_, 3);
   p | level_next_;
   p | cycle_;
   p | time_;
@@ -333,16 +293,16 @@ void Block::pup(PUP::er &p)
   // SKIP method_: initialized when needed
 
   if (up) {
-    Simulation * simulation = cello::simulation();
+    Simulation* simulation = cello::simulation();
     if (simulation != NULL) simulation->data_insert_block(this);
   }
   p | refresh_sync_list_;
 
-  int len=refresh_msg_list_.size();
+  int len = refresh_msg_list_.size();
   p | len;
   if (up) {
     refresh_msg_list_.resize(len);
-    for (int i=0; i<len; i++) refresh_msg_list_[i].clear();
+    for (int i = 0; i < len; i++) refresh_msg_list_[i].clear();
   }
 
   p | index_order_;
@@ -351,27 +311,20 @@ void Block::pup(PUP::er &p)
 
 //----------------------------------------------------------------------
 
-ItFace Block::it_face
-(int min_face_rank,
- Index index,
- const int * ic3,
- const int * if3) throw()
-{
+ItFace Block::it_face(int min_face_rank, Index index, const int* ic3,
+                      const int* if3) throw() {
   int rank = cello::rank();
   int n3[3];
   int p3[3];
-  size_array(n3,n3+1,n3+2);
-  cello::hierarchy()->get_periodicity(p3,p3+1,p3+2);
-  return ItFace (rank,min_face_rank,p3,n3,index,ic3,if3);
+  size_array(n3, n3 + 1, n3 + 2);
+  cello::hierarchy()->get_periodicity(p3, p3 + 1, p3 + 2);
+  return ItFace(rank, min_face_rank, p3, n3, index, ic3, if3);
 }
 
 //----------------------------------------------------------------------
 
-ItNeighbor Block::it_neighbor (Index index,
-                               int min_face_rank,
-			       int neighbor_type,
-			       int min_level, int coarse_level) throw()
-{
+ItNeighbor Block::it_neighbor(Index index, int min_face_rank, int neighbor_type,
+                              int min_level, int coarse_level) throw() {
   if (min_face_rank == -1) {
     min_face_rank = cello::config()->adapt_min_face_rank;
   }
@@ -379,101 +332,132 @@ ItNeighbor Block::it_neighbor (Index index,
     min_level = cello::config()->mesh_min_level;
   }
   int n3[3];
-  size_array(&n3[0],&n3[1],&n3[2]);
+  size_array(&n3[0], &n3[1], &n3[2]);
   int p3[3];
-  cello::hierarchy()->get_periodicity(p3,p3+1,p3+2);
-  return ItNeighbor
-    (this,min_face_rank,p3,n3,index,
-     neighbor_type,min_level,coarse_level);
+  cello::hierarchy()->get_periodicity(p3, p3 + 1, p3 + 2);
+  return ItNeighbor(this, min_face_rank, p3, n3, index, neighbor_type,
+                    min_level, coarse_level);
 }
 
 //----------------------------------------------------------------------
 
-Method * Block::method () throw ()
-{
-  Problem * problem = cello::problem();
-  Method * method = problem->method(index_method_);
+Method* Block::method() throw() {
+  Problem* problem = cello::problem();
+  Method* method = problem->method(index_method_);
   return method;
 }
 
 //----------------------------------------------------------------------
 
-Initial * Block::initial () throw ()
-{
-  Problem * problem = cello::problem();
-  Initial * initial = problem->initial(index_initial_);
+Initial* Block::initial() throw() {
+  Problem* problem = cello::problem();
+  Initial* initial = problem->initial(index_initial_);
   return initial;
 }
 
 //----------------------------------------------------------------------
 
-Solver * Block::solver () throw ()
-{
-  Problem * problem = cello::problem();
-  Solver * solver = problem->solver(index_solver());
+Solver* Block::solver() throw() {
+  Problem* problem = cello::problem();
+  Solver* solver = problem->solver(index_solver());
   return solver;
 }
 
 //----------------------------------------------------------------------
 
-void Block::print (FILE * fp_in) const
-{
-  FILE * fp = nullptr;
+void Block::print(FILE* fp_in) const {
+  FILE* fp = nullptr;
   if (fp_in == nullptr) {
-    fp = fopen ((std::string("CB-")+name_).c_str(),"a");
+    fp = fopen((std::string("CB-") + name_).c_str(), "a");
   } else {
     fp = fp_in;
   }
-  fprintf (fp,"%d %s PRINT_BLOCK data_ = %p\n",CkMyPe(),name_.c_str(),(void*)data_);
-  fprintf (fp,"%d %s PRINT_BLOCK child_data_ = %p\n",CkMyPe(),name_.c_str(),(void*)child_data_);
-  int v3[3];index().values(v3);
-  fprintf (fp,"%d %s PRINT_BLOCK index_ = %0x %0x %0x\n",CkMyPe(),name_.c_str(),v3[0],v3[1],v3[2]);
-  fprintf (fp,"%d %s PRINT_BLOCK array_ = %d %d %d\n",CkMyPe(),name_.c_str(),array_[0],array_[1],array_[2]);
-  fprintf (fp,"%d %s PRINT_BLOCK level_next_ = %d\n",CkMyPe(),name_.c_str(),level_next_);
-  fprintf (fp,"%d %s PRINT_BLOCK cycle_ = %d\n",CkMyPe(),name_.c_str(),cycle_);
-  fprintf (fp,"%d %s PRINT_BLOCK time_ = %f\n",CkMyPe(),name_.c_str(),time_);
-  fprintf (fp,"%d %s PRINT_BLOCK dt_ = %f\n",CkMyPe(),name_.c_str(),dt_);
-  fprintf (fp,"%d %s PRINT_BLOCK stop_ = %d\n",CkMyPe(),name_.c_str(),stop_);
-  fprintf (fp,"%d %s PRINT_BLOCK index_initial_ = %d\n",CkMyPe(),name_.c_str(),index_initial_);
-  fprintf (fp,"%d %s PRINT_BLOCK children_.size() = %lu\n",CkMyPe(),name_.c_str(),children_.size());
-  fprintf (fp,"%d %s PRINT_BLOCK child_face_level_curr_.size() = %lu\n",CkMyPe(),name_.c_str(),child_face_level_curr_.size());
-  for (std::size_t i=0; i<child_face_level_curr_.size(); i++) {fprintf (fp,"%d ",child_face_level_curr_[i]);} fprintf (fp,"\n");
-  sync_coarsen_.print("PRINT_BLOCK",fp);
-  fprintf (fp,"%d %s PRINT_BLOCK sync_count_ %d: ",
-           CkMyPe(), name_.c_str(), (int)sync_count_.size());
-  for (std::size_t i=0; i<sync_count_.size(); i++) {fprintf (fp,"%d ",sync_count_[i]);} fprintf (fp,"\n");
-  fprintf (fp,"%d %s PRINT_BLOCK sync_max_ %d: ",
-           CkMyPe(), name_.c_str(), (int)sync_max_.size());
-  for (std::size_t i=0; i<sync_max_.size(); i++) {fprintf (fp,"%d ",sync_max_[i]);} fprintf (fp,"\n");
-  fprintf (fp,"%d %s PRINT_BLOCK child_face_level_next_.size() = %lu\n",CkMyPe(),name_.c_str(),child_face_level_next_.size());
-  for (std::size_t i=0; i<child_face_level_next_.size(); i++) {fprintf (fp,"%d ",child_face_level_next_[i]);} fprintf (fp,"\n");
+  fprintf(fp, "%d %s PRINT_BLOCK data_ = %p\n", CkMyPe(), name_.c_str(),
+          (void*)data_);
+  fprintf(fp, "%d %s PRINT_BLOCK child_data_ = %p\n", CkMyPe(), name_.c_str(),
+          (void*)child_data_);
+  int v3[3];
+  index().values(v3);
+  fprintf(fp, "%d %s PRINT_BLOCK index_ = %0x %0x %0x\n", CkMyPe(),
+          name_.c_str(), v3[0], v3[1], v3[2]);
+  fprintf(fp, "%d %s PRINT_BLOCK array_ = %d %d %d\n", CkMyPe(), name_.c_str(),
+          array_[0], array_[1], array_[2]);
+  fprintf(fp, "%d %s PRINT_BLOCK level_next_ = %d\n", CkMyPe(), name_.c_str(),
+          level_next_);
+  fprintf(fp, "%d %s PRINT_BLOCK cycle_ = %d\n", CkMyPe(), name_.c_str(),
+          cycle_);
+  fprintf(fp, "%d %s PRINT_BLOCK time_ = %f\n", CkMyPe(), name_.c_str(), time_);
+  fprintf(fp, "%d %s PRINT_BLOCK dt_ = %f\n", CkMyPe(), name_.c_str(), dt_);
+  fprintf(fp, "%d %s PRINT_BLOCK stop_ = %d\n", CkMyPe(), name_.c_str(), stop_);
+  fprintf(fp, "%d %s PRINT_BLOCK index_initial_ = %d\n", CkMyPe(),
+          name_.c_str(), index_initial_);
+  fprintf(fp, "%d %s PRINT_BLOCK children_.size() = %lu\n", CkMyPe(),
+          name_.c_str(), children_.size());
+  fprintf(fp, "%d %s PRINT_BLOCK child_face_level_curr_.size() = %lu\n",
+          CkMyPe(), name_.c_str(), child_face_level_curr_.size());
+  for (std::size_t i = 0; i < child_face_level_curr_.size(); i++) {
+    fprintf(fp, "%d ", child_face_level_curr_[i]);
+  }
+  fprintf(fp, "\n");
+  sync_coarsen_.print("PRINT_BLOCK", fp);
+  fprintf(fp, "%d %s PRINT_BLOCK sync_count_ %d: ", CkMyPe(), name_.c_str(),
+          (int)sync_count_.size());
+  for (std::size_t i = 0; i < sync_count_.size(); i++) {
+    fprintf(fp, "%d ", sync_count_[i]);
+  }
+  fprintf(fp, "\n");
+  fprintf(fp, "%d %s PRINT_BLOCK sync_max_ %d: ", CkMyPe(), name_.c_str(),
+          (int)sync_max_.size());
+  for (std::size_t i = 0; i < sync_max_.size(); i++) {
+    fprintf(fp, "%d ", sync_max_[i]);
+  }
+  fprintf(fp, "\n");
+  fprintf(fp, "%d %s PRINT_BLOCK child_face_level_next_.size() = %lu\n",
+          CkMyPe(), name_.c_str(), child_face_level_next_.size());
+  for (std::size_t i = 0; i < child_face_level_next_.size(); i++) {
+    fprintf(fp, "%d ", child_face_level_next_[i]);
+  }
+  fprintf(fp, "\n");
 
-  fprintf (fp,"%d %s PRINT_BLOCK count_coarsen_ = %d\n",CkMyPe(),name_.c_str(),count_coarsen_);
-  fprintf (fp,"%d %s PRINT_BLOCK adapt_step_ = %d\n",CkMyPe(),name_.c_str(),adapt_step_);
-  fprintf (fp,"%d %s PRINT_BLOCK adapt_ready_ = %s\n",CkMyPe(),name_.c_str(),adapt_ready_?"true":"false");
-  fprintf (fp,"%d %s PRINT_BLOCK adapt_balanced_ = %s\n",CkMyPe(),name_.c_str(),adapt_balanced_?"true":"false");
-  fprintf (fp,"%d %s PRINT_BLOCK adapt_changed_ = %d\n",CkMyPe(),name_.c_str(),adapt_changed_);
-  fprintf (fp,"%d %s PRINT_BLOCK adapt_msg_list_.size() = %lu\n",CkMyPe(),name_.c_str(),adapt_msg_list_.size());
+  fprintf(fp, "%d %s PRINT_BLOCK count_coarsen_ = %d\n", CkMyPe(),
+          name_.c_str(), count_coarsen_);
+  fprintf(fp, "%d %s PRINT_BLOCK adapt_step_ = %d\n", CkMyPe(), name_.c_str(),
+          adapt_step_);
+  fprintf(fp, "%d %s PRINT_BLOCK adapt_ready_ = %s\n", CkMyPe(), name_.c_str(),
+          adapt_ready_ ? "true" : "false");
+  fprintf(fp, "%d %s PRINT_BLOCK adapt_balanced_ = %s\n", CkMyPe(),
+          name_.c_str(), adapt_balanced_ ? "true" : "false");
+  fprintf(fp, "%d %s PRINT_BLOCK adapt_changed_ = %d\n", CkMyPe(),
+          name_.c_str(), adapt_changed_);
+  fprintf(fp, "%d %s PRINT_BLOCK adapt_msg_list_.size() = %lu\n", CkMyPe(),
+          name_.c_str(), adapt_msg_list_.size());
 
-  fprintf (fp,"%d %s PRINT_BLOCK coarsened_ = %d\n",CkMyPe(),name_.c_str(),coarsened_);
-  fprintf (fp,"%d %s PRINT_BLOCK is_leaf_ = %d\n",CkMyPe(),name_.c_str(),is_leaf_);
-  fprintf (fp,"%d %s PRINT_BLOCK age_ = %d\n",CkMyPe(),name_.c_str(),age_);
-  fprintf (fp,"%d %s PRINT_BLOCK ip_next_ = %d\n",CkMyPe(),name_.c_str(),ip_next_);
-  fprintf (fp,"%d %s PRINT_BLOCK index_method_ = %d\n",CkMyPe(),name_.c_str(),index_method_);
-  fprintf (fp,"%d %s PRINT_BLOCK index_solver_.size() = %lu\n",CkMyPe(),name_.c_str(),index_solver_.size());
-  adapt_.print(std::string("Adapt-")+name_,this,fp);
+  fprintf(fp, "%d %s PRINT_BLOCK coarsened_ = %d\n", CkMyPe(), name_.c_str(),
+          coarsened_);
+  fprintf(fp, "%d %s PRINT_BLOCK is_leaf_ = %d\n", CkMyPe(), name_.c_str(),
+          is_leaf_);
+  fprintf(fp, "%d %s PRINT_BLOCK age_ = %d\n", CkMyPe(), name_.c_str(), age_);
+  fprintf(fp, "%d %s PRINT_BLOCK ip_next_ = %d\n", CkMyPe(), name_.c_str(),
+          ip_next_);
+  fprintf(fp, "%d %s PRINT_BLOCK index_method_ = %d\n", CkMyPe(), name_.c_str(),
+          index_method_);
+  fprintf(fp, "%d %s PRINT_BLOCK index_solver_.size() = %lu\n", CkMyPe(),
+          name_.c_str(), index_solver_.size());
+  adapt_.print(std::string("Adapt-") + name_, this, fp);
 
-  for (std::size_t i=0; i<refresh_.size(); i++) { refresh_[i]->print(fp); }
+  for (std::size_t i = 0; i < refresh_.size(); i++) {
+    refresh_[i]->print(fp);
+  }
 
   if (fp_in == nullptr) {
-    fclose (fp);
+    fclose(fp);
   }
 }
 
 //=====================================================================
 
-void Block::compute_derived(const std::vector< std::string>& field_list
-                            /* = std::vector< std::string>() */ ) throw ()
+void Block::compute_derived(const std::vector<std::string>& field_list
+                            /* = std::vector< std::string>() */) throw()
 /// @param      field_list     list of fields that may be derived to compute
 {
   TRACE("Block::compute_derived()");
@@ -484,61 +468,57 @@ void Block::compute_derived(const std::vector< std::string>& field_list
 
   int nderived = field.groups()->size("derived");
 
-  if (nderived > 0){
-
-    Problem * problem = cello::problem();
-    Config   * config  = (Config *) cello::config();
+  if (nderived > 0) {
+    Problem* problem = cello::problem();
+    Config* config = (Config*)cello::config();
 
     // this is not a good way of doing this...
     //   should contruct list of fields from full list
     //   rather than copying this loop twice...
-    if (field_list.size() > 0){
-      for (size_t i = 0; i < field_list.size(); i++){
+    if (field_list.size() > 0) {
+      for (size_t i = 0; i < field_list.size(); i++) {
         std::string name = field_list[i];
-        if (field.groups()->is_in(name,"derived")){
-          Compute * compute = problem->create_compute(name,
-                                                      config);
+        if (field.groups()->is_in(name, "derived")) {
+          Compute* compute = problem->create_compute(name, config);
           compute->compute(this);
-          delete compute; // must be done
+          delete compute;  // must be done
         }
       }
-    } else{ // else check full field list and compute all
+    } else {  // else check full field list and compute all
       // derived fields
-      for(int i = 0; i < field.field_count(); i++){
+      for (int i = 0; i < field.field_count(); i++) {
         std::string name = field.field_name(i);
-        if (field.groups()->is_in(name,"derived")){
+        if (field.groups()->is_in(name, "derived")) {
           // call the appropriate compute object
-          Compute * compute = problem->create_compute(name,
-                                                      config);
+          Compute* compute = problem->create_compute(name, config);
           compute->compute(this);
-          delete compute; // must be done
+          delete compute;  // must be done
         }
       }
     }
-  } // end if derived
+  }  // end if derived
 
   return;
 }
 
 //======================================================================
 
-void Block::apply_initial_(MsgRefine * msg) throw ()
-{
+void Block::apply_initial_(MsgRefine* msg) throw() {
 #ifdef TRACE_BLOCK
-  CkPrintf ("TRACE_BLOCK %s apply_initial()\n",name().c_str());
+  CkPrintf("TRACE_BLOCK %s apply_initial()\n", name().c_str());
   fflush(stdout);
 #endif
-  if (! cello::is_initial_cycle(cycle_,InitCycleKind::fresh)) {
+  if (!cello::is_initial_cycle(cycle_, InitCycleKind::fresh)) {
     msg->update(data());
   } else {
     TRACE("Block::apply_initial_()");
-    Simulation * simulation = cello::simulation();
+    Simulation* simulation = cello::simulation();
     if (simulation->phase() == phase_initial) {
       // Create child blocks if this block refines during the initialization
       // phase.
       create_initial_child_blocks();
 
-      // Tell the root Simulation object this block is inserted and ready 
+      // Tell the root Simulation object this block is inserted and ready
       // to initialize data.
       proxy_simulation[0].p_initial_block_created();
     } else {
@@ -547,8 +527,7 @@ void Block::apply_initial_(MsgRefine * msg) throw ()
   }
 }
 
-void Block::initial_begin()
-{
+void Block::initial_begin() {
   const bool initial_new = cello::config()->initial_new;
 
   if (initial_new) {
@@ -557,48 +536,45 @@ void Block::initial_begin()
   } else {
     // Apply initial conditions
     index_initial_ = 0;
-    Problem * problem = cello::problem();
-    while (Initial * initial = problem->initial(index_initial_)) {
-      initial->enforce_block(this,cello::hierarchy());
+    Problem* problem = cello::problem();
+    while (Initial* initial = problem->initial(index_initial_)) {
+      initial->enforce_block(this, cello::hierarchy());
       index_initial_++;
     }
   }
 }
 //----------------------------------------------------------------------
 
-Block::~Block()
-{
-  Simulation * simulation = cello::simulation();
+Block::~Block() {
+  Simulation* simulation = cello::simulation();
 
-  Monitor * monitor = simulation ? simulation->monitor() : NULL;
+  Monitor* monitor = simulation ? simulation->monitor() : NULL;
 
   if (monitor && monitor->is_verbose()) {
-    char buffer [80];
-    snprintf (buffer,sizeof(buffer),"~Block() %s (%d;%d;%d) destroyed",
-              name().c_str(),index_[0],index_[1],index_[2]);
-    monitor->print("Adapt",buffer);
+    char buffer[80];
+    snprintf(buffer, sizeof(buffer), "~Block() %s (%d;%d;%d) destroyed",
+             name().c_str(), index_[0], index_[1], index_[2]);
+    monitor->print("Adapt", buffer);
   }
 
   const int level = this->level();
 
   if (level > 0) {
-
     // Send restricted data to parent
 
     int ic3[3];
-    index_.child(level,ic3,ic3+1,ic3+2);
+    index_.child(level, ic3, ic3 + 1, ic3 + 2);
 
     int n;
-    char * array;
-    int if3[3]={0,0,0};
-    int g3[3]={0,0,0};
-    Refresh * refresh = new Refresh;
+    char* array;
+    int if3[3] = {0, 0, 0};
+    int g3[3] = {0, 0, 0};
+    Refresh* refresh = new Refresh;
     refresh->add_all_data();
 
-    FieldFace * field_face = create_face
-      ( if3,ic3,g3,refresh_coarse,refresh);
+    FieldFace* field_face = create_face(if3, ic3, g3, refresh_coarse, refresh);
 
-    field_face->face_to_array(data()->field(),&n,&array);
+    field_face->face_to_array(data()->field(), &n, &array);
     delete field_face;
 
     const Index index_parent = index_.index_parent();
@@ -607,10 +583,10 @@ Block::~Block()
     // ENTRY: #2 Block::~Block()-> Block::p_refresh_child()
     // ENTRY: parent if level > 0
     // --------------------------------------------------
-    thisProxy[index_parent].p_refresh_child(n,array,ic3);
+    thisProxy[index_parent].p_refresh_child(n, array, ic3);
     // --------------------------------------------------
 
-    delete [] array;
+    delete[] array;
   }
 
   delete data_;
@@ -620,28 +596,20 @@ Block::~Block()
   child_data_ = 0;
 
   if (simulation) simulation->data_delete_block(this);
-
 }
 
 //----------------------------------------------------------------------
 
-void Block::p_refresh_child
-(
- int    n,
- char * buffer,
- int    ic3[3]
- )
-{
+void Block::p_refresh_child(int n, char* buffer, int ic3[3]) {
   performance_start_(perf_refresh_child);
-  int if3[3] = {0,0,0};
-  int  g3[3] = {0,0,0};
-  Refresh * refresh = new Refresh;
+  int if3[3] = {0, 0, 0};
+  int g3[3] = {0, 0, 0};
+  Refresh* refresh = new Refresh;
   refresh->add_all_data();
 
-  FieldFace * field_face = create_face
-    (if3, ic3, g3, refresh_coarse,refresh);
+  FieldFace* field_face = create_face(if3, ic3, g3, refresh_coarse, refresh);
 
-  field_face -> array_to_face (buffer, data()->field());
+  field_face->array_to_face(buffer, data()->field());
   delete field_face;
   performance_stop_(perf_refresh_child);
   performance_start_(perf_refresh_child_sync);
@@ -649,53 +617,51 @@ void Block::p_refresh_child
 
 //----------------------------------------------------------------------
 
-Block::Block ()
-  : CBase_Block(),
-    data_(NULL),
-    child_data_(NULL),
-    level_next_(0),
-    cycle_(0),
-    time_(0.0),
-    dt_(0.0),
-    stop_(false),
-    index_initial_(0),
-    children_(),
-    sync_coarsen_(),
-    sync_count_(),
-    sync_max_(),
-    adapt_(),
-    child_face_level_curr_(),
-    child_face_level_next_(),
-    count_coarsen_(0),
-    adapt_step_(0),
-    adapt_ready_(false),
-    adapt_balanced_(false),
-    adapt_changed_(0),
-    coarsened_(false),
-    is_leaf_((thisIndex.level() >= 0)),
-    age_(0),
-    ip_next_(-1),
-    name_(""),
-    index_method_(-1),
-    index_solver_(),
-    refresh_()
-{
+Block::Block()
+    : CBase_Block(),
+      data_(NULL),
+      child_data_(NULL),
+      level_next_(0),
+      cycle_(0),
+      time_(0.0),
+      dt_(0.0),
+      stop_(false),
+      index_initial_(0),
+      children_(),
+      sync_coarsen_(),
+      sync_count_(),
+      sync_max_(),
+      adapt_(),
+      child_face_level_curr_(),
+      child_face_level_next_(),
+      count_coarsen_(0),
+      adapt_step_(0),
+      adapt_ready_(false),
+      adapt_balanced_(false),
+      adapt_changed_(0),
+      coarsened_(false),
+      is_leaf_((thisIndex.level() >= 0)),
+      age_(0),
+      ip_next_(-1),
+      name_(""),
+      index_method_(-1),
+      index_solver_(),
+      refresh_() {
   init_refresh_();
   init_adapt_(nullptr);
 
-  for (int i=0; i<3; i++) array_[i]=0;
+  for (int i = 0; i < 3; i++) array_[i] = 0;
 }
 
 //----------------------------------------------------------------------
 
-void Block::init_adapt_(Adapt * adapt_parent)
-{
+void Block::init_adapt_(Adapt* adapt_parent) {
   const int level = index_.level();
   const int rank = cello::rank();
 
-  int p3[3],b3[3];
-  cello::hierarchy()->get_periodicity(p3,p3+1,p3+2);
-  cello::hierarchy()->root_blocks(b3,b3+1,b3+2);
+  int p3[3], b3[3];
+  cello::hierarchy()->get_periodicity(p3, p3 + 1, p3 + 2);
+  cello::hierarchy()->root_blocks(b3, b3 + 1, b3 + 2);
 
   adapt_.set_rank(rank);
   adapt_.set_min_level(cello::config()->mesh_min_level);
@@ -704,16 +670,16 @@ void Block::init_adapt_(Adapt * adapt_parent)
   adapt_.set_periodicity(p3);
   adapt_.set_valid(true);
 
-  if ( (level <= 0) && cello::is_initial_cycle(cycle_,InitCycleKind::fresh) ) {
+  if ((level <= 0) && cello::is_initial_cycle(cycle_, InitCycleKind::fresh)) {
     // If root-level (or below) block in first simulation cycle,
     // initialize neighbors to be all adjacent root-level blocks
-    int nb3[3],np3[3],ib3[3];
-    cello::hierarchy()->root_blocks(nb3,nb3+1,nb3+2);
-    cello::hierarchy()->get_periodicity(np3,np3+1,np3+2);
-    index_.array(ib3,ib3+1,ib3+2);
+    int nb3[3], np3[3], ib3[3];
+    cello::hierarchy()->root_blocks(nb3, nb3 + 1, nb3 + 2);
+    cello::hierarchy()->get_periodicity(np3, np3 + 1, np3 + 2);
+    index_.array(ib3, ib3 + 1, ib3 + 2);
     // Initialize face index loop limits
-    int ifm3[3],ifp3[3];
-    for (int i=0; i<3; i++) {
+    int ifm3[3], ifp3[3];
+    for (int i = 0; i < 3; i++) {
       if (i < rank) {
         if (np3[i]) {
           // If periodic then block always has neighbor
@@ -721,7 +687,7 @@ void Block::init_adapt_(Adapt * adapt_parent)
           ifp3[i] = +1;
         } else {
           // If not periodic then no block neighbor at domain ends
-          ifm3[i] = (ib3[i] - 1 >= 0)     ? -1 : 0;
+          ifm3[i] = (ib3[i] - 1 >= 0) ? -1 : 0;
           ifp3[i] = (ib3[i] + 1 < nb3[i]) ? +1 : 0;
         }
       } else {
@@ -730,37 +696,36 @@ void Block::init_adapt_(Adapt * adapt_parent)
       }
     }
     int if3[3];
-    for (if3[2]=ifm3[2]; if3[2]<=ifp3[2]; ++if3[2]) {
-      for (if3[1]=ifm3[1]; if3[1]<=ifp3[1]; ++if3[1]) {
-        for (if3[0]=ifm3[0]; if3[0]<=ifp3[0]; ++if3[0]) {
+    for (if3[2] = ifm3[2]; if3[2] <= ifp3[2]; ++if3[2]) {
+      for (if3[1] = ifm3[1]; if3[1] <= ifp3[1]; ++if3[1]) {
+        for (if3[0] = ifm3[0]; if3[0] <= ifp3[0]; ++if3[0]) {
           if (if3[0] || if3[1] || if3[2]) {
-            Index index_neighbor = index_.index_neighbor(if3,nb3);
+            Index index_neighbor = index_.index_neighbor(if3, nb3);
             adapt_.insert_neighbor(index_neighbor);
           }
         }
       }
     }
-  
+
   } else if (level > 0) {
     // else if a refined Block, initialize adapt from its incoming
     // parent block
     int ic3[3];
-    index_.child(level,ic3,ic3+1,ic3+2);
-    adapt_.refine(*adapt_parent,ic3);
+    index_.child(level, ic3, ic3 + 1, ic3 + 2);
+    adapt_.refine(*adapt_parent, ic3);
 #ifdef DEBUG_ADAPT
-    CkPrintf ("DEBUG_ADAPT %s Block() level > 0\n",
-              name().c_str());
-    adapt_parent->print("init_adapt parent",this);
-    adapt_.print("init_adapt child after",this);
-#endif    
+    CkPrintf("DEBUG_ADAPT %s Block() level > 0\n", name().c_str());
+    adapt_parent->print("init_adapt parent", this);
+    adapt_.print("init_adapt child after", this);
+#endif
   }
 
   // replace neighbor blocks with their child blocks if they refine
   // during the initialization phase.
   int max_initial_level = cello::config()->mesh_max_initial_level;
-  for (int level_i=level; level_i < max_initial_level; level_i++) {
+  for (int level_i = level; level_i < max_initial_level; level_i++) {
     std::vector<Index> neighbors = adapt_.index_neighbors();
-    for (int i=0; i<(int) neighbors.size(); i++) {
+    for (int i = 0; i < (int)neighbors.size(); i++) {
       Index neighbor_index = neighbors.at(i);
       if (neighbor_index.level() == level_i) {
         if (refine_during_initialization(neighbor_index))
@@ -772,22 +737,19 @@ void Block::init_adapt_(Adapt * adapt_parent)
 
 //----------------------------------------------------------------------
 
-void Block::init_refresh_()
-{
+void Block::init_refresh_() {
   const int count = cello::simulation()->refresh_count();
   refresh_sync_list_.resize(count);
   refresh_msg_list_.resize(count);
-  for (int i=0; i<count; i++) {
+  for (int i = 0; i < count; i++) {
     refresh_sync_list_[i].reset();
   }
 }
 
 //----------------------------------------------------------------------
 
-std::string Block::name() const throw()
-{
+std::string Block::name() const throw() {
   if (name_ == "") {
-
     name_ = name(index_);
   }
   return name_;
@@ -795,61 +757,63 @@ std::string Block::name() const throw()
 
 //----------------------------------------------------------------------
 
-std::string Block::name(Index index) const throw()
-{
-  int blocking[3] = {1,1,1};
-  cello::hierarchy()->root_blocks(blocking,blocking+1,blocking+2);
+std::string Block::name(Index index) const throw() {
+  int blocking[3] = {1, 1, 1};
+  cello::hierarchy()->root_blocks(blocking, blocking + 1, blocking + 2);
 
   const int level = index.level();
-  for (int i=-1; i>=level; i--) {
+  for (int i = -1; i >= level; i--) {
     blocking[0] /= 2;
     blocking[1] /= 2;
     blocking[2] /= 2;
   }
 
-  int bits[3] = {0,0,0};
+  int bits[3] = {0, 0, 0};
 
   blocking[0]--;
   blocking[1]--;
   blocking[2]--;
 
-  if (blocking[0]) do { ++bits[0]; } while (blocking[0]/=2);
-  if (blocking[1]) do { ++bits[1]; } while (blocking[1]/=2);
-  if (blocking[2]) do { ++bits[2]; } while (blocking[2]/=2);
+  if (blocking[0]) do {
+      ++bits[0];
+    } while (blocking[0] /= 2);
+  if (blocking[1]) do {
+      ++bits[1];
+    } while (blocking[1] /= 2);
+  if (blocking[2]) do {
+      ++bits[2];
+    } while (blocking[2] /= 2);
 
-  return std::string("B" + index.bit_string(level,cello::rank(),bits));
+  return std::string("B" + index.bit_string(level, cello::rank(), bits));
 }
 
 //----------------------------------------------------------------------
 
-void Block::size_array (int * nx, int * ny, int * nz) const throw ()
-{
-  cello::hierarchy()->root_blocks(nx,ny,nz);
+void Block::size_array(int* nx, int* ny, int* nz) const throw() {
+  cello::hierarchy()->root_blocks(nx, ny, nz);
 }
 
 //----------------------------------------------------------------------
 
-void Block::lower
-(double * xm, double * ym, double * zm) const throw ()
-{
-  int  ix, iy, iz;
-  int  nx, ny, nz;
+void Block::lower(double* xm, double* ym, double* zm) const throw() {
+  int ix, iy, iz;
+  int nx, ny, nz;
 
-  index_global (&ix,&iy,&iz,&nx,&ny,&nz);
+  index_global(&ix, &iy, &iz, &nx, &ny, &nz);
 
-  Hierarchy * hierarchy = cello::hierarchy();
+  Hierarchy* hierarchy = cello::hierarchy();
   double xdm, ydm, zdm;
-  hierarchy->lower(&xdm,&ydm,&zdm);
+  hierarchy->lower(&xdm, &ydm, &zdm);
   double xdp, ydp, zdp;
-  hierarchy->upper(&xdp,&ydp,&zdp);
+  hierarchy->upper(&xdp, &ydp, &zdp);
 
-  double ax = 1.0*ix/nx;
-  double ay = 1.0*iy/ny;
-  double az = 1.0*iz/nz;
+  double ax = 1.0 * ix / nx;
+  double ay = 1.0 * iy / ny;
+  double az = 1.0 * iz / nz;
 
-  double xbm = (1.0-ax)*xdm + ax*xdp;
-  double ybm = (1.0-ay)*ydm + ay*ydp;
-  double zbm = (1.0-az)*zdm + az*zdp;
+  double xbm = (1.0 - ax) * xdm + ax * xdp;
+  double ybm = (1.0 - ay) * ydm + ay * ydp;
+  double zbm = (1.0 - az) * zdm + az * zdp;
 
   if (xm) (*xm) = xbm;
   if (ym) (*ym) = ybm;
@@ -858,27 +822,25 @@ void Block::lower
 
 //----------------------------------------------------------------------
 
-void Block::upper
-(double * xp, double * yp, double * zp) const throw ()
-{
-  int  ix, iy, iz;
-  int  nx, ny, nz;
+void Block::upper(double* xp, double* yp, double* zp) const throw() {
+  int ix, iy, iz;
+  int nx, ny, nz;
 
-  index_global (&ix,&iy,&iz,&nx,&ny,&nz);
+  index_global(&ix, &iy, &iz, &nx, &ny, &nz);
 
-  Hierarchy * hierarchy = cello::hierarchy();
+  Hierarchy* hierarchy = cello::hierarchy();
   double xdm, ydm, zdm;
-  hierarchy->lower(&xdm,&ydm,&zdm);
+  hierarchy->lower(&xdm, &ydm, &zdm);
   double xdp, ydp, zdp;
-  hierarchy->upper(&xdp,&ydp,&zdp);
+  hierarchy->upper(&xdp, &ydp, &zdp);
 
-  double ax = 1.0*(ix+1)/nx;
-  double ay = 1.0*(iy+1)/ny;
-  double az = 1.0*(iz+1)/nz;
+  double ax = 1.0 * (ix + 1) / nx;
+  double ay = 1.0 * (iy + 1) / ny;
+  double az = 1.0 * (iz + 1) / nz;
 
-  double xbp = (1.0-ax)*xdm + ax*xdp;
-  double ybp = (1.0-ay)*ydm + ay*ydp;
-  double zbp = (1.0-az)*zdm + az*zdp;
+  double xbp = (1.0 - ax) * xdm + ax * xdp;
+  double ybp = (1.0 - ay) * ydm + ay * ydp;
+  double zbp = (1.0 - az) * zdm + az * zdp;
 
   if (xp) (*xp) = xbp;
   if (yp) (*yp) = ybp;
@@ -887,29 +849,24 @@ void Block::upper
 
 //----------------------------------------------------------------------
 
-void Block::cell_width
-(double * dx, double * dy, double * dz) const throw()
-{
-  double xm,ym,zm;
-  lower(&xm,&ym,&zm);
-  double xp,yp,zp;
-  upper(&xp,&yp,&zp);
-  data()->field_data()->cell_width(xm,xp,dx, ym,yp,dy, zm,zp,dz);
+void Block::cell_width(double* dx, double* dy, double* dz) const throw() {
+  double xm, ym, zm;
+  lower(&xm, &ym, &zm);
+  double xp, yp, zp;
+  upper(&xp, &yp, &zp);
+  data()->field_data()->cell_width(xm, xp, dx, ym, yp, dy, zm, zp, dz);
 }
 
 //----------------------------------------------------------------------
 
-void Block::index_global
-( Index index,
-  int *ix, int *iy, int *iz,
-  int *nx, int *ny, int *nz ) const
-{
+void Block::index_global(Index index, int* ix, int* iy, int* iz, int* nx,
+                         int* ny, int* nz) const {
   const int level = index.level();
-  index.array(ix,iy,iz);
-  size_array (nx,ny,nz);
+  index.array(ix, iy, iz);
+  size_array(nx, ny, nz);
 
-  if (level < 0 ) {
-    for (int i=level; i<0; i++) {
+  if (level < 0) {
+    for (int i = level; i < 0; i++) {
       if (ix) (*ix) = ((*ix) >> 1);
       if (iy) (*iy) = ((*iy) >> 1);
       if (iz) (*iz) = ((*iz) >> 1);
@@ -917,10 +874,10 @@ void Block::index_global
       if (ny) (*ny) >>= 1;
       if (nz) (*nz) >>= 1;
     }
-  }  else if (0 < level) {
-    for (int i=0; i<level; i++) {
-      int bx,by,bz;
-      index.child(i+1,&bx,&by,&bz);
+  } else if (0 < level) {
+    for (int i = 0; i < level; i++) {
+      int bx, by, bz;
+      index.child(i + 1, &bx, &by, &bz);
       if (ix) (*ix) = ((*ix) << 1) | bx;
       if (iy) (*iy) = ((*iy) << 1) | by;
       if (iz) (*iz) = ((*iz) << 1) | bz;
@@ -933,8 +890,8 @@ void Block::index_global
 
 //----------------------------------------------------------------------
 
-Index Block::index_from_global(int ix, int iy, int iz, int level, int min_level)
-{
+Index Block::index_from_global(int ix, int iy, int iz, int level,
+                               int min_level) {
   Index index;
   index.set_array(ix >> level, iy >> level, iz >> level);
   index.set_level(level);
@@ -948,31 +905,28 @@ Index Block::index_from_global(int ix, int iy, int iz, int level, int min_level)
 
 //----------------------------------------------------------------------
 
-FieldFace * Block::create_face
-(int if3[3], int ic3[3], int g3[3],
- int refresh_type, Refresh * refresh, bool new_refresh) const
-{
-  FieldFace  * field_face = new FieldFace(cello::rank());
+FieldFace* Block::create_face(int if3[3], int ic3[3], int g3[3],
+                              int refresh_type, Refresh* refresh,
+                              bool new_refresh) const {
+  FieldFace* field_face = new FieldFace(cello::rank());
 
-  field_face -> set_refresh_type (refresh_type);
-  field_face -> set_child (ic3[0],ic3[1],ic3[2]);
-  field_face -> set_face (if3[0],if3[1],if3[2]);
-  field_face -> set_ghost(g3[0],g3[1],g3[2]);
-  field_face -> set_refresh(refresh,new_refresh);
+  field_face->set_refresh_type(refresh_type);
+  field_face->set_child(ic3[0], ic3[1], ic3[2]);
+  field_face->set_face(if3[0], if3[1], if3[2]);
+  field_face->set_ghost(g3[0], g3[1], g3[2]);
+  field_face->set_refresh(refresh, new_refresh);
 
   return field_face;
 }
 
 //----------------------------------------------------------------------
 
-void Block::is_on_boundary (bool is_boundary[3][2]) const throw()
-{
-
+void Block::is_on_boundary(bool is_boundary[3][2]) const throw() {
   // Boundary * boundary = simulation()->problem()->boundary();
   // bool periodic = boundary->is_periodic();
 
   int n3[3];
-  size_array (&n3[0],&n3[1],&n3[2]);
+  size_array(&n3[0], &n3[1], &n3[2]);
 
   const int level = this->level();
   // adjust array size for negative levels
@@ -983,64 +937,56 @@ void Block::is_on_boundary (bool is_boundary[3][2]) const throw()
     n3[2] = n3[2] >> shift;
   }
 
-  for (int axis=0; axis<3; axis++) {
-    for (int face=0; face<2; face++) {
+  for (int axis = 0; axis < 3; axis++) {
+    for (int face = 0; face < 2; face++) {
       is_boundary[axis][face] =
-	index_.is_on_boundary(axis,2*face-1,n3[axis]);
+          index_.is_on_boundary(axis, 2 * face - 1, n3[axis]);
     }
   }
 }
 
 //----------------------------------------------------------------------
 
-void Block::verify_neighbors()
-{
-  if (! is_leaf()) return;
+void Block::verify_neighbors() {
+  if (!is_leaf()) return;
 
   ItNeighbor it_neighbor = this->it_neighbor(index_);
 
   int num_neighbors = 0;
   int tf3[3];
   while (it_neighbor.next(tf3)) {
-     ++num_neighbors;
+    ++num_neighbors;
   }
-  ASSERT2 ("Block::verify_neighbors()",
-           "Neighbor count mismatch between Adapt %d and face_level_ %d",
-           adapt_.num_neighbors(), num_neighbors,
-           (adapt_.num_neighbors() == num_neighbors));
+  ASSERT2("Block::verify_neighbors()",
+          "Neighbor count mismatch between Adapt %d and face_level_ %d",
+          adapt_.num_neighbors(), num_neighbors,
+          (adapt_.num_neighbors() == num_neighbors));
 
   while (it_neighbor.next(tf3)) {
-     Index index_neighbor = it_neighbor.index();
-     char buffer[256];
-     snprintf (buffer,80,"%s Neighbor mismatch between Adapt and face_level_",
-               name().c_str());
-     ASSERT ("Block::verify_neighbors()",
-             buffer,
-             adapt_.is_neighbor(index_neighbor));
-     ++num_neighbors;
+    Index index_neighbor = it_neighbor.index();
+    char buffer[256];
+    snprintf(buffer, 80, "%s Neighbor mismatch between Adapt and face_level_",
+             name().c_str());
+    ASSERT("Block::verify_neighbors()", buffer,
+           adapt_.is_neighbor(index_neighbor));
+    ++num_neighbors;
   }
-  ASSERT2 ("Block::verify_neighbors()",
-           "Neighbor count mismatch between Adapt %d and face_level_ %d",
-           adapt_.num_neighbors(), num_neighbors,
-           (adapt_.num_neighbors() == num_neighbors));
+  ASSERT2("Block::verify_neighbors()",
+          "Neighbor count mismatch between Adapt %d and face_level_ %d",
+          adapt_.num_neighbors(), num_neighbors,
+          (adapt_.num_neighbors() == num_neighbors));
 }
 
 //======================================================================
 
-void Block::determine_boundary_
-(
- bool bndry[3][2],
- bool * fxm, bool * fxp,
- bool * fym, bool * fyp,
- bool * fzm, bool * fzp
- )
-{
+void Block::determine_boundary_(bool bndry[3][2], bool* fxm, bool* fxp,
+                                bool* fym, bool* fyp, bool* fzm, bool* fzp) {
   // return bndry[] array of faces on domain boundary
 
-  is_on_boundary (bndry);
+  is_on_boundary(bndry);
 
-  int nx,ny,nz;
-  data()->field_data()->size (&nx,&ny,&nz);
+  int nx, ny, nz;
+  data()->field_data()->size(&nx, &ny, &nz);
 
   // Determine in which directions we need to communicate or update boundary
 
@@ -1054,155 +1000,134 @@ void Block::determine_boundary_
 
 //----------------------------------------------------------------------
 
-void Block::update_boundary_ ()
-{
+void Block::update_boundary_() {
   bool is_boundary[3][2];
-  bool fxm=0,fxp=0,fym=0,fyp=0,fzm=0,fzp=0;
+  bool fxm = 0, fxp = 0, fym = 0, fyp = 0, fzm = 0, fzp = 0;
 
-  determine_boundary_(is_boundary,&fxm,&fxp,&fym,&fyp,&fzm,&fzp);
+  determine_boundary_(is_boundary, &fxm, &fxp, &fym, &fyp, &fzm, &fzp);
 
   int index = 0;
-  Problem * problem = cello::problem();
-  Boundary * boundary;
+  Problem* problem = cello::problem();
+  Boundary* boundary;
 
   while ((boundary = problem->boundary(index++))) {
     // Update boundaries
-    if ( fxm ) boundary->enforce(this,face_lower,axis_x);
-    if ( fxp ) boundary->enforce(this,face_upper,axis_x);
-    if ( fym ) boundary->enforce(this,face_lower,axis_y);
-    if ( fyp ) boundary->enforce(this,face_upper,axis_y);
-    if ( fzm ) boundary->enforce(this,face_lower,axis_z);
-    if ( fzp ) boundary->enforce(this,face_upper,axis_z);
+    if (fxm) boundary->enforce(this, face_lower, axis_x);
+    if (fxp) boundary->enforce(this, face_upper, axis_x);
+    if (fym) boundary->enforce(this, face_lower, axis_y);
+    if (fyp) boundary->enforce(this, face_upper, axis_y);
+    if (fzm) boundary->enforce(this, face_lower, axis_z);
+    if (fzp) boundary->enforce(this, face_upper, axis_z);
   }
 }
 
 //----------------------------------------------------------------------
 
-void Block::facing_child_(int jc3[3], const int ic3[3], const int if3[3]) const
-{
+void Block::facing_child_(int jc3[3], const int ic3[3],
+                          const int if3[3]) const {
   jc3[0] = if3[0] ? 1 - ic3[0] : ic3[0];
   jc3[1] = if3[1] ? 1 - ic3[1] : ic3[1];
   jc3[2] = if3[2] ? 1 - ic3[2] : ic3[2];
-  TRACE9("facing_child %d %d %d  child %d %d %d  face %d %d %d",
-	 jc3[0],jc3[1],jc3[2],ic3[0],ic3[1],ic3[2],if3[0],if3[1],if3[2]);
+  TRACE9("facing_child %d %d %d  child %d %d %d  face %d %d %d", jc3[0], jc3[1],
+         jc3[2], ic3[0], ic3[1], ic3[2], if3[0], if3[1], if3[2]);
 }
 
 //----------------------------------------------------------------------
 
-void Block::copy_(const Block & block) throw()
-{
+void Block::copy_(const Block& block) throw() {
   data_->copy_(*block.data());
   if (child_data_) child_data_->copy_(*block.child_data());
 
-  cycle_      = block.cycle_;
-  time_       = block.time_;
-  dt_         = block.dt_;
-  stop_       = block.stop_;
+  cycle_ = block.cycle_;
+  time_ = block.time_;
+  dt_ = block.dt_;
+  stop_ = block.stop_;
   adapt_step_ = block.adapt_step_;
   adapt_ready_ = block.adapt_ready_;
   adapt_balanced_ = block.adapt_balanced_;
   adapt_changed_ = block.adapt_changed_;
-  coarsened_  = block.coarsened_;
+  coarsened_ = block.coarsened_;
 }
 
 //----------------------------------------------------------------------
 
-Index Block::neighbor_
-(
- const int of3[3],
- Index *   ind
- ) const
-{
+Index Block::neighbor_(const int of3[3], Index* ind) const {
   Index index = (ind != 0) ? (*ind) : index_;
 
   int na3[3];
-  size_array (&na3[0],&na3[1],&na3[2]);
+  size_array(&na3[0], &na3[1], &na3[2]);
   // const bool periodic  = simulation()->problem()->boundary()->is_periodic();
-  Index in = index.index_neighbor (of3,na3);
+  Index in = index.index_neighbor(of3, na3);
   return in;
 }
 
 //----------------------------------------------------------------------
 
-void Block::performance_start_
-(int index_region, std::string file, int line)
-{
-  Simulation * simulation = cello::simulation();
+void Block::performance_start_(int index_region, std::string file, int line) {
+  Simulation* simulation = cello::simulation();
   if (simulation)
-    simulation->performance()->start_region(index_region,file,line);
+    simulation->performance()->start_region(index_region, file, line);
 }
 
 //----------------------------------------------------------------------
 
-void Block::performance_stop_
-(int index_region, std::string file, int line)
-{
-  Simulation * simulation = cello::simulation();
+void Block::performance_stop_(int index_region, std::string file, int line) {
+  Simulation* simulation = cello::simulation();
   if (simulation)
-    simulation->performance()->stop_region(index_region,file,line);
+    simulation->performance()->stop_region(index_region, file, line);
 }
 
 //----------------------------------------------------------------------
 
-void Block::check_leaf_()
-{
-  if (level() >= 0 &&
-      ((  is_leaf() && children_.size() != 0) ||
-       (! is_leaf() && children_.size() == 0))) {
-
+void Block::check_leaf_() {
+  if (level() >= 0 && ((is_leaf() && children_.size() != 0) ||
+                       (!is_leaf() && children_.size() == 0))) {
     WARNING3("Block::check_leaf_()",
-	     "%s: is_leaf() == %s && children_.size() == %lu",
-	     name_.c_str(), is_leaf()?"true":"false",
-	     children_.size());
+             "%s: is_leaf() == %s && children_.size() == %lu", name_.c_str(),
+             is_leaf() ? "true" : "false", children_.size());
   }
 }
 
-
 //----------------------------------------------------------------------
 
-bool Block::check_position_in_block
-(const double &x, const double &y, const double &z,
- bool include_ghost // default - false
- )
-{
-
-  double xm,ym,zm;
-  lower(&xm,&ym,&zm);
-  double xp,yp,zp;
-  upper(&xp,&yp,&zp);
+bool Block::check_position_in_block(const double& x, const double& y,
+                                    const double& z,
+                                    bool include_ghost  // default - false
+) {
+  double xm, ym, zm;
+  lower(&xm, &ym, &zm);
+  double xp, yp, zp;
+  upper(&xp, &yp, &zp);
 
   bool result = false;
 
-  if (include_ghost){
+  if (include_ghost) {
     int gx, gy, gz;
-    double hx,hy,hz;
-    data()->field().ghost_depth(0,&gx,&gy,&gz);
-    cell_width(&hx,&hy,&hz);
+    double hx, hy, hz;
+    data()->field().ghost_depth(0, &gx, &gy, &gz);
+    cell_width(&hx, &hy, &hz);
 
-    xm -= gx*hx;
-    ym -= gy*hy;
-    zm -= gz*hz;
-    xp += gx*hx;
-    yp += gy*hy;
-    zp += gz*hz;
+    xm -= gx * hx;
+    ym -= gy * hy;
+    zm -= gz * hz;
+    xp += gx * hx;
+    yp += gy * hy;
+    zp += gz * hz;
   }
 
-  if (  ((x >= xm) && (x < xp)) &&
-        ((y >= ym) && (y < yp)) &&
-        ((z >= zm) && (z < zp))) result = true;
+  if (((x >= xm) && (x < xp)) && ((y >= ym) && (y < yp)) &&
+      ((z >= zm) && (z < zp)))
+    result = true;
 
   return result;
 }
 
 //----------------------------------------------------------------------
 
-bool Block::refine_during_initialization(Index index) const throw()
-{
+bool Block::refine_during_initialization(Index index) const throw() {
   int level = index.level();
   if (level >= 0) {
-    
-    if (level + 1 <= (int) cello::config()->refined_regions_lower.size()) {
-
+    if (level + 1 <= (int)cello::config()->refined_regions_lower.size()) {
       std::vector<int> lower = cello::config()->refined_regions_lower.at(level);
       std::vector<int> upper = cello::config()->refined_regions_upper.at(level);
 

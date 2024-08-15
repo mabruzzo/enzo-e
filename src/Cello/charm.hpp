@@ -3,7 +3,7 @@
 /// @file     charm.hpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2012-03-20 16:37:14
-/// @brief    Include file for the \ref Charm component 
+/// @brief    Include file for the \ref Charm component
 
 #include "charm++.h"
 

@@ -10,31 +10,25 @@
 #define MESH_REFINE_SLOPE_HPP
 
 class RefineSlope : public Refine {
-
   /// @class    RefineSlope
   /// @ingroup  Mesh
-  /// @brief    [\ref Mesh] 
+  /// @brief    [\ref Mesh]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  RefineSlope(double min_refine,
-	      double max_coarsen,
-	      std::vector<std::string> field_name_list,
-	      int    max_level,
-	      bool include_ghosts,
-	      std::string output) throw();
+  RefineSlope(double min_refine, double max_coarsen,
+              std::vector<std::string> field_name_list, int max_level,
+              bool include_ghosts, std::string output) throw();
 
   /// default constructor
   // RefineSlope () throw() : Refine() {};
 
   PUPable_decl(RefineSlope);
 
-  RefineSlope(CkMigrateMessage *m) : Refine (m) {}
+  RefineSlope(CkMigrateMessage* m) : Refine(m) {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
     // NOTE: change this function whenever attributes change
     Refine::pup(p);
@@ -42,28 +36,19 @@ public: // interface
   }
 
   /// Evaluate the refinement criteria, updating the refinement field
-  virtual int apply (Block * block) throw();
+  virtual int apply(Block* block) throw();
 
-  virtual std::string name () const { return "slope"; };
+  virtual std::string name() const { return "slope"; };
 
-private: // functions
-
+private:  // functions
   template <class T>
-  void evaluate_block_(T * array,  T * output,
-		       int ndx, int ndy, int ndz,
-		       int gx, int gy, int gz,
-		       bool * any_refine,
-		       bool * all_coarsen, 
-		       int rank, 
-		       double * h3);
+  void evaluate_block_(T* array, T* output, int ndx, int ndy, int ndz, int gx,
+                       int gy, int gz, bool* any_refine, bool* all_coarsen,
+                       int rank, double* h3);
 
-private: // attributes
-
+private:  // attributes
   /// List of field id's
-  std::vector <int> field_id_list_;
-
-  
+  std::vector<int> field_id_list_;
 };
 
 #endif /* MESH_REFINE_SLOPE_HPP */
-

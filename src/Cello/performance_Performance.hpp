@@ -30,7 +30,7 @@ enum index_enum {
   perf_index_last,
   num_perf_index = perf_index_last
 };
-  
+
 /// @enum    perf_region
 /// @brief   region ID's for the Simulation performance object
 enum perf_region {
@@ -63,48 +63,44 @@ enum perf_region {
 };
 
 class Performance {
-
   /// @class    Performance
   /// @ingroup  Performance
   /// @brief    [\ref Performance] Measuring and allow access to run-time
   /// parallel performance
 
-public: // interface
-
+public:  // interface
   Performance()
-    :
-#ifdef CONFIG_USE_PAPI  
-     papi_(),
-#endif     
-     counter_name_(),
-     counter_type_(),
-     counter_values_(),
-     counter_values_reduced_(),
-     region_name_(),
-     region_counters_(),
-     region_started_(),
-     region_index_(),
-     region_in_charm_(),
-#ifdef CONFIG_USE_PAPI     
-     papi_counters_(0),
+      :
+#ifdef CONFIG_USE_PAPI
+        papi_(),
 #endif
-     warnings_(false),
-     index_region_current_(perf_unknown)
-  {};
+        counter_name_(),
+        counter_type_(),
+        counter_values_(),
+        counter_values_reduced_(),
+        region_name_(),
+        region_counters_(),
+        region_started_(),
+        region_index_(),
+        region_in_charm_(),
+#ifdef CONFIG_USE_PAPI
+        papi_counters_(0),
+#endif
+        warnings_(false),
+        index_region_current_(perf_unknown){};
 
   /// Initialize a Performance object
-  Performance(Config *);
+  Performance(Config*);
 
   /// Delete a Performance object
   ~Performance();
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
-    
+
     // NOTE: change this function whenever attributes change
-#ifdef CONFIG_USE_PAPI  
+#ifdef CONFIG_USE_PAPI
     p | papi_;
 #endif
     p | counter_name_;
@@ -116,11 +112,10 @@ public: // interface
     p | region_started_;
     p | region_index_;
     p | region_in_charm_;
-#ifdef CONFIG_USE_PAPI  
-    WARNING("Performance::pup",
-	    "skipping Performance:papi_counters_");
+#ifdef CONFIG_USE_PAPI
+    WARNING("Performance::pup", "skipping Performance:papi_counters_");
     //    p | papi_counters_
-#endif    
+#endif
     p | warnings_;
     p | index_region_current_;
   }
@@ -132,8 +127,7 @@ public: // interface
   void end() throw();
 
   /// Return the number of counters
-  int num_counters() const throw() 
-  { return counter_name_.size(); }
+  int num_counters() const throw() { return counter_name_.size(); }
 
   ///  	Create a new user counter.
   int new_counter(int counter_type, std::string counter_name);
@@ -148,74 +142,75 @@ public: // interface
   void increment_counter(int index_counter, long long value);
 
   ///  	Return the given counter name
-  std::string counter_name (int index_counter)
-  { return counter_name_[index_counter]; }
+  std::string counter_name(int index_counter) {
+    return counter_name_[index_counter];
+  }
 
   /// Return the type of the given counter index
-  int counter_type (int index) const throw()
-  { return counter_type_[index]; }
+  int counter_type(int index) const throw() { return counter_type_[index]; }
 
   /// Return number of regions
-  int num_regions() const throw()
-  {  return region_name_.size(); }
+  int num_regions() const throw() { return region_name_.size(); }
 
   /// Return the currently active region
-  std::string region_name (int index_region) const throw()
-  { return region_name_[index_region]; }
+  std::string region_name(int index_region) const throw() {
+    return region_name_[index_region];
+  }
 
   /// Return the index of the given region
-  int region_index (std::string name) const throw();
+  int region_index(std::string name) const throw();
 
   /// Return whether the code region is outside the scope of Cello
-  bool region_in_charm (std::string name) const throw();
+  bool region_in_charm(std::string name) const throw();
 
   /// Add a new region, returning the id
-  void new_region(int index_region, std::string region, bool in_charm=false) throw();
+  void new_region(int index_region, std::string region,
+                  bool in_charm = false) throw();
 
-  /// Return whether performance monitoring is started for the region 
+  /// Return whether performance monitoring is started for the region
   bool is_region_active(int index_region) throw();
 
   /// Start counters for a code region
-  void start_region(int index_region, std::string file="", int line=0) throw();
+  void start_region(int index_region, std::string file = "",
+                    int line = 0) throw();
 
   /// Stop counters for a code region
-  void stop_region(int index_region,  std::string file="", int line=0) throw();
+  void stop_region(int index_region, std::string file = "",
+                   int line = 0) throw();
 
   /// Clear the counters for a code region
   void clear_region(int index_region) throw();
 
   /// Return counters for a code region
-  void region_counters(int index_region, long long * counters) throw();
+  void region_counters(int index_region, long long* counters) throw();
 
   /// Return whether the given region is active
-  bool region_started(int index_region) const throw()
-  { return region_started_[index_region]; }
+  bool region_started(int index_region) const throw() {
+    return region_started_[index_region];
+  }
 
-#ifdef CONFIG_USE_PAPI  
+#ifdef CONFIG_USE_PAPI
   /// Return the associated Papi object
-  Papi * papi() { return &papi_; };
-#endif  
+  Papi* papi() { return &papi_; };
+#endif
 
-private: // functions
-
+private:  // functions
   /// Refresh the array of current counter values
   void refresh_counters_() throw();
 
   /// Return the current time in usec
-  long long time_real_ () const
-  {
+  long long time_real_() const {
     struct timeval tv;
     struct timezone tz;
-    gettimeofday (&tv,&tz);
-    return (long long )(1000000) * tv.tv_sec + tv.tv_usec;
+    gettimeofday(&tv, &tz);
+    return (long long)(1000000) * tv.tv_sec + tv.tv_usec;
   }
 
   //==================================================
 
-private: // attributes
-
-#ifdef CONFIG_USE_PAPI  
-  /// PAPI counters, if available
+private:  // attributes
+#ifdef CONFIG_USE_PAPI
+          /// PAPI counters, if available
   Papi papi_;
 #endif
 
@@ -230,26 +225,26 @@ private: // attributes
 
   /// Reduced counter values (e.g. sum over processes)
   std::vector<long long> counter_values_reduced_;
-  
+
   /// list of region names
   std::vector<std::string> region_name_;
 
   /// list of counter values
-  std::vector< std::vector<long long> > region_counters_;
+  std::vector<std::vector<long long> > region_counters_;
 
   /// list of counter values (should be bool but Charm++ requires int)
-  std::vector< int > region_started_;
+  std::vector<int> region_started_;
 
   /// mapping of region name to index
-  std::map<std::string,int> region_index_;
+  std::map<std::string, int> region_index_;
 
   /// which regions are outside scope of Cello
   std::vector<char> region_in_charm_;
 
-#ifdef CONFIG_USE_PAPI  
+#ifdef CONFIG_USE_PAPI
   /// Array for storing PAPI counter values
-  long long * papi_counters_;
-#endif  
+  long long* papi_counters_;
+#endif
 
   /// Whether to output warning messages
   bool warnings_;

@@ -6,60 +6,52 @@
 /// @brief  Implementation of EnzoMethodAccretion, a base class
 ///         for accretion methods. These methods compute
 ///         the accretion rate onto sink particles, and change the properties
-///         of the particles accordingly. Gas density is reduced by setting values
-///         for the "density_accreted" field. The "accretion_remove_gas" method
-///         then subtracts density_accreted from the gas density field
+///         of the particles accordingly. Gas density is reduced by setting
+///         values for the "density_accreted" field. The "accretion_remove_gas"
+///         method then subtracts density_accreted from the gas density field
 
 #ifndef ENZO_ENZO_METHOD_ACCRETION
 #define ENZO_ENZO_METHOD_ACCRETION
 
 class EnzoMethodAccretion : public Method {
-
   /// @class   EnzoMethodAccretion
   /// @ingroup Enzo
   /// @brief   [\ref Enzo] Base class for accretion methods, which add
-  ///          mass and momentum to sink particles while removing it from the gas
-  ///          within an accretion zone around the sink particle.
+  ///          mass and momentum to sink particles while removing it from the
+  ///          gas within an accretion zone around the sink particle.
 
 public:
-
   // Constructor
   EnzoMethodAccretion(ParameterGroup p);
 
   /// Destructor
-  virtual ~EnzoMethodAccretion() throw() {};
+  virtual ~EnzoMethodAccretion() throw(){};
 
   /// Charm++ Pup::able declarations
   PUPable_decl(EnzoMethodAccretion);
 
   /// Charm++ PUP::able migration constructor
-  EnzoMethodAccretion (CkMigrateMessage *m)
-    : Method (m)
-    {  }
+  EnzoMethodAccretion(CkMigrateMessage* m) : Method(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Apply the method
-  virtual void compute ( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
   /// Name
-  virtual std::string name () throw()
-  { return "accretion"; }
+  virtual std::string name() throw() { return "accretion"; }
 
   /// Not sure if this is needed
-  virtual std::string particle_type () throw()
-  { return "sink";}
+  virtual std::string particle_type() throw() { return "sink"; }
 
   // Compute the maximum timestep for this method
-  virtual double timestep ( Block * block) const throw();
+  virtual double timestep(Block* block) const throw();
 
   // Update fields representing fluid quantities.
-  void update_fields(EnzoBlock * enzo_block) throw();
-
+  void update_fields(EnzoBlock* enzo_block) throw();
 
 protected:
-
   // methods
 
   // Checks to be performed at initial cycle
@@ -90,7 +82,6 @@ protected:
 
   // ID for this method's "accumulate refresh"
   int ir_accretion_;
-
 };
 
-#endif // ENZO_ENZO_METHOD_ACCRETION
+#endif  // ENZO_ENZO_METHOD_ACCRETION

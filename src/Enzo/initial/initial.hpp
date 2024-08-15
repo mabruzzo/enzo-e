@@ -22,27 +22,24 @@
 #include "Cello/cello.hpp"
 #include "Cello/charm.hpp"
 
-#include "Cello/mesh.hpp"    // Block
-#include "Cello/problem.hpp" // Initial
+#include "Cello/mesh.hpp"     // Block
+#include "Cello/problem.hpp"  // Initial
 
-#include "Enzo/enzo.hpp" // enzo_float, EnzoConfig
+#include "Enzo/enzo.hpp"  // enzo_float, EnzoConfig
 
 //----------------------------------------------------------------------
 // Assorted Public Functions
 //----------------------------------------------------------------------
 
 // TODO: potentially move these into their own private header file
-extern "C" void FORTRAN_NAME(turboinit)
-  (int *rank, int *nbox,
-   enzo_float *u, enzo_float *v, enzo_float *w,
-   int *in, int *jn, int *kn,
-   int *ig, int *jg, int *kg);
+extern "C" void FORTRAN_NAME(turboinit)(int* rank, int* nbox, enzo_float* u,
+                                        enzo_float* v, enzo_float* w, int* in,
+                                        int* jn, int* kn, int* ig, int* jg,
+                                        int* kg);
 
-extern "C" void FORTRAN_NAME(turboinit2d)
-  (int *rank, int *nbox,
-   enzo_float *u, enzo_float *v,
-   int *in, int *jn,
-   int *ig, int *jg);
+extern "C" void FORTRAN_NAME(turboinit2d)(int* rank, int* nbox, enzo_float* u,
+                                          enzo_float* v, int* in, int* jn,
+                                          int* ig, int* jg);
 
 //----------------------------------------------------------------------
 // Component dependencies

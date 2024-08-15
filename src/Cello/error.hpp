@@ -13,6 +13,4 @@
 #include "_monitor.hpp"
 #include "_parallel.hpp"
 
-
 #endif /* ERROR_HPP */
-

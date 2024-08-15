@@ -7,22 +7,18 @@
 
 #ifndef ENZO_ENZO_BFIELDMETHODCT_HPP
 #define ENZO_ENZO_BFIELDMETHODCT_HPP
-class EnzoBfieldMethodCT : public EnzoBfieldMethod
-{
+class EnzoBfieldMethodCT : public EnzoBfieldMethod {
   /// @class    EnzoBfieldMethodCT
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates operations of constrained transport
 
-public: // interface
-
+public:  // interface
   /// Create a new EnzoBfieldMethodCT
   ///
   /// @param[in] num_partial_timesteps The number of partial timesteps over
   ///     which the constructed instance will update the magnetic fields.
   EnzoBfieldMethodCT(int num_partial_timesteps)
-    : EnzoBfieldMethod(num_partial_timesteps),
-      cell_widths_(nullptr)
-  { }
+      : EnzoBfieldMethod(num_partial_timesteps), cell_widths_(nullptr) {}
 
   /// checks that the interface bfields exist and have the required shapes
   void check_required_fields() const noexcept;
@@ -41,8 +37,8 @@ public: // interface
   /// @param[in]     stale_depth The current staling depth. This is the stale
   ///     depth from just before reconstruction plus the reconstructor's
   ///     immediate staling rate.
-  void correct_reconstructed_bfield(EnzoEFltArrayMap &l_map,
-                                    EnzoEFltArrayMap &r_map, int dim,
+  void correct_reconstructed_bfield(EnzoEFltArrayMap& l_map,
+                                    EnzoEFltArrayMap& r_map, int dim,
                                     int stale_depth) noexcept;
 
   /// identifies and stores the upwind direction
@@ -52,7 +48,7 @@ public: // interface
   /// @param[in] dim The dimension to identify the upwind direction along.
   /// @param[in] stale_depth The current staling depth. This should match the
   ///     staling depth used to compute the flux_group.
-  void identify_upwind(const EnzoEFltArrayMap &flux_map, int dim,
+  void identify_upwind(const EnzoEFltArrayMap& flux_map, int dim,
                        int stale_depth) noexcept;
 
   /// Updates all components of the face-centered and the cell-centered bfields
@@ -74,11 +70,11 @@ public: // interface
   ///     supplied quantities. This should nominally be the same as the stale
   ///     depth used to compute the fluxes and that is passed to
   ///     EnzoIntegrationQuanUpdate::update_quantities.
-  void update_all_bfield_components(EnzoEFltArrayMap &cur_integration_map,
-                                    const EnzoEFltArrayMap &xflux_map,
-                                    const EnzoEFltArrayMap &yflux_map,
-                                    const EnzoEFltArrayMap &zflux_map,
-                                    EnzoEFltArrayMap &out_centered_bfield_map,
+  void update_all_bfield_components(EnzoEFltArrayMap& cur_integration_map,
+                                    const EnzoEFltArrayMap& xflux_map,
+                                    const EnzoEFltArrayMap& yflux_map,
+                                    const EnzoEFltArrayMap& zflux_map,
+                                    EnzoEFltArrayMap& out_centered_bfield_map,
                                     enzo_float dt, int stale_depth) noexcept;
 
   /// Computes a component of the cell-centered magnetic by averaging the
@@ -97,12 +93,11 @@ public: // interface
   ///     supplied quantities.
   ///
   /// @note this function is called in `update_all_bfield_components`
-  static void compute_center_bfield
-  (int dim, const CelloView<enzo_float,3> &bfieldc_comp,
-   const CelloView<const enzo_float,3> &bfieldi_comp, int stale_depth = 0);
+  static void compute_center_bfield(
+      int dim, const CelloView<enzo_float, 3>& bfieldc_comp,
+      const CelloView<const enzo_float, 3>& bfieldi_comp, int stale_depth = 0);
 
-protected: // methods
-
+protected:  // methods
   /// Virtual method that subclasses overide to preload any method specific
   /// data from the new target block and optionally initialize scratch space
   ///
@@ -110,7 +105,7 @@ protected: // methods
   /// @param[in] first_initialization Indicates if this is the first call since
   ///    construction (including deserialization). When true, scratch space
   ///    data should be allocated.
-  void register_target_block_(Block *target_block,
+  void register_target_block_(Block* target_block,
                               bool first_initialization) noexcept;
 
   /// Computes component i of the cell-centered E-field.
@@ -125,8 +120,8 @@ protected: // methods
   /// @param[in]  stale_depth the stale depth at the time of this function call
   ///
   /// @note this function is called in `compute_all_edge_efields`
-  static void compute_center_efield(int dim, EFlt3DArray &center_efield,
-                                    const EnzoEFltArrayMap &integration_map,
+  static void compute_center_efield(int dim, EFlt3DArray& center_efield,
+                                    const EnzoEFltArrayMap& integration_map,
                                     int stale_depth = 0);
 
   /// Computes component i of the edge-centered E-field that sits on the faces
@@ -158,13 +153,12 @@ protected: // methods
   /// @param[in]  stale_depth the stale depth at the time of this function call
   ///
   /// @note this function is called in compute_all_edge_efields
-  void static compute_edge_efield
-  (int dim, const CelloView<const enzo_float, 3> &center_efield,
-   const CelloView<enzo_float, 3> &edge_efield,
-   const EnzoEFltArrayMap &jflux_map,
-   const EnzoEFltArrayMap &kflux_map,
-   const std::array< CelloView<const enzo_float, 3>, 3> &weight_l,
-   int stale_depth);
+  void static compute_edge_efield(
+      int dim, const CelloView<const enzo_float, 3>& center_efield,
+      const CelloView<enzo_float, 3>& edge_efield,
+      const EnzoEFltArrayMap& jflux_map, const EnzoEFltArrayMap& kflux_map,
+      const std::array<CelloView<const enzo_float, 3>, 3>& weight_l,
+      int stale_depth);
 
   /// Compute the all of the edge-centered electric fields using the current
   /// fluxes and current cell-centered integration quantities .
@@ -194,12 +188,13 @@ protected: // methods
   ///     exterior faces of the block (This is included to optionally implement
   ///     the weighting scheme used by Athena++ at a later date).
   /// @param[in] stale_depth the stale depth at the time of this function call
-  static void compute_all_edge_efields
-  (const EnzoEFltArrayMap &integration_map, const EnzoEFltArrayMap &xflux_map,
-   const EnzoEFltArrayMap &yflux_map, const EnzoEFltArrayMap &zflux_map,
-   EFlt3DArray &center_efield, std::array<EFlt3DArray,3> &edge_efield_l,
-   const std::array< CelloView<const enzo_float, 3>, 3> &weight_l,
-   int stale_depth);
+  static void compute_all_edge_efields(
+      const EnzoEFltArrayMap& integration_map,
+      const EnzoEFltArrayMap& xflux_map, const EnzoEFltArrayMap& yflux_map,
+      const EnzoEFltArrayMap& zflux_map, EFlt3DArray& center_efield,
+      std::array<EFlt3DArray, 3>& edge_efield_l,
+      const std::array<CelloView<const enzo_float, 3>, 3>& weight_l,
+      int stale_depth);
 
   /// Updates the face-centered B-field component along the ith dimension using
   /// the jth and kth components of the edge-centered E-field
@@ -229,15 +224,14 @@ protected: // methods
   /// @param[in] dt The time time-step over which to apply the fluxes
   /// @param[in] stale_depth indicates the current stale_depth for the supplied
   ///     quantities
-  static void update_bfield
-  (const enzo_float* &cell_widths, int dim,
-   const std::array<CelloView<const enzo_float, 3>, 3> &efield_l,
-   const CelloView<enzo_float, 3> &cur_interface_bfield,
-   const CelloView<enzo_float, 3> &out_interface_bfield,
-   enzo_float dt, int stale_depth);
+  static void update_bfield(
+      const enzo_float*& cell_widths, int dim,
+      const std::array<CelloView<const enzo_float, 3>, 3>& efield_l,
+      const CelloView<enzo_float, 3>& cur_interface_bfield,
+      const CelloView<enzo_float, 3>& out_interface_bfield, enzo_float dt,
+      int stale_depth);
 
-protected: // attributes
-
+protected:  // attributes
   // Block Specific data: (its updated everytime a new block is registered.)
 
   /// Set of arrays wrapping the Cello fields that contain the interface
@@ -248,19 +242,18 @@ protected: // attributes
   /// If a cell-centered array has shape (mz,my,mx), the entries in this list
   /// have shapes (mz,my,mx+1), (mz,my+1,mx), and (mz+1,my,mx), respectively.
   ///
-  /// The entries in this array will be 
-  std::array<EFlt3DArray,3> bfieldi_l_;
+  /// The entries in this array will be
+  std::array<EFlt3DArray, 3> bfieldi_l_;
 
   /// Array holding cell widths (from the CellWidth attribute of EnzoBlock)
-  const enzo_float *cell_widths_;
-
+  const enzo_float* cell_widths_;
 
   // Scratch arrays: The following are reused for different blocks
 
   /// Set of arrays to temporarily hold the values of the face-centered fields
   /// computed at the half time-step. Each entry should have the same shape as
   /// the corresponding entry in bfieldi_l_
-  std::array<EFlt3DArray,3> temp_bfieldi_l_;
+  std::array<EFlt3DArray, 3> temp_bfieldi_l_;
 
   /// Set of arrays that hold "weight" values. For a given dimension, the array
   /// tracks the upwind/downwind direction on the cell interfaces for that
@@ -268,7 +261,7 @@ protected: // attributes
   ///
   /// If a cell-centered array has shape (mz,my,mx), the entries in this list
   /// have shapes (mz,my,mx-1), (mz,my-1,mx), and (mz-1,my,mx), respectively.
-  std::array<EFlt3DArray,3> weight_l_;
+  std::array<EFlt3DArray, 3> weight_l_;
 
   /// Set of arrays used to temporarily store the calculated edge-centered
   /// components of the electric field. For a given electric field component,
@@ -280,11 +273,10 @@ protected: // attributes
   /// If a cell-centered array has shape (mz,my,mx), the entries in this list
   /// have shapes (mz-1,my-1,mx), (mz-1,my,mx-1), and (mz,my-1,mx-1),
   /// respectively.
-  std::array<EFlt3DArray,3> edge_efield_l_;
+  std::array<EFlt3DArray, 3> edge_efield_l_;
 
   /// Array used to temporarily store cell-centered values of different
   /// electric field components. This array is reused for each component.
   EFlt3DArray center_efield_;
-
 };
 #endif /* ENZO_ENZO_BFIELDMETHODCT_HPP */

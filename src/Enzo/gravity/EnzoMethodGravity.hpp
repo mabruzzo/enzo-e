@@ -1,7 +1,7 @@
 // See LICENSE_CELLO file for license and copyright information
 
 /// @file     enzo_EnzoMethodGravity.hpp
-/// @author   James Bordner (jobordner@ucsd.edu) 
+/// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2016-11-07
 /// @brief    [\ref Enzo] Declaration of EnzoMethodGravity
 ///
@@ -11,7 +11,6 @@
 #define ENZO_ENZO_METHOD_GRAVITY_HPP
 
 class EnzoMethodGravity : public Method {
-
   /// @class    EnzoMethodGravity
   /// @ingroup  Enzo
   ///
@@ -21,42 +20,38 @@ class EnzoMethodGravity : public Method {
   /// constant.  Applies the solver to solve for the "potential"
   /// field.
 
-public: // interface
-
+public:  // interface
   /// Create a new EnzoMethodGravity object
   EnzoMethodGravity(ParameterGroup p, int index_solver, int index_prolong);
 
   EnzoMethodGravity()
-    : index_solver_(-1),
-      order_(4),
-      ir_exit_(-1),
-      index_prolong_(0),
-      dt_max_(0.0)
-  {};
+      : index_solver_(-1),
+        order_(4),
+        ir_exit_(-1),
+        index_prolong_(0),
+        dt_max_(0.0){};
 
   /// Destructor
   virtual ~EnzoMethodGravity() throw() {}
 
   /// Charm++ PUP::able declarations
   PUPable_decl(EnzoMethodGravity);
-  
-  /// Charm++ PUP::able migration constructor
-  EnzoMethodGravity (CkMigrateMessage *m)
-    : Method (m),
-      index_solver_(-1),
-      order_(4),
-      ir_exit_(-1),
-      index_prolong_(0),
-      dt_max_(0.0)
 
-  { }
+  /// Charm++ PUP::able migration constructor
+  EnzoMethodGravity(CkMigrateMessage* m)
+      : Method(m),
+        index_solver_(-1),
+        order_(4),
+        ir_exit_(-1),
+        index_prolong_(0),
+        dt_max_(0.0)
+
+  {}
 
   /// CHARM++ Pack / Unpack function
-//----------------------------------------------------------------------
+  //----------------------------------------------------------------------
 
-  void pup (PUP::er &p)
-  {
-
+  void pup(PUP::er& p) {
     // NOTE: change this function whenever attributes change
 
     TRACEPUP;
@@ -67,32 +62,28 @@ public: // interface
     p | order_;
     p | dt_max_;
     p | ir_exit_;
-
   }
 
   /// Solve for the gravitational potential
-  virtual void compute( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
-  virtual std::string name () throw () 
-  { return "gravity"; }
+  virtual std::string name() throw() { return "gravity"; }
 
   /// Compute maximum timestep for this method
-  virtual double timestep (Block * block) throw() ;
+  virtual double timestep(Block* block) throw();
 
   /// Compute accelerations from potential and exit solver
-  void compute_accelerations (EnzoBlock * enzo_block) throw();
+  void compute_accelerations(EnzoBlock* enzo_block) throw();
 
-  void refresh_potential (EnzoBlock * enzo_block) throw();
+  void refresh_potential(EnzoBlock* enzo_block) throw();
 
-  protected: // methods
-
-  void compute_ (EnzoBlock * enzo_block) throw();
+protected:  // methods
+  void compute_(EnzoBlock* enzo_block) throw();
 
   /// Compute maximum timestep for this method
-  double timestep_ (Block * block) throw() ;
-  
-protected: // attributes
+  double timestep_(Block* block) throw();
 
+protected:  // attributes
   /// Solver index for the linear solver used to compute the potential
   int index_solver_;
 
@@ -109,6 +100,5 @@ protected: // attributes
   /// Maximum timestep
   double dt_max_;
 };
-
 
 #endif /* ENZO_ENZO_METHOD_GRAVITY_HPP */

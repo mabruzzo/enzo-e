@@ -10,8 +10,7 @@
 
 #include "simulation.decl.h"
 
-class MappingTree: public CkArrayMap {
-
+class MappingTree : public CkArrayMap {
   /// @class    MappingTree
   /// @ingroup  Charm
   /// @brief    [\ref Parallel] Class for mapping Blocks to processors
@@ -20,20 +19,15 @@ class MappingTree: public CkArrayMap {
   /// processes
 
 public:
-
   MappingTree(int nx, int ny, int nz);
 
-  int procNum(int, const CkArrayIndex &idx);
+  int procNum(int, const CkArrayIndex& idx);
 
   /// CHARM++ migration constructor for PUP::able
-  MappingTree (CkMigrateMessage *m)
-    : CkArrayMap(m),
-      nx_(0),ny_(0),nz_(0)
-  { }
+  MappingTree(CkMigrateMessage* m) : CkArrayMap(m), nx_(0), ny_(0), nz_(0) {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
     CkArrayMap::pup(p);
     // NOTE: change this function whenever attributes change
@@ -43,10 +37,7 @@ public:
   }
 
 private:
-
   int nx_, ny_, nz_;
-
 };
 
 #endif /* CHARM_MAPPING_TREE_HPP */
-

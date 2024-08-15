@@ -18,7 +18,6 @@ enum enum_parameter {
   enum_parameter_function
 };
 
-
 enum enum_node {
   enum_node_unknown,
   enum_node_operation,
@@ -45,32 +44,30 @@ enum enum_op {
 };
 
 struct node_expr {
-  int  type;
+  int type;
   union {
-    int      op_value;       /* arthmetic / logical operation */
-    double   float_value;   /* floating point number */
-    int      integer_value;  /* integer / logical constant */
-    char     var_value;      /* variable, e.g. x,y,z,t */
+    int op_value;                /* arthmetic / logical operation */
+    double float_value;          /* floating point number */
+    int integer_value;           /* integer / logical constant */
+    char var_value;              /* variable, e.g. x,y,z,t */
     double (*fun_value)(double); /* math.h function */
   };
-  struct node_expr * left;
-  struct node_expr * right;
-  char * function_name;
+  struct node_expr* left;
+  struct node_expr* right;
+  char* function_name;
 };
 
 struct param_struct {
-  char * group[MAX_GROUP_DEPTH];
-  char * parameter;
-  int  type;
-  union  {
-    int                 logical_value; 
-    int                 integer_value; 
-    double              float_value; 
-    char *              string_value;
-    struct param_struct * list_value;
-    struct node_expr    * op_value;    /* expression tree */
+  char* group[MAX_GROUP_DEPTH];
+  char* parameter;
+  int type;
+  union {
+    int logical_value;
+    int integer_value;
+    double float_value;
+    char* string_value;
+    struct param_struct* list_value;
+    struct node_expr* op_value; /* expression tree */
   };
-  struct param_struct *   next;
+  struct param_struct* next;
 };
-
-

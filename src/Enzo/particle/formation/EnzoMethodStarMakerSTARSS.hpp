@@ -14,7 +14,6 @@
 ///
 
 class EnzoMethodStarMakerSTARSS : public EnzoMethodStarMaker {
-
 public:
   // Create new EnzoStarMakerSTARSS object
   EnzoMethodStarMakerSTARSS(ParameterGroup p);
@@ -23,39 +22,32 @@ public:
   PUPable_decl(EnzoMethodStarMakerSTARSS);
 
   // Charm++ PUP::able declarations
-  EnzoMethodStarMakerSTARSS (CkMigrateMessage *m)
-   : EnzoMethodStarMaker (m)
-   {  }
+  EnzoMethodStarMakerSTARSS(CkMigrateMessage* m) : EnzoMethodStarMaker(m) {}
 
   /// Charm++ Pack / Unpack function
-  void pup (PUP::er &p) override;
+  void pup(PUP::er& p) override;
 
   /// Apply method
-  void compute ( Block * block) throw() override;
+  void compute(Block* block) throw() override;
 
-  std::string particle_type () throw() override
-  { return "star";}
+  std::string particle_type() throw() override { return "star"; }
 
   /// Name
-  std::string name () throw() override
-   { return "star_maker";}
+  std::string name() throw() override { return "star_maker"; }
 
-  virtual ~EnzoMethodStarMakerSTARSS() throw() {};
+  virtual ~EnzoMethodStarMakerSTARSS() throw(){};
 
   /// return minimum AMR level where star formation can occur
   ///
   /// @note
   /// The override keyword tells the compiler to perform a sanity-check for us
   /// compilation fails if we aren't overwriting a virtual function
-  int sf_minimum_level() const noexcept override
-  { return min_level_; }
+  int sf_minimum_level() const noexcept override { return min_level_; }
 
 protected:
-
   /// minimum AMR level for star formation
   int min_level_;
   bool turn_off_probability_;
-
 };
 
 #endif /* EnzoMethodStarMakerSTARSS */

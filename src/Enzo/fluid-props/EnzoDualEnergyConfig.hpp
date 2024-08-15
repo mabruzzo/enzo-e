@@ -9,7 +9,6 @@
 #define ENZO_ENZO_DUAL_ENERGY_CONFIG_HPP
 
 class EnzoDualEnergyConfig {
-
   /// @class    EnzoDualEnergyConfig
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates the configuration of the dual-energy
@@ -27,20 +26,18 @@ class EnzoDualEnergyConfig {
   /// The data stored in the class should be considered immutable.
 
 public:
+  /// creates an instance that represents a disabled dual energy formalism
+  EnzoDualEnergyConfig() : EnzoDualEnergyConfig(-1, -1) {}
 
   /// creates an instance that represents a disabled dual energy formalism
-  EnzoDualEnergyConfig()
-    : EnzoDualEnergyConfig(-1, -1)
-  { }
-
-  /// creates an instance that represents a disabled dual energy formalism
-  static EnzoDualEnergyConfig build_disabled() noexcept
-  { return EnzoDualEnergyConfig(); }
+  static EnzoDualEnergyConfig build_disabled() noexcept {
+    return EnzoDualEnergyConfig();
+  }
 
   /// creates an instance that holds parameters for the modern formulation of
   /// the dual energy formalism
-  static EnzoDualEnergyConfig build_modern_formulation(enzo_float eta) noexcept
-  {
+  static EnzoDualEnergyConfig build_modern_formulation(
+      enzo_float eta) noexcept {
     ASSERT("EnzoDualEnergyConfig::build_modern_formulation",
            "eta must be non-negative", eta >= 0);
     return {eta, -1};
@@ -48,9 +45,8 @@ public:
 
   /// creates an instance that holds parameters for the bryan95 formulation of
   /// the dual energy formalism
-  static EnzoDualEnergyConfig build_bryan95_formulation
-  (enzo_float eta1, enzo_float eta2) noexcept
-  {
+  static EnzoDualEnergyConfig build_bryan95_formulation(
+      enzo_float eta1, enzo_float eta2) noexcept {
     ASSERT("EnzoDualEnergyConfig::build_bryan95_formulation",
            "eta1 and eta2 must be non-negative", (eta1 >= 0) & (eta2 >= 0));
     return {eta1, eta2};
@@ -70,10 +66,11 @@ public:
   ///    formulation of the dual-energy formalism, the corresponding eta value
   ///    parameter is written to the location specified by this pointer (unless
   ///    the parameter is a nullptr).
-  bool modern_formulation(enzo_float* eta = nullptr) const noexcept
-  {
-    if ((primary_eta_ >= 0) & (other_eta_ < 0)){
-      if (eta != nullptr) { *eta = primary_eta_; }
+  bool modern_formulation(enzo_float* eta = nullptr) const noexcept {
+    if ((primary_eta_ >= 0) & (other_eta_ < 0)) {
+      if (eta != nullptr) {
+        *eta = primary_eta_;
+      }
       return true;
     } else {
       return false;
@@ -89,38 +86,37 @@ public:
   ///    values are written to locations specified by these pointers (unless
   ///    the parameters are nullptrs)
   bool bryan95_formulation(enzo_float* eta1 = nullptr,
-                           enzo_float* eta2 = nullptr) const noexcept
-  {
-    if ((primary_eta_ >= 0) & (other_eta_ >= 0)){
-      if (eta1 != nullptr) { *eta1 = primary_eta_; }
-      if (eta2 != nullptr) { *eta2 = other_eta_; }
+                           enzo_float* eta2 = nullptr) const noexcept {
+    if ((primary_eta_ >= 0) & (other_eta_ >= 0)) {
+      if (eta1 != nullptr) {
+        *eta1 = primary_eta_;
+      }
+      if (eta2 != nullptr) {
+        *eta2 = other_eta_;
+      }
       return true;
     } else {
       return false;
     }
   }
 
-  void pup(PUP::er &p) {
-    p|primary_eta_;
-    p|other_eta_;
+  void pup(PUP::er& p) {
+    p | primary_eta_;
+    p | other_eta_;
   }
-  
-private:
 
+private:
   /// constructs a new EnzoDualEnergyConfig instance. Users don't directly use
   /// this method, instead they should should use one of the static "build_*"
   /// methods instead.
   EnzoDualEnergyConfig(enzo_float primary_eta, enzo_float other_eta)
-    : primary_eta_(primary_eta),
-      other_eta_(other_eta)
-  {
-    if ((primary_eta < 0) & (other_eta >= 0)){
+      : primary_eta_(primary_eta), other_eta_(other_eta) {
+    if ((primary_eta < 0) & (other_eta >= 0)) {
       ERROR("EnzoDualEnergyConfig::EnzoDualEnergyConfig", "invalid arguments");
     }
   }
 
-protected: // attributes
-
+protected:  // attributes
   enzo_float primary_eta_;
   enzo_float other_eta_;
 };

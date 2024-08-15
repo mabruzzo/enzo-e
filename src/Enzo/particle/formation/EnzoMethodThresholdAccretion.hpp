@@ -13,9 +13,7 @@
 #define ENZO_ENZO_METHOD_THRESHOLD_ACCRETION
 
 class EnzoMethodThresholdAccretion : public EnzoMethodAccretion {
-
 public:
-
   // Constructor
   EnzoMethodThresholdAccretion(ParameterGroup p);
 
@@ -23,25 +21,21 @@ public:
   PUPable_decl(EnzoMethodThresholdAccretion);
 
   /// Charm++ PUP::able migration constructor
-  EnzoMethodThresholdAccretion (CkMigrateMessage *m)
-    : EnzoMethodAccretion (m)
-    {  }
+  EnzoMethodThresholdAccretion(CkMigrateMessage* m) : EnzoMethodAccretion(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Apply the method
-  virtual void compute( Block * block) throw();
+  virtual void compute(Block* block) throw();
 
   /// Name
-  virtual std::string name () throw()
-  { return "accretion"; }
-  
+  virtual std::string name() throw() { return "accretion"; }
+
 private:
   // methods
 
-  void compute_(Block * block);
-
+  void compute_(Block* block);
 };
 
-#endif // ENZO_ENZO_METHOD_THRESHOLD_ACCRETION
+#endif  // ENZO_ENZO_METHOD_THRESHOLD_ACCRETION

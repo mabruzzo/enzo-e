@@ -27,8 +27,7 @@
 #ifndef ENZO_ENZO_SOURCE_INTERNAL_ENERGY_HPP
 #define ENZO_ENZO_SOURCE_INTERNAL_ENERGY_HPP
 
-class EnzoSourceInternalEnergy
-{
+class EnzoSourceInternalEnergy {
   /// @class    EnzoSourceInternalEnergy
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates the calculation of the internal energy
@@ -49,7 +48,6 @@ class EnzoSourceInternalEnergy
   /// The current implementation ignores the scale factor.
 
 public:
-
   /// Computes the internal energy density source term contributed by the
   /// derivative of the velocity along dimension `dim` and add it to the array
   /// tracking the total change in internal_energy density.
@@ -78,13 +76,11 @@ public:
   ///     supplied cell-centered quantities. The update using the
   ///     reconstructor's delayed_staling_rate should be applied at some
   ///     time after this function call.
-  void calculate_source(const int dim, const double dt,
-			const enzo_float cell_width,
-                        const EnzoEFltArrayMap &prim_map,
-                        EnzoEFltArrayMap &dUcons_map,
-                        const CelloView<const enzo_float,3> &interface_velocity,
-			const int stale_depth)
-    const throw();
+  void calculate_source(
+      const int dim, const double dt, const enzo_float cell_width,
+      const EnzoEFltArrayMap& prim_map, EnzoEFltArrayMap& dUcons_map,
+      const CelloView<const enzo_float, 3>& interface_velocity,
+      const int stale_depth) const throw();
 };
 
 #endif /* ENZO_ENZO_SOURCE_INTERNAL_ENERGY_HPP */

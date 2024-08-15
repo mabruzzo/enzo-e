@@ -15,81 +15,84 @@
 enum class RefreshState { INACTIVE, ACTIVE, READY };
 
 class Sync {
-
   /// @class    Sync
   /// @ingroup  Cello
-  /// @brief    [\ref Parallel] 
+  /// @brief    [\ref Parallel]
 
 public:
   /// Create a Sync counter object
-  Sync (int index_stop = 0);
+  Sync(int index_stop = 0);
 
   /// CHARM++ pack / unpack
-  void pup(PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Increment counter and return whether the counter reached the
   /// stopping value
-  bool next () throw();
+  bool next() throw();
 
   /// Increment counter but not return whether the counter reached the
   /// stopping value (used to bypass Coverity analysis false positive)
-  void advance () throw();
-  
+  void advance() throw();
+
   /// Return whether the Sync counter has reached the stopping value
-  bool is_done () const throw();
-  
+  bool is_done() const throw();
+
   /// Set the stopping value for the counter
-  void set_stop (int stop) throw ();
+  void set_stop(int stop) throw();
 
   /// Increment the stopping value for the counter
-  void inc_stop (int increment) throw ();
+  void inc_stop(int increment) throw();
 
   /// Return the current counter index
-  int value () const;
+  int value() const;
 
   /// Return the currently-set stopping value for the counter
-  int stop () const throw ();
+  int stop() const throw();
 
   /// Reset the counter to 0
-  void reset () throw () ;
+  void reset() throw();
 
   /// Decrement the stopping value by one
-  inline int operator -- () 
-  { --index_stop_; return index_stop_; }
-
-  /// Increment the stopping value by one
-  inline int operator ++ () 
-  { ++index_stop_; return index_stop_; }
-
-  /// Decrement the stopping value by count
-  inline int operator -= (int count) 
-  { index_stop_ -= count; return index_stop_; }
-
-  /// Increment the stopping value by count
-  inline int operator += (int count) 
-  { index_stop_ += count; return index_stop_; }
-
-  inline RefreshState state () const
-  { return state_; }
-  inline void set_state (RefreshState state)
-  { state_ = state; }
-
-  inline void print(std::string message, FILE * fp_in = nullptr) const {
-    FILE * fp = fp_in ? fp_in : stdout;
-    fprintf (fp,"DEBUG_SYNC %p %s %d/%d done %d\n",
-             (void *)this,message.c_str(),index_curr_,index_stop_,is_done_?1:0);
+  inline int operator--() {
+    --index_stop_;
+    return index_stop_;
   }
 
-private: // methods
+  /// Increment the stopping value by one
+  inline int operator++() {
+    ++index_stop_;
+    return index_stop_;
+  }
 
+  /// Decrement the stopping value by count
+  inline int operator-=(int count) {
+    index_stop_ -= count;
+    return index_stop_;
+  }
+
+  /// Increment the stopping value by count
+  inline int operator+=(int count) {
+    index_stop_ += count;
+    return index_stop_;
+  }
+
+  inline RefreshState state() const { return state_; }
+  inline void set_state(RefreshState state) { state_ = state; }
+
+  inline void print(std::string message, FILE* fp_in = nullptr) const {
+    FILE* fp = fp_in ? fp_in : stdout;
+    fprintf(fp, "DEBUG_SYNC %p %s %d/%d done %d\n", (void*)this,
+            message.c_str(), index_curr_, index_stop_, is_done_ ? 1 : 0);
+  }
+
+private:  // methods
   /// Increment counter
-  void advance_() throw ();
+  void advance_() throw();
 
   /// Check whether stop reached
-  void check_done_() throw ();
+  void check_done_() throw();
 
-private: // attributes
-
+private:  // attributes
   int is_done_;
 
   /// Last value of the parallel sync index
@@ -103,4 +106,3 @@ private: // attributes
 };
 
 #endif /* CELLO_SYNC_HPP */
-

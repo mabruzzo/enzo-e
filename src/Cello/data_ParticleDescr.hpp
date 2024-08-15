@@ -10,22 +10,20 @@
 #define DATA_PARTICLE_DESCR_HPP
 
 class ParticleDescr {
-
   /// @class    ParticleDescr
   /// @ingroup  Data
-  /// @brief    [\ref Data] 
+  /// @brief    [\ref Data]
 
   //----------------------------------------------------------------------
 
   friend class Particle;
 
-public: // interface
-
+public:  // interface
   /// Constructor
   ParticleDescr() throw();
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   //--------------------------------------------------
   // TYPES
@@ -41,15 +39,15 @@ public: // interface
 
   /// Return the index for the given particle type
 
-  int type_index (std::string type) const;
+  int type_index(std::string type) const;
 
   /// Return whether the particle type exists
 
-  bool type_exists (std::string type) const;
+  bool type_exists(std::string type) const;
 
   /// Return the name of the given particle type given its index
 
-  std::string type_name (int index) const;
+  std::string type_name(int index) const;
 
   //--------------------------------------------------
   // CONSTANTS
@@ -57,7 +55,7 @@ public: // interface
 
   /// Create a new constant for the given type and return its id
 
-  int new_constant (int it, std::string name, int type);
+  int new_constant(int it, std::string name, int type);
 
   /// Return the number of attributes of the given type.
 
@@ -65,25 +63,25 @@ public: // interface
 
   /// Return the index for the given constant
 
-  int constant_index (int it, std::string constant) const;
+  int constant_index(int it, std::string constant) const;
 
   /// Byte offsets of constants in constant array
   int constant_offset(int it, int ic) const;
 
   /// Return the index for the given constant
-  std::string constant_name (int it, int ic) const;
+  std::string constant_name(int it, int ic) const;
 
   /// Return the number of bytes allocated for the given constant.
-  int constant_bytes (int it,int ic) const;
+  int constant_bytes(int it, int ic) const;
 
   /// Return the constant array for the given particle type
-  char * constant_array (int it);
+  char* constant_array(int it);
 
-   /// Return a pointer to the given constant for the given type
-  char * constant_value (int it, int ic);
+  /// Return a pointer to the given constant for the given type
+  char* constant_value(int it, int ic);
 
   /// Check if particle type has constant with given name
-  bool has_constant (int it, std::string constant) const;
+  bool has_constant(int it, std::string constant) const;
 
   //--------------------------------------------------
   // ATTRIBUTES
@@ -99,69 +97,65 @@ public: // interface
 
   /// Check if particle type has attribute of given name
 
-  bool has_attribute (int it, std::string attribute) const;
+  bool has_attribute(int it, std::string attribute) const;
 
   /// Return the index for the given attribute
 
-  int attribute_index (int it, std::string attribute) const;
+  int attribute_index(int it, std::string attribute) const;
 
   /// Return the index for the given attribute
 
-  std::string attribute_name (int it, int ia) const;
+  std::string attribute_name(int it, int ia) const;
 
   /// Byte offsets of attributes into block array.  Not including
   /// initial offset for 16-byte alignment.
   int attribute_offset(int it, int ia) const;
 
   /// Define which attributes represent position coordinates (-1 if not defined)
-  void set_position (int it, int ix, int iy=-1, int iz=-1);
+  void set_position(int it, int ix, int iy = -1, int iz = -1);
 
   /// Define which attributes represent velocity coordinates (-1 if not defined)
-  void set_velocity (int it, int ix, int iy=-1, int iz=-1);
+  void set_velocity(int it, int ix, int iy = -1, int iz = -1);
 
   /// Checks whether particle type has an attribute with given name
   void check_particle_attribute(const std::string& type,
-				const std::string& attribute);
+                                const std::string& attribute);
   //--------------------------------------------------
   // INTERLEAVING
   //--------------------------------------------------
 
   /// Set whether attributes are interleaved for the given type.
 
-  void set_interleaved (int it, bool interleaved);
+  void set_interleaved(int it, bool interleaved);
 
   /// Return whether attributes are interleaved or not
 
-  bool interleaved (int it) const;
+  bool interleaved(int it) const;
 
   /// Return the number of bytes use to represent a particle.
-  int particle_bytes (int it) const;
+  int particle_bytes(int it) const;
 
   /// Return the data type of the given attribute.
-  int attribute_type (int it,int ia) const;
+  int attribute_type(int it, int ia) const;
 
   /// Return the number of bytes allocated for the given attribute.
-  int attribute_bytes (int it,int ia) const;
+  int attribute_bytes(int it, int ia) const;
 
   /// Return the attribute corresponding to the given position
   /// coordinate, -1 if none
-  int attribute_position (int it, int axis)
-  {
+  int attribute_position(int it, int axis) {
     ASSERT1("ParticleDescr::attribute_position()",
-	    "Trying to access unknown particle type %d",
-	    it,
-	    (0 <= it && it < num_types()));
+            "Trying to access unknown particle type %d", it,
+            (0 <= it && it < num_types()));
     return attribute_position_[it][axis];
   }
 
   /// Return the attribute corresponding to the given velocity
   /// coordinate, -1 if none
-  int attribute_velocity (int it, int axis)
-  {
+  int attribute_velocity(int it, int axis) {
     ASSERT1("ParticleDescr::attribute_velocity()",
-	    "Trying to access unknown particle type %d",
-	    it,
-	    (0 <= it && it < num_types()));
+            "Trying to access unknown particle type %d", it,
+            (0 <= it && it < num_types()));
     return attribute_velocity_[it][axis];
   }
 
@@ -176,8 +170,7 @@ public: // interface
   //--------------------------------------------------
 
   /// Set batch size
-  void set_batch_size(int batch_size)
-  { batch_size_ = batch_size; }
+  void set_batch_size(int batch_size) { batch_size_ = batch_size; }
 
   /// Return the current batch size.
 
@@ -188,7 +181,7 @@ public: // interface
   /// particles, e.g. initializing new particles after insert().
   /// Basically just div / mod.  ASSUMES COMPRESSED.
 
-  void index (int i, int * ib, int * ip) const;
+  void index(int i, int* ib, int* ip) const;
 
   //--------------------------------------------------
   // GROUPING
@@ -196,16 +189,14 @@ public: // interface
 
   /// Return the Grouping object for the particle types
 
-  Grouping * groups () { return & groups_; }
+  Grouping* groups() { return &groups_; }
 
-private: // functions
-
+private:  // functions
   /// increment value if needed so that it is a multiple of bytes
   int align_(int value, int bytes) const;
   //----------------------------------------------------------------------
 
-private: // attributes
-
+private:  // attributes
   //--------------------------------------------------
   // TYPES
   //--------------------------------------------------
@@ -214,70 +205,70 @@ private: // attributes
   std::vector<std::string> type_name_;
 
   /// Index of each particle type (inverse of type_)
-  std::map<std::string,int> type_index_;
+  std::map<std::string, int> type_index_;
 
   /// Number of bytes used to store all attributes for each particle
   /// type, including any extra for alignment of stride.
-  std::vector < int > particle_bytes_;
+  std::vector<int> particle_bytes_;
 
   //--------------------------------------------------
   // CONSTANTS
   //--------------------------------------------------
 
   /// List of particle constants
-  std::vector < std::vector<std::string> > constant_name_;
+  std::vector<std::vector<std::string> > constant_name_;
 
   /// Index of each particle constant (inverse of constant_)
-  std::vector < std::map<std::string,int> > constant_index_;
+  std::vector<std::map<std::string, int> > constant_index_;
 
   /// Scalar type of each constant of each particle type.  Valid
   /// scalar types are in type_enum defined in cello.hpp
-  std::vector < std::vector<int> > constant_type_;
+  std::vector<std::vector<int> > constant_type_;
 
   /// Arrays of byte offsets within constant_values_ for each type
   /// type.  Referenced as [it][ic]
-  std::vector < std::vector <int> > constant_offset_;
+  std::vector<std::vector<int> > constant_offset_;
 
   /// Number of bytes used by the given constant
-  std::vector < std::vector<int> > constant_bytes_;
+  std::vector<std::vector<int> > constant_bytes_;
 
   /// Array of constant data [it][ic];
-  std::vector< std::vector<char> > constant_array_;
+  std::vector<std::vector<char> > constant_array_;
 
   //--------------------------------------------------
   // ATTRIBUTES
   //--------------------------------------------------
 
   /// List of particle attributes
-  std::vector < std::vector<std::string> > attribute_name_;
+  std::vector<std::vector<std::string> > attribute_name_;
 
   /// Index of each particle attribute (inverse of attribute_)
-  std::vector < std::map<std::string,int> > attribute_index_;
+  std::vector<std::map<std::string, int> > attribute_index_;
 
   /// Scalar type of each attribute of each particle type.  Valid
   /// scalar types are in type_enum defined in cello.hpp
-  std::vector < std::vector<int> > attribute_type_;
+  std::vector<std::vector<int> > attribute_type_;
 
   /// Attributes that define particle positions
-  std::vector < std::vector <int> > attribute_position_;
+  std::vector<std::vector<int> > attribute_position_;
 
   /// Attributes that define particle velocities
-  std::vector < std::vector <int> > attribute_velocity_;
+  std::vector<std::vector<int> > attribute_velocity_;
 
   /// Number of bytes used by the given attribute
-  std::vector < std::vector<int> > attribute_bytes_;
+  std::vector<std::vector<int> > attribute_bytes_;
 
   /// Whether attributes are interleaved.  (char since Charm++ pup
   /// doesn't recognize bool)
 
-  std::vector < char > attribute_interleaved_;
+  std::vector<char> attribute_interleaved_;
 
   /// Arrays of byte offsets within a batch for attributes for each
   /// type.  Does not take into account byte alignment, since that's
   /// different for different blocks.  Referenced as [it][ia]
 
-  std::vector < std::vector <int> > attribute_offset_;
-  
+  std::vector<std::vector<int> > attribute_offset_;
+
   //--------------------------------------------------
   // GROUPING
   //--------------------------------------------------
@@ -292,8 +283,6 @@ private: // attributes
   /// deallocated, and operated on a batch at a time
 
   int batch_size_;
-  
 };
 
 #endif /* DATA_PARTICLE_DESCR_HPP */
-

@@ -20,7 +20,7 @@
 ///
 /// Consider the following concrete example: the `EnzoMethodMHDVlct` Method is
 /// a predictor-corrector scheme that needs to compute the primitive quantities
-/// (including pressure) from arrays holding integration quantities at the 
+/// (including pressure) from arrays holding integration quantities at the
 /// start of the timestep and predicted after a half timestep.
 ///   - Integration quantities at the start of the timestep do directly map to
 ///     fields of a `Block`. This means we could use technically use the old
@@ -48,112 +48,112 @@
 #ifndef ENZO_ENZO_FIELD_ACCESSOR_ADAPTOR_HPP
 #define ENZO_ENZO_FIELD_ACCESSOR_ADAPTOR_HPP
 
-
 namespace enzo_field_adaptor_detail {
 
-  //----------------------------------------------------------------------
+//----------------------------------------------------------------------
 
-  class WrapperBase {};
+class WrapperBase {};
 
-  //----------------------------------------------------------------------
+//----------------------------------------------------------------------
 
-  class ArrayMapWrapper : public WrapperBase {
-    /// Wrapper for EnzoEFltArrayMap.
+class ArrayMapWrapper : public WrapperBase {
+  /// Wrapper for EnzoEFltArrayMap.
 
-  public:
+public:
+  ArrayMapWrapper(const EnzoEFltArrayMap& array_map);
 
-    ArrayMapWrapper(const EnzoEFltArrayMap& array_map);
+  inline CelloView<const enzo_float, 3> view(
+      const std::string& name) const noexcept {
+    return array_map_[name];
+  }
 
-    inline CelloView<const enzo_float, 3> view(const std::string& name)
-      const noexcept
-    { return array_map_[name]; }
-    
-    inline const enzo_float* ptr_grackle(const std::string& name) const noexcept
-    { return array_map_.contains(name) ? array_map_[name].data() : nullptr; }
+  inline const enzo_float* ptr_grackle(const std::string& name) const noexcept {
+    return array_map_.contains(name) ? array_map_[name].data() : nullptr;
+  }
 
-    std::array<int,3> field_strides() const noexcept;
+  std::array<int, 3> field_strides() const noexcept;
 
-    void cell_width(double *hx, double *hy, double *hz) const noexcept
-    { ERROR("ArrayMapWrapper::cell_width", "not implemented yet"); }
+  void cell_width(double* hx, double* hy, double* hz) const noexcept {
+    ERROR("ArrayMapWrapper::cell_width", "not implemented yet");
+  }
 
-    void grackle_field_grid_props(std::array<int,3>& grid_dimension,
-                                  std::array<int,3>& grid_start,
-                                  std::array<int,3>& grid_end) const noexcept;
+  void grackle_field_grid_props(std::array<int, 3>& grid_dimension,
+                                std::array<int, 3>& grid_start,
+                                std::array<int, 3>& grid_end) const noexcept;
 
-    double compute_time() const noexcept
-    { ERROR("ArrayMapWrapper::compute_time", "not implemented yet"); }
+  double compute_time() const noexcept {
+    ERROR("ArrayMapWrapper::compute_time", "not implemented yet");
+  }
 
-  private:
-    const EnzoEFltArrayMap array_map_;
-  };
+private:
+  const EnzoEFltArrayMap array_map_;
+};
 
-  //----------------------------------------------------------------------
+//----------------------------------------------------------------------
 
-  class BlockWrapper : public WrapperBase {
-    /// Wraps a Block. This always return arrays that include ghost zones.
+class BlockWrapper : public WrapperBase {
+  /// Wraps a Block. This always return arrays that include ghost zones.
 
-  public:
-    BlockWrapper(Block* block, int index_history);
+public:
+  BlockWrapper(Block* block, int index_history);
 
-    inline CelloView<const enzo_float, 3> view(const std::string& name)
-      const noexcept
-    {
-      return field_.view<enzo_float>(name,ghost_choice::include,index_history_);
+  inline CelloView<const enzo_float, 3> view(
+      const std::string& name) const noexcept {
+    return field_.view<enzo_float>(name, ghost_choice::include, index_history_);
+  }
+
+  inline const enzo_float* ptr_grackle(const std::string& name) const noexcept {
+    int id_field = field_.field_id(name);
+
+    bool correct_prec;
+    switch (field_.precision(id_field)) {
+      case precision_default:
+        correct_prec = true;
+        break;
+      case precision_single:
+        correct_prec = std::is_same<enzo_float, float>::value;
+        break;
+      case precision_double:
+        correct_prec = std::is_same<enzo_float, double>::value;
+        break;
+      case precision_quadruple:
+        correct_prec = std::is_same<enzo_float, long double>::value;
+        break;
+      default:
+        correct_prec = false;
     }
 
-    inline const enzo_float* ptr_grackle(const std::string& name) const noexcept
-    {
-      int id_field = field_.field_id(name);
-
-      bool correct_prec;
-      switch (field_.precision(id_field)){
-        case precision_default:
-          correct_prec = true;
-          break;
-        case precision_single:
-          correct_prec = std::is_same<enzo_float, float>::value;
-          break;
-        case precision_double:
-          correct_prec = std::is_same<enzo_float, double>::value;
-          break;
-        case precision_quadruple:
-          correct_prec = std::is_same<enzo_float, long double>::value;
-          break;
-        default:
-          correct_prec = false;
-      }
-
-      if ((id_field >= 0) & !correct_prec){
-        ERROR1("BlockWrapper::ptr_grackle",
-               "%s doesn't have default precision", name.c_str());
-      }
-      return (const enzo_float*)field_.values(id_field, index_history_);
+    if ((id_field >= 0) & !correct_prec) {
+      ERROR1("BlockWrapper::ptr_grackle", "%s doesn't have default precision",
+             name.c_str());
     }
+    return (const enzo_float*)field_.values(id_field, index_history_);
+  }
 
-    std::array<int,3> field_strides() const noexcept;
+  std::array<int, 3> field_strides() const noexcept;
 
-    void cell_width(double *hx, double *hy, double *hz) const noexcept
-    { block_->cell_width(hx, hy, hz); }
+  void cell_width(double* hx, double* hy, double* hz) const noexcept {
+    block_->cell_width(hx, hy, hz);
+  }
 
-    /// grid_start and grid_end will include the ghost zones
-    void grackle_field_grid_props(std::array<int,3>& grid_dimension,
-                                  std::array<int,3>& grid_start,
-                                  std::array<int,3>& grid_end) const noexcept;
+  /// grid_start and grid_end will include the ghost zones
+  void grackle_field_grid_props(std::array<int, 3>& grid_dimension,
+                                std::array<int, 3>& grid_start,
+                                std::array<int, 3>& grid_end) const noexcept;
 
-    double compute_time() const noexcept;
+  double compute_time() const noexcept;
 
-  private:
-    Block* block_;
-    Field field_;
-    int index_history_;
-  };
+private:
+  Block* block_;
+  Field field_;
+  int index_history_;
+};
 
-}
+}  // namespace enzo_field_adaptor_detail
 
 //----------------------------------------------------------------------
 
 class EnzoFieldAdaptor {
-
   /// @class    EnzoFieldAdaptor
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Adaptor to provide a single interface for
@@ -183,7 +183,6 @@ class EnzoFieldAdaptor {
   using ArrayMapWrapper = enzo_field_adaptor_detail::ArrayMapWrapper;
 
 public:
-
   EnzoFieldAdaptor() = delete;
   EnzoFieldAdaptor(const EnzoFieldAdaptor&) = delete;
   EnzoFieldAdaptor& operator=(const EnzoFieldAdaptor&) = delete;
@@ -195,27 +194,22 @@ public:
   /// An implicit assumption is that `block->data->field.ghosts_allocated`
   /// is always `true`, even when passing `ghost_choice::exclude`
   EnzoFieldAdaptor(Block* block, int index_history)
-    : holds_block_(true),
-      wrapper_(nullptr)
-  {
+      : holds_block_(true), wrapper_(nullptr) {
     // allocate wrapper with placement new (to avoid heap allocation)
-    wrapper_ = new(&wrapper_storage_) BlockWrapper(block, index_history);
+    wrapper_ = new (&wrapper_storage_) BlockWrapper(block, index_history);
   }
 
   /// Construct from a EnzoEFltArrayMap object
   EnzoFieldAdaptor(const EnzoEFltArrayMap& array_map)
-    : holds_block_(false),
-      wrapper_(nullptr)
-  {
+      : holds_block_(false), wrapper_(nullptr) {
     // allocate wrapper with placement new (to avoid heap allocation)
-    wrapper_ = new(&wrapper_storage_) ArrayMapWrapper(array_map); 
+    wrapper_ = new (&wrapper_storage_) ArrayMapWrapper(array_map);
   }
 
-  ~EnzoFieldAdaptor()
-  {
+  ~EnzoFieldAdaptor() {
     // since wrappers are allocated with placement new, we need to use explicit
     // destructors
-    if (holds_block_){
+    if (holds_block_) {
       reinterpret_cast<BlockWrapper*>(wrapper_)->~BlockWrapper();
     } else {
       reinterpret_cast<ArrayMapWrapper*>(wrapper_)->~ArrayMapWrapper();
@@ -223,16 +217,16 @@ public:
   }
 
   /// Returns whether arr has the same strides as the wrapped fields
-  inline bool consistent_with_field_strides
-  (const CelloView<const enzo_float, 3>& arr) const noexcept
-  {
-    std::array<int,3> ref_strides = (holds_block_) ?
-      reinterpret_cast<BlockWrapper*>(wrapper_)->field_strides() :
-      reinterpret_cast<ArrayMapWrapper*>(wrapper_)->field_strides();
+  inline bool consistent_with_field_strides(
+      const CelloView<const enzo_float, 3>& arr) const noexcept {
+    std::array<int, 3> ref_strides =
+        (holds_block_)
+            ? reinterpret_cast<BlockWrapper*>(wrapper_)->field_strides()
+            : reinterpret_cast<ArrayMapWrapper*>(wrapper_)->field_strides();
 
-    return ( (ref_strides[0] == arr.stride(0)) &
-             (ref_strides[1] == arr.stride(1)) &
-             (ref_strides[2] == arr.stride(2)) );
+    return ((ref_strides[0] == arr.stride(0)) &
+            (ref_strides[1] == arr.stride(1)) &
+            (ref_strides[2] == arr.stride(2)));
   }
 
   /// Return a CelloView that acts as a view of the corresponding field
@@ -240,10 +234,9 @@ public:
   /// When a Field is being wrapped, the ghost zones are always excluded
   /// (if we want to make this configurable in the future, the choice should be
   /// passed to the appropriate constructor)
-  inline CelloView<const enzo_float, 3> view(const std::string& name)
-    const noexcept
-  {
-    if (holds_block_){
+  inline CelloView<const enzo_float, 3> view(
+      const std::string& name) const noexcept {
+    if (holds_block_) {
       return reinterpret_cast<BlockWrapper*>(wrapper_)->view(name);
     } else {
       return reinterpret_cast<ArrayMapWrapper*>(wrapper_)->view(name);
@@ -268,15 +261,15 @@ public:
   /// header-inclusion order. This is totally fine since gr_float must be
   /// equivalent to enzo_float.
   inline enzo_float* ptr_for_grackle(const std::string& name,
-                                     bool require_exists = false) const{
+                                     bool require_exists = false) const {
     const enzo_float* ptr;
-    if (holds_block_){
+    if (holds_block_) {
       ptr = reinterpret_cast<BlockWrapper*>(wrapper_)->ptr_grackle(name);
     } else {
       ptr = reinterpret_cast<ArrayMapWrapper*>(wrapper_)->ptr_grackle(name);
     }
 
-    if ((ptr == nullptr) & (require_exists)){
+    if ((ptr == nullptr) & (require_exists)) {
       ERROR1("EnzoFieldAdaptor::ptr_for_grackle",
              "there is no array called \"%s\"", name.c_str());
     }
@@ -287,45 +280,41 @@ public:
   ///
   /// This requires grid_dimension, grid_start and grid_end to be pre-allocated
   /// (they should each have space for storing 3 integers)
-  inline void get_grackle_field_grid_props(int *grid_dimension,
-                                           int *grid_start,
-                                           int *grid_end) const noexcept
-  {
-    std::array<int,3> dimension_, start_, end_;
+  inline void get_grackle_field_grid_props(int* grid_dimension, int* grid_start,
+                                           int* grid_end) const noexcept {
+    std::array<int, 3> dimension_, start_, end_;
 
-    if (holds_block_){
-      reinterpret_cast<BlockWrapper*>(wrapper_)
-        -> grackle_field_grid_props(dimension_, start_, end_);
+    if (holds_block_) {
+      reinterpret_cast<BlockWrapper*>(wrapper_)->grackle_field_grid_props(
+          dimension_, start_, end_);
     } else {
-      reinterpret_cast<ArrayMapWrapper*>(wrapper_)
-        -> grackle_field_grid_props(dimension_, start_, end_);
+      reinterpret_cast<ArrayMapWrapper*>(wrapper_)->grackle_field_grid_props(
+          dimension_, start_, end_);
     }
 
-    for (int i=0; i<3; i++){
+    for (int i = 0; i < 3; i++) {
       grid_dimension[i] = dimension_[i];
-      grid_start[i]     = start_[i];
-      grid_end[i]       = end_[i];
+      grid_start[i] = start_[i];
+      grid_end[i] = end_[i];
     }
   }
 
   /// Returns the cell width
   ///
   /// This is only needed for use with grackle (sometimes)
-  inline void cell_width(double *hx, double *hy, double *hz) const
-  {
-    if (holds_block_){
-      reinterpret_cast<BlockWrapper*>(wrapper_)->cell_width(hx,hy,hz);
+  inline void cell_width(double* hx, double* hy, double* hz) const {
+    if (holds_block_) {
+      reinterpret_cast<BlockWrapper*>(wrapper_)->cell_width(hx, hy, hz);
     } else {
-      reinterpret_cast<ArrayMapWrapper*>(wrapper_)->cell_width(hx,hy,hz);
+      reinterpret_cast<ArrayMapWrapper*>(wrapper_)->cell_width(hx, hy, hz);
     }
   }
 
   /// Returns the time that data was computed at
   ///
   /// This is only needed for use with grackle (for cosmological simulations)
-  inline double compute_time() const
-  {
-    if (holds_block_){
+  inline double compute_time() const {
+    if (holds_block_) {
       return reinterpret_cast<BlockWrapper*>(wrapper_)->compute_time();
     } else {
       return reinterpret_cast<ArrayMapWrapper*>(wrapper_)->compute_time();
@@ -333,7 +322,6 @@ public:
   }
 
 private:
-
   /// Specifies whether the instance holds a Field or EnzoEFltArrayMap
   bool holds_block_;
   /// Pointer to wrapper around the Field or EnzoEFltArrayMap
@@ -342,6 +330,5 @@ private:
   /// us avoid extra heap allocations)
   std::aligned_union<0, BlockWrapper, ArrayMapWrapper>::type wrapper_storage_;
 };
-
 
 #endif /* ENZO_ENZO_FIELD_ACCESSOR_ADAPTOR_HPP */

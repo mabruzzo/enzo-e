@@ -15,10 +15,7 @@
 
 static CmiNodeLock hierarchy_node_lock;
 
-void mutex_init_hierarchy()
-{
-  hierarchy_node_lock = CmiCreateLock();
-}
+void mutex_init_hierarchy() { hierarchy_node_lock = CmiCreateLock(); }
 
 // #define CELLO_TRACE
 
@@ -27,32 +24,26 @@ void mutex_init_hierarchy()
 int Hierarchy::num_blocks_node = 0;
 int64_t Hierarchy::num_particles_node = 0;
 
-Hierarchy::Hierarchy 
-(
- const Factory * factory,
- int refinement,
- int min_level,
- int max_level) throw ()
-  :
-  factory_((Factory *)factory),
-  refinement_(refinement),
-  min_level_(min_level),
-  max_level_(max_level),
-  refined_regions_lower_(),
-  refined_regions_upper_(),
-  num_blocks_(0),
-  num_blocks_level_(),
-  num_particles_(0),
-  num_zones_total_(0),
-  num_zones_real_(0),
-  block_array_()
-{
+Hierarchy::Hierarchy(const Factory* factory, int refinement, int min_level,
+                     int max_level) throw()
+    : factory_((Factory*)factory),
+      refinement_(refinement),
+      min_level_(min_level),
+      max_level_(max_level),
+      refined_regions_lower_(),
+      refined_regions_upper_(),
+      num_blocks_(0),
+      num_blocks_level_(),
+      num_particles_(0),
+      num_zones_total_(0),
+      num_zones_real_(0),
+      block_array_() {
   TRACE("Hierarchy::Hierarchy()");
   // Initialize extents
 
   num_blocks_level_.resize(max_level - min_level + 1);
 
-  for (int i=0; i<3; i++) {
+  for (int i = 0; i < 3; i++) {
     root_size_[i] = 1;
     lower_[i] = 0.0;
     upper_[i] = 1.0;
@@ -63,16 +54,11 @@ Hierarchy::Hierarchy
 
 //----------------------------------------------------------------------
 
-Hierarchy::~Hierarchy() throw()
-{
-  deallocate_blocks();
-}
+Hierarchy::~Hierarchy() throw() { deallocate_blocks(); }
 
 //----------------------------------------------------------------------
 
-void Hierarchy::pup (PUP::er &p)
-{
-    
+void Hierarchy::pup(PUP::er& p) {
   TRACEPUP;
   // NOTE: change this function whenever attributes change
 
@@ -97,29 +83,27 @@ void Hierarchy::pup (PUP::er &p)
   // checkpoint / restart then double-counts Blocks.
 
   if (up) {
-    for (size_t i=0; i<num_blocks_level_.size(); i++)
-      num_blocks_level_[i]=0;
-    num_blocks_      = 0;
-    num_particles_   = 0;
+    for (size_t i = 0; i < num_blocks_level_.size(); i++)
+      num_blocks_level_[i] = 0;
+    num_blocks_ = 0;
+    num_particles_ = 0;
     num_zones_total_ = 0;
-    num_zones_real_  = 0;
+    num_zones_real_ = 0;
   }
 
   p | block_array_;
 
-  PUParray(p,root_size_,3);
-  PUParray(p,lower_,3);
-  PUParray(p,upper_,3);
+  PUParray(p, root_size_, 3);
+  PUParray(p, lower_, 3);
+  PUParray(p, upper_, 3);
 
-  PUParray(p,blocking_,3);
-  PUParray(p,periodicity_,3);
-
+  PUParray(p, blocking_, 3);
+  PUParray(p, periodicity_, 3);
 }
 
 //----------------------------------------------------------------------
 
-void Hierarchy::set_lower(double x, double y, double z) throw ()
-{
+void Hierarchy::set_lower(double x, double y, double z) throw() {
   lower_[0] = x;
   lower_[1] = y;
   lower_[2] = z;
@@ -127,8 +111,7 @@ void Hierarchy::set_lower(double x, double y, double z) throw ()
 
 //----------------------------------------------------------------------
 
-void Hierarchy::set_upper(double x, double y, double z) throw ()
-{
+void Hierarchy::set_upper(double x, double y, double z) throw() {
   upper_[0] = x;
   upper_[1] = y;
   upper_[2] = z;
@@ -136,32 +119,27 @@ void Hierarchy::set_upper(double x, double y, double z) throw ()
 
 //----------------------------------------------------------------------
 
-void Hierarchy::set_root_size(int nx, int ny, int nz) throw ()
-{
-  TRACE3("Hierarchy::set_root_size(%d %d %d)",nx,ny,nz);
+void Hierarchy::set_root_size(int nx, int ny, int nz) throw() {
+  TRACE3("Hierarchy::set_root_size(%d %d %d)", nx, ny, nz);
 
   root_size_[0] = nx;
   root_size_[1] = ny;
   root_size_[2] = nz;
-
 }
 
 //----------------------------------------------------------------------
 
-void Hierarchy::set_blocking(int nx, int ny, int nz) throw ()
-{
-  TRACE3("Hierarchy::set_blocking(%d %d %d)",nx,ny,nz);
+void Hierarchy::set_blocking(int nx, int ny, int nz) throw() {
+  TRACE3("Hierarchy::set_blocking(%d %d %d)", nx, ny, nz);
 
   blocking_[0] = nx;
   blocking_[1] = ny;
   blocking_[2] = nz;
-
 }
 
 //----------------------------------------------------------------------
 
-void Hierarchy::root_size(int * nx, int * ny, int * nz) const throw ()
-{
+void Hierarchy::root_size(int* nx, int* ny, int* nz) const throw() {
   if (nx) *nx = root_size_[0];
   if (ny) *ny = root_size_[1];
   if (nz) *nz = root_size_[2];
@@ -169,16 +147,14 @@ void Hierarchy::root_size(int * nx, int * ny, int * nz) const throw ()
 
 //----------------------------------------------------------------------
 
-void Hierarchy::lower(double * x, double * y, double * z) const throw ()
-{
+void Hierarchy::lower(double* x, double* y, double* z) const throw() {
   if (x) *x = lower_[0];
   if (y) *y = lower_[1];
   if (z) *z = lower_[2];
 }
 //----------------------------------------------------------------------
 
-void Hierarchy::upper(double * x, double * y, double * z) const throw ()
-{
+void Hierarchy::upper(double* x, double* y, double* z) const throw() {
   if (x) *x = upper_[0];
   if (y) *y = upper_[1];
   if (z) *z = upper_[2];
@@ -186,14 +162,13 @@ void Hierarchy::upper(double * x, double * y, double * z) const throw ()
 
 //----------------------------------------------------------------------
 
-void Hierarchy::root_blocks
-(int * nbx, int * nby, int * nbz,int level) const throw()
-{
+void Hierarchy::root_blocks(int* nbx, int* nby, int* nbz, int level) const
+    throw() {
   if (nbx) (*nbx) = blocking_[0];
   if (nby) (*nby) = blocking_[1];
   if (nbz) (*nbz) = blocking_[2];
   if (level > 0) {
-    const int r = std::pow(2,level);
+    const int r = std::pow(2, level);
     const int rank = cello::rank();
     if (nbx && rank >= 1) (*nbx) *= r;
     if (nby && rank >= 2) (*nby) *= r;
@@ -203,21 +178,18 @@ void Hierarchy::root_blocks
 
 //----------------------------------------------------------------------
 
-void Hierarchy::deallocate_blocks() throw()
-{
-}
+void Hierarchy::deallocate_blocks() throw() {}
 
 //----------------------------------------------------------------------
 
-void Hierarchy::increment_block_count(int count, int level)
-{
+void Hierarchy::increment_block_count(int count, int level) {
   num_blocks_ += count;
-  const int n=num_blocks_level_.size();
+  const int n = num_blocks_level_.size();
   const int index = level - min_level_;
   ASSERT1("Hierarchy::increment_block_count",
-          "Block level %d exceeds block count array",
-          level, 0 <= index && index < n);
-  num_blocks_level_[level-min_level_] += count;
+          "Block level %d exceeds block count array", level,
+          0 <= index && index < n);
+  num_blocks_level_[level - min_level_] += count;
   CmiLock(hierarchy_node_lock);
   Hierarchy::num_blocks_node += count;
   CmiUnlock(hierarchy_node_lock);
@@ -225,51 +197,42 @@ void Hierarchy::increment_block_count(int count, int level)
 
 //----------------------------------------------------------------------
 
-void Hierarchy::increment_particle_count(int64_t count)
-{
+void Hierarchy::increment_particle_count(int64_t count) {
   num_particles_ += count;
   CmiLock(hierarchy_node_lock);
   Hierarchy::num_particles_node += count;
   CmiUnlock(hierarchy_node_lock);
-  
 }
 
 //----------------------------------------------------------------------
 
-CProxy_Block Hierarchy::new_block_proxy ( bool allocate_data) throw()
-{
+CProxy_Block Hierarchy::new_block_proxy(bool allocate_data) throw() {
   TRACE("Creating block_array_");
 
-  DataMsg * data_msg = NULL;
+  DataMsg* data_msg = NULL;
 
-  block_array_ = factory_->new_block_proxy
-    ( data_msg,  blocking_[0],blocking_[1],blocking_[2]);
+  block_array_ = factory_->new_block_proxy(data_msg, blocking_[0], blocking_[1],
+                                           blocking_[2]);
   return block_array_;
 }
 
 //----------------------------------------------------------------------
 
-void Hierarchy::create_block_array () throw()
-{
+void Hierarchy::create_block_array() throw() {
   // determine block size
   const int mbx = root_size_[0] / blocking_[0];
   const int mby = root_size_[1] / blocking_[1];
   const int mbz = root_size_[2] / blocking_[2];
 
   // Check that blocks evenly subdivide array
-  if (! ((blocking_[0]*mbx == root_size_[0]) &&
-	 (blocking_[1]*mby == root_size_[1]) &&
-	 (blocking_[2]*mbz == root_size_[2]))) {
-
-    ERROR6("Hierarchy::create_block_array()",  
-	   "Blocks must evenly subdivide array: "
-	   "array size = (%d %d %d)  block count = (%d %d %d)",
-	   root_size_[0],
-	   root_size_[1],
-	   root_size_[2],
-	   blocking_[0],
-	   blocking_[1],
-	   blocking_[2]);
+  if (!((blocking_[0] * mbx == root_size_[0]) &&
+        (blocking_[1] * mby == root_size_[1]) &&
+        (blocking_[2] * mbz == root_size_[2]))) {
+    ERROR6("Hierarchy::create_block_array()",
+           "Blocks must evenly subdivide array: "
+           "array size = (%d %d %d)  block count = (%d %d %d)",
+           root_size_[0], root_size_[1], root_size_[2], blocking_[0],
+           blocking_[1], blocking_[2]);
   }
 
   // CREATE AND INITIALIZE NEW DATA BLOCKS
@@ -278,20 +241,16 @@ void Hierarchy::create_block_array () throw()
 
   TRACE("Allocating block_array_");
 
-  DataMsg * data_msg = NULL;
+  DataMsg* data_msg = NULL;
 
-  factory_->create_block_array
-    ( data_msg,
-      block_array_,
-      blocking_[0],blocking_[1],blocking_[2],
-      mbx,mby,mbz,
-      num_field_blocks);
+  factory_->create_block_array(data_msg, block_array_, blocking_[0],
+                               blocking_[1], blocking_[2], mbx, mby, mbz,
+                               num_field_blocks);
 }
 
 //----------------------------------------------------------------------
 
-void Hierarchy::create_subblock_array () throw()
-{
+void Hierarchy::create_subblock_array() throw() {
   // determine block size
 
   const int mbx = root_size_[0] / blocking_[0];
@@ -304,22 +263,17 @@ void Hierarchy::create_subblock_array () throw()
 
   TRACE("Allocating sub-block_array_");
 
-  DataMsg * data_msg = NULL;
+  DataMsg* data_msg = NULL;
 
-  factory_->create_subblock_array
-    (data_msg,
-     block_array_,min_level_,
-     blocking_[0],blocking_[1],blocking_[2],
-     mbx,mby,mbz,
-     num_field_blocks);
-    
+  factory_->create_subblock_array(data_msg, block_array_, min_level_,
+                                  blocking_[0], blocking_[1], blocking_[2], mbx,
+                                  mby, mbz, num_field_blocks);
 }
 
 // --------------------------------------------------------------------
 
-void Hierarchy::refined_region_lower(int* region_lower, int level) throw()
-{
-  if (level >= 0){
+void Hierarchy::refined_region_lower(int* region_lower, int level) throw() {
+  if (level >= 0) {
     region_lower[0] = refined_regions_lower_.at(level).at(0);
     region_lower[1] = refined_regions_lower_.at(level).at(1);
     region_lower[2] = refined_regions_lower_.at(level).at(2);
@@ -330,92 +284,92 @@ void Hierarchy::refined_region_lower(int* region_lower, int level) throw()
   }
 }
 
-void Hierarchy::refined_region_upper(int* region_upper, int level) throw()
-{
+void Hierarchy::refined_region_upper(int* region_upper, int level) throw() {
   if (level >= 0) {
     region_upper[0] = refined_regions_upper_.at(level).at(0);
     region_upper[1] = refined_regions_upper_.at(level).at(1);
     region_upper[2] = refined_regions_upper_.at(level).at(2);
   } else {
-    root_blocks(region_upper, region_upper+1, region_upper+2);
+    root_blocks(region_upper, region_upper + 1, region_upper + 2);
   }
 }
 
 // --------------------------------------------------------------------
 
-void Hierarchy::get_nearest_periodic_image
-(const double * x, const double *y, double * npi) const throw()
+void Hierarchy::get_nearest_periodic_image(const double* x, const double* y,
+                                           double* npi) const throw()
 
 {
   const int rank = cello::rank();
   double domain_width;
   double n;
-  int periodic_x, periodic_y,periodic_z;
-  get_periodicity(&periodic_x,&periodic_y,&periodic_z);
-  if (periodic_x){
+  int periodic_x, periodic_y, periodic_z;
+  get_periodicity(&periodic_x, &periodic_y, &periodic_z);
+  if (periodic_x) {
     domain_width = upper_[0] - lower_[0];
-    n = std::floor((x[0] - y[0])/domain_width);
-    npi[0] = ((x[0] - y[0])/domain_width - n < 0.5) ?
-      x[0] - n * domain_width : x[0] - (n + 1.0) * domain_width ;
-  }
-  else npi[0] = x[0];
-  if (rank >= 2){
-    if (periodic_y){
+    n = std::floor((x[0] - y[0]) / domain_width);
+    npi[0] = ((x[0] - y[0]) / domain_width - n < 0.5)
+                 ? x[0] - n * domain_width
+                 : x[0] - (n + 1.0) * domain_width;
+  } else
+    npi[0] = x[0];
+  if (rank >= 2) {
+    if (periodic_y) {
       domain_width = upper_[1] - lower_[1];
-      n = std::floor((x[1] - y[1])/domain_width);
-      npi[1] = ((x[1] - y[1])/domain_width - n < 0.5) ?
-	x[1] - n * domain_width : x[1] - (n + 1.0) * domain_width ;
-    }
-    else npi[1] = x[1];
+      n = std::floor((x[1] - y[1]) / domain_width);
+      npi[1] = ((x[1] - y[1]) / domain_width - n < 0.5)
+                   ? x[1] - n * domain_width
+                   : x[1] - (n + 1.0) * domain_width;
+    } else
+      npi[1] = x[1];
   }
 
-  if (rank >= 3){
-    if (periodic_z){
+  if (rank >= 3) {
+    if (periodic_z) {
       domain_width = upper_[2] - lower_[2];
-      n = std::floor((x[2] - y[2])/domain_width);
-      npi[2] = ((x[2] - y[2])/domain_width - n < 0.5) ?
-	x[2] - n * domain_width : x[2] - (n + 1.0) * domain_width ;
-    }
-    else npi[2] = x[2];
+      n = std::floor((x[2] - y[2]) / domain_width);
+      npi[2] = ((x[2] - y[2]) / domain_width - n < 0.5)
+                   ? x[2] - n * domain_width
+                   : x[2] - (n + 1.0) * domain_width;
+    } else
+      npi[2] = x[2];
   }
-  
+
   return;
-  
 }
 
 // --------------------------------------------------------------------
 
-void Hierarchy::get_folded_position
-(const double * x, double * folded_x) const throw()
+void Hierarchy::get_folded_position(const double* x, double* folded_x) const
+    throw()
 
 {
   const int rank = cello::rank();
   double domain_width;
   double n;
-  int periodic_x, periodic_y,periodic_z;
-  get_periodicity(&periodic_x,&periodic_y,&periodic_z);
-  if (periodic_x){
+  int periodic_x, periodic_y, periodic_z;
+  get_periodicity(&periodic_x, &periodic_y, &periodic_z);
+  if (periodic_x) {
     domain_width = upper_[0] - lower_[0];
-    n = std::floor((x[0] - lower_[0])/domain_width);
-    folded_x[0] = x[0] - n*domain_width;
-  }
-  else folded_x[0] = x[0];
-  if (rank >= 2){
-    if (periodic_y){
+    n = std::floor((x[0] - lower_[0]) / domain_width);
+    folded_x[0] = x[0] - n * domain_width;
+  } else
+    folded_x[0] = x[0];
+  if (rank >= 2) {
+    if (periodic_y) {
       domain_width = upper_[1] - lower_[1];
-      n = std::floor((x[1] - lower_[1])/domain_width);
-      folded_x[1] = x[1] - n*domain_width;
-    }
-    else folded_x[1] = x[1];
+      n = std::floor((x[1] - lower_[1]) / domain_width);
+      folded_x[1] = x[1] - n * domain_width;
+    } else
+      folded_x[1] = x[1];
   }
-  if (rank >= 3){
-    if (periodic_z){
+  if (rank >= 3) {
+    if (periodic_z) {
       domain_width = upper_[2] - lower_[2];
-      n = std::floor((x[2] - lower_[2])/domain_width);
-      folded_x[2] = x[2] - n*domain_width;
-    }
-    else folded_x[2] = x[2];
+      n = std::floor((x[2] - lower_[2]) / domain_width);
+      folded_x[2] = x[2] - n * domain_width;
+    } else
+      folded_x[2] = x[2];
   }
   return;
-  
 }

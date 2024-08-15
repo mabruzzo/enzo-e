@@ -10,66 +10,55 @@
 #define MESH_IT_FACE_HPP
 
 class ItFace {
-
   /// @class    ItFace
   /// @ingroup  Mesh
-  /// @brief    [\ref Mesh] 
+  /// @brief    [\ref Mesh]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  ItFace(int rank,
-	 int rank_limit,
-	 int periodic[3],
-	 int n3[3],
-	 Index index,
-	 const int * ic3=0,
-	 const int * if3=0) throw();
+  ItFace(int rank, int rank_limit, int periodic[3], int n3[3], Index index,
+         const int* ic3 = 0, const int* if3 = 0) throw();
 
   /// Destructor
   ~ItFace() throw();
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     // NOTE: change this function whenever attributes change
     TRACEPUP;
-    PUParray(p,if3_,3);
+    PUParray(p, if3_, 3);
     p | ic3_;
     p | ipf3_;
     p | rank_;
     p | rank_limit_;
-    PUParray (p,periodicity_,3);
-    PUParray (p,n3_,3);
+    PUParray(p, periodicity_, 3);
+    PUParray(p, n3_, 3);
     p | index_;
   }
 
   /// Go to the next face if any and return it through of3[]
-  bool next (int of3[3]) throw()
-  {
+  bool next(int of3[3]) throw() {
     const bool retval = next_();
     if (retval) face_(of3);
     return retval;
   }
 
-  Index index() const ;
+  Index index() const;
 
   /// Reset the Iterator to the beginning
   void reset() throw();
 
   bool is_reset() const;
 
-private: // functions
-
+private:  // functions
   /// Go to the next face if any
-  bool next_ () throw();
+  bool next_() throw();
 
   /// Return the current face through of3[]
-  void face_ (int of3[3]) const ;
+  void face_(int of3[3]) const;
 
   /// go to the next face
   void increment_();
-
 
   /// go to the first face
   void set_first_();
@@ -77,8 +66,7 @@ private: // functions
   /// Whether the current face rank is valid
   bool valid_() const;
 
-private: // attributes
-
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
 
   /// Current face
@@ -104,8 +92,6 @@ private: // attributes
 
   /// Index
   Index index_;
-
 };
 
 #endif /* MESH_ITFACE_HPP */
-

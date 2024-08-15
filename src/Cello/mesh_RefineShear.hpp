@@ -10,54 +10,39 @@
 #define MESH_REFINE_SHEAR_HPP
 
 class RefineShear : public Refine {
-
   /// @class    RefineShear
   /// @ingroup  Mesh
-  /// @brief    [\ref Mesh] 
+  /// @brief    [\ref Mesh]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  RefineShear(double min_refine,
-	      double max_coarsen,
-	      int    max_level,
-	      bool   include_ghosts,
-	      std::string output) throw();
+  RefineShear(double min_refine, double max_coarsen, int max_level,
+              bool include_ghosts, std::string output) throw();
 
   /// default constructor
   // RefineShear () throw() : Refine() {};
 
   PUPable_decl(RefineShear);
 
-  RefineShear(CkMigrateMessage *m) : Refine (m) {}
+  RefineShear(CkMigrateMessage* m) : Refine(m) {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
     // NOTE: change this function whenever attributes change
     Refine::pup(p);
   }
 
   /// Evaluate the refinement criteria, updating the refinement field
-  virtual int apply (Block * block) throw();
+  virtual int apply(Block* block) throw();
 
-  virtual std::string name () const { return "shear"; };
+  virtual std::string name() const { return "shear"; };
 
-private: // functions
-
+private:  // functions
   template <class T>
-  void evaluate_block_(const T * u,
-		       const T * v,
-		       const T * w,
-		       T * output,
-		       int ndx, int ndy, int ndz,
-		       int nx, int ny, int nz,
-		       int gx, int gy, int gz,
-		       bool *any_refine,
-		       bool * all_coarsen, 
-		       int rank);
+  void evaluate_block_(const T* u, const T* v, const T* w, T* output, int ndx,
+                       int ndy, int ndz, int nx, int ny, int nz, int gx, int gy,
+                       int gz, bool* any_refine, bool* all_coarsen, int rank);
 };
 
 #endif /* MESH_REFINE_SHEAR_HPP */
-

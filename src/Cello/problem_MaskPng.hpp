@@ -10,88 +10,73 @@
 #define PROBLEM_MASK_PNG_HPP
 
 class MaskPng : public Mask {
-
   /// @class    MaskPng
   /// @ingroup  Problem
-  /// @brief    [\ref Problem] 
+  /// @brief    [\ref Problem]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  MaskPng() throw() 
-  : Mask(),mask_(NULL), nx_(0),ny_(0), xm_(0),xp_(0),ym_(0),yp_(0)
-  { };
+  MaskPng() throw()
+      : Mask(), mask_(NULL), nx_(0), ny_(0), xm_(0), xp_(0), ym_(0), yp_(0){};
 
   /// Destructor
-  virtual ~MaskPng() throw() 
-  {
-    delete [] mask_;
-  };
+  virtual ~MaskPng() throw() { delete[] mask_; };
 
   /// Copy constructor
-  MaskPng(const MaskPng & mask) throw() 
-  {copy_(mask); }
+  MaskPng(const MaskPng& mask) throw() { copy_(mask); }
 
   /// Assignment operator
-  MaskPng & operator= (const MaskPng & mask) throw()
-  {   copy_(mask); return *this; }
-
+  MaskPng& operator=(const MaskPng& mask) throw() {
+    copy_(mask);
+    return *this;
+  }
 
   /// Clone the object
-  virtual std::shared_ptr<Mask> make_clone() const
-  { return std::make_shared<MaskPng>(*this); }
+  virtual std::shared_ptr<Mask> make_clone() const {
+    return std::make_shared<MaskPng>(*this);
+  }
 
-  MaskPng(std::string file_name, 
-	  double xm, double xp,
-	  double ym, double yp) throw();
+  MaskPng(std::string file_name, double xm, double xp, double ym,
+          double yp) throw();
 
   PUPable_decl(MaskPng);
 
-  MaskPng(CkMigrateMessage *m)
-    : Mask (m),
-      mask_(NULL), nx_(0),ny_(0), xm_(0),xp_(0),ym_(0),yp_(0)
-  {}
-
+  MaskPng(CkMigrateMessage* m)
+      : Mask(m), mask_(NULL), nx_(0), ny_(0), xm_(0), xp_(0), ym_(0), yp_(0) {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
     Mask::pup(p);
     p | nx_;
     p | ny_;
-    PUParray(p,mask_,nx_*ny_);
+    PUParray(p, mask_, nx_ * ny_);
     p | xm_;
     p | xp_;
     p | ym_;
     p | yp_;
-    WARNING("MaskPng::pup()","UNFINISHED");
+    WARNING("MaskPng::pup()", "UNFINISHED");
     // NOTE: change this function whenever attributes change
   }
 
   /// Evaluate mask at a point
-  virtual bool evaluate (double t, double x, double y, double z) const;
+  virtual bool evaluate(double t, double x, double y, double z) const;
 
   /// Return mask values in an array
-  virtual void evaluate (bool * mask, double t,
-			 int ndx, int nx, double * x,
-			 int ndy, int ny, double * y,
-			 int ndz, int nz, double * z) const;
-  
-private: // functions
+  virtual void evaluate(bool* mask, double t, int ndx, int nx, double* x,
+                        int ndy, int ny, double* y, int ndz, int nz,
+                        double* z) const;
 
-  void copy_(const MaskPng & mask) throw();
+private:  // functions
+  void copy_(const MaskPng& mask) throw();
 
-private: // attributes
-
-  bool * mask_;
+private:  // attributes
+  bool* mask_;
   /// Size of the image
   int nx_;
   int ny_;
 
   double xm_, xp_, ym_, yp_;
-
 };
 
 #endif /* PROBLEM_MASK_PNG_HPP */
-

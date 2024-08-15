@@ -9,48 +9,40 @@
 #define ENZO_ENZO_METHOD_FEEDBACK
 
 class EnzoMethodFeedback : public Method {
-
   /// @class   EnzoMethodFeedback
   /// @ingroup Enzo
   /// @btief   [\ref Enzo] Encapsulate Feedback Routines
 
 public:
-
   EnzoMethodFeedback(ParameterGroup p);
 
   /// Destructor
-  virtual ~EnzoMethodFeedback() throw() {};
+  virtual ~EnzoMethodFeedback() throw(){};
 
   /// CHarm++ Pup::able declarations
   PUPable_decl(EnzoMethodFeedback);
 
   /// Charm++ Pup::able migration Constructor
-  EnzoMethodFeedback (CkMigrateMessage *m)
-    : Method (m)
-    {  }
+  EnzoMethodFeedback(CkMigrateMessage* m) : Method(m) {}
 
   /// Charm++ Pack / Unpack function
-  void pup(PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Apply the method
-  virtual void compute (Block * block) throw();
+  virtual void compute(Block* block) throw();
 
-  void compute_ (Block * block) throw();
+  void compute_(Block* block) throw();
 
   /// name
-  virtual std::string name() throw()
-  { return "feedback"; }
+  virtual std::string name() throw() { return "feedback"; }
 
   // Compute the maximum timestep for this method
-  virtual double timestep (Block * block) throw();
+  virtual double timestep(Block* block) throw();
 
 protected:
-
   double ejecta_mass_;
   double ejecta_energy_;
   double ejecta_metal_fraction_;
-
 };
-
 
 #endif /* EnzoMethodFeedback */

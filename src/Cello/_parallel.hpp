@@ -32,4 +32,3 @@
 #include "parallel.def"
 
 #endif /* _PARALLEL_HPP */
-

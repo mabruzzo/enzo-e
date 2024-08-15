@@ -11,62 +11,54 @@
 class Simulation;
 
 class IoSimulation : public Io {
-
   /// @class    IoSimulation
   /// @ingroup  Io
   /// @brief    [\ref Io] Class for linking between Simulation and IO
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  IoSimulation(const Simulation * simulation) throw();
+  IoSimulation(const Simulation* simulation) throw();
 
   /// CHARM++ PUP::able declaration
   PUPable_decl(IoSimulation);
 
   /// CHARM++ migration constructor
-  IoSimulation(CkMigrateMessage *m) : Io(m) {}
+  IoSimulation(CkMigrateMessage* m) : Io(m) {}
 
   /// Destructor
-  virtual ~IoSimulation () throw()
-  {}
+  virtual ~IoSimulation() throw() {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
-
+  inline void pup(PUP::er& p) {
     TRACEPUP;
 
     // NOTE: change this function whenever attributes change
 
     Io::pup(p);
 
-    p | rank_; 
+    p | rank_;
     p | cycle_;
     p | time_;
     p | dt_;
   }
 
   /// Return the ith metadata item associated with the object
-  virtual void meta_value 
-  (int index,
-   void ** buffer, std::string * name, int * type,
-   int * nxd=0, int * nyd=0, int * nzd=0) throw();
+  virtual void meta_value(int index, void** buffer, std::string* name,
+                          int* type, int* nxd = 0, int* nyd = 0,
+                          int* nzd = 0) throw();
 
-  void get_state (double & time, double & dt, int & cycle)
-  {
+  void get_state(double& time, double& dt, int& cycle) {
     time = time_;
     dt = dt_;
     cycle = cycle_;
   }
 
   /// Copy the values to the object
-  virtual void save_to (void *); 
+  virtual void save_to(void*);
 
-private: // attributes
-
+private:  // attributes
   /// Rank of the simulation
-  int  rank_; 
+  int rank_;
 
   /// Current cycle
   int cycle_;
@@ -76,8 +68,6 @@ private: // attributes
 
   /// Current timestep
   double dt_;
-
 };
 
 #endif /* IO_IO_SIMULATION_HPP */
-

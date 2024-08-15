@@ -9,55 +9,50 @@
 #define ENZO_ENZO_INITIAL_SEDOV_RANDOM_HPP
 
 class EnzoInitialSedovRandom : public Initial {
-
   /// @class    EnzoInitialSedovRandom
   /// @ingroup  Enzo
-  /// @brief    [\ref Enzo] initial conditions for 3D array of Randomized Sedov Blasts 
+  /// @brief    [\ref Enzo] initial conditions for 3D array of Randomized Sedov
+  /// Blasts
 
-public: // interface
-
+public:  // interface
   /// CHARM++ constructor
   EnzoInitialSedovRandom() throw()
-  : Initial (),
-    half_empty_(false),
-    grackle_cooling_(false), // not implimented
-    max_blasts_(0),
-    radius_relative_(0.0),
-    pressure_in_(0.0),
-    pressure_out_(0.0),
-    density_(0.0),
-    te_multiplier_(0)
-  { }
-  
+      : Initial(),
+        half_empty_(false),
+        grackle_cooling_(false),  // not implimented
+        max_blasts_(0),
+        radius_relative_(0.0),
+        pressure_in_(0.0),
+        pressure_out_(0.0),
+        density_(0.0),
+        te_multiplier_(0) {}
+
   /// Constructor
-  EnzoInitialSedovRandom(const EnzoConfig * enzo_config) throw();
+  EnzoInitialSedovRandom(const EnzoConfig* enzo_config) throw();
 
   /// CHARM++ PUP::able declaration
   PUPable_decl(EnzoInitialSedovRandom);
 
   /// CHARM++ migration constructor
-  EnzoInitialSedovRandom(CkMigrateMessage *m)
-    : Initial (m),
-      half_empty_(false),
-      grackle_cooling_(false), // not implimented
-      max_blasts_(0),
-      radius_relative_(0.0),
-      pressure_in_(0.0),
-      pressure_out_(0.0),
-      density_(0.0),
-      te_multiplier_(0)
-  {}
+  EnzoInitialSedovRandom(CkMigrateMessage* m)
+      : Initial(m),
+        half_empty_(false),
+        grackle_cooling_(false),  // not implimented
+        max_blasts_(0),
+        radius_relative_(0.0),
+        pressure_in_(0.0),
+        pressure_out_(0.0),
+        density_(0.0),
+        te_multiplier_(0) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Initialize the block
 
-  virtual void enforce_block
-  ( Block * block, const Hierarchy * hierarchy ) throw();
+  virtual void enforce_block(Block* block, const Hierarchy* hierarchy) throw();
 
-private: // attributes
-
+private:  // attributes
   /// Size of the array of Sedov blasts
   int array_[3];
 
@@ -83,8 +78,6 @@ private: // attributes
 
   /// Variation of energy in sedov explosions
   int te_multiplier_;
-
 };
 
 #endif /* ENZO_ENZO_INITIAL_SEDOV_RANDOM_HPP */
-

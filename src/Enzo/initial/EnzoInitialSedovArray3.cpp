@@ -16,181 +16,169 @@
 
 //----------------------------------------------------------------------
 
-EnzoInitialSedovArray3::EnzoInitialSedovArray3 
-(const EnzoConfig * config) throw ()
-: Initial(config->initial_cycle, config->initial_time) 
-{
-  array_[0]        = config->initial_sedov_array[0];
-  array_[1]        = config->initial_sedov_array[1];
-  array_[2]        = config->initial_sedov_array[2];
+EnzoInitialSedovArray3::EnzoInitialSedovArray3(const EnzoConfig* config) throw()
+    : Initial(config->initial_cycle, config->initial_time) {
+  array_[0] = config->initial_sedov_array[0];
+  array_[1] = config->initial_sedov_array[1];
+  array_[2] = config->initial_sedov_array[2];
   radius_relative_ = config->initial_sedov_radius_relative;
-  pressure_in_     = config->initial_sedov_pressure_in;
-  pressure_out_    = config->initial_sedov_pressure_out;
-  density_         = config->initial_sedov_density;
+  pressure_in_ = config->initial_sedov_pressure_in;
+  pressure_out_ = config->initial_sedov_pressure_out;
+  density_ = config->initial_sedov_density;
 }
 
 //----------------------------------------------------------------------
 
-void EnzoInitialSedovArray3::pup (PUP::er &p)
-{
+void EnzoInitialSedovArray3::pup(PUP::er& p) {
   // NOTE: update whenever attributes change
 
   TRACEPUP;
 
   Initial::pup(p);
 
-  PUParray(p,array_,3);
+  PUParray(p, array_, 3);
   p | radius_relative_;
   p | pressure_in_;
   p | pressure_out_;
   p | density_;
-  
 }
 
 //----------------------------------------------------------------------
-void EnzoInitialSedovArray3::enforce_block
-( Block * block, const Hierarchy * hierarchy ) throw()
+void EnzoInitialSedovArray3::enforce_block(Block* block,
+                                           const Hierarchy* hierarchy) throw()
 
 {
   if (!block->is_leaf()) {
     block->initial_done();
     return;
   }
-  
-  ASSERT("EnzoInitialSedovArray3",
-	 "Block does not exist",
-	 block != NULL);
+
+  ASSERT("EnzoInitialSedovArray3", "Block does not exist", block != NULL);
 
   Field field = block->data()->field();
 
-  ASSERT("EnzoInitialSedovArray3",
-	 "Insufficient number of fields",
-	 field.field_count() >= 4);
+  ASSERT("EnzoInitialSedovArray3", "Insufficient number of fields",
+         field.field_count() >= 4);
 
-  enzo_float *  d = (enzo_float *) field.values
-    (field.field_id("density"));
-  
-  enzo_float * te = 0;
+  enzo_float* d = (enzo_float*)field.values(field.field_id("density"));
 
-  te = (enzo_float *) field.values
-    (field.field_id("total_energy"));
+  enzo_float* te = 0;
 
-  int nx,ny,nz;
-  field.size(&nx,&ny,&nz);
+  te = (enzo_float*)field.values(field.field_id("total_energy"));
 
-  double xmb,ymb,zmb;
-  block->data()->lower(&xmb,&ymb,&zmb);
+  int nx, ny, nz;
+  field.size(&nx, &ny, &nz);
 
-  double xpb,ypb,zpb;
-  block->data()->upper(&xpb,&ypb,&zpb);
+  double xmb, ymb, zmb;
+  block->data()->lower(&xmb, &ymb, &zmb);
 
-  double hx,hy,hz;
-  field.cell_width(xmb,xpb,&hx,
-		   ymb,ypb,&hy,
-		   zmb,zpb,&hz);
+  double xpb, ypb, zpb;
+  block->data()->upper(&xpb, &ypb, &zpb);
+
+  double hx, hy, hz;
+  field.cell_width(xmb, xpb, &hx, ymb, ypb, &hy, zmb, zpb, &hz);
 
   // Parameters
 
-  const double sedov_radius = radius_relative_/array_[0];
-  const double sedov_radius_2 = sedov_radius*sedov_radius;
+  const double sedov_radius = radius_relative_ / array_[0];
+  const double sedov_radius_2 = sedov_radius * sedov_radius;
 
   const enzo_float gamma = enzo::fluid_props()->gamma();
 
-  const double sedov_te_in = pressure_in_  / ((gamma - 1.0) * density_);
-  const double sedov_te_out= pressure_out_ / ((gamma - 1.0) * density_);
+  const double sedov_te_in = pressure_in_ / ((gamma - 1.0) * density_);
+  const double sedov_te_out = pressure_out_ / ((gamma - 1.0) * density_);
 
-  int gx,gy,gz;
-  field.ghost_depth(0,&gx,&gy,&gz);
+  int gx, gy, gz;
+  field.ghost_depth(0, &gx, &gy, &gz);
 
-  int mx = nx + 2*gx;
-  int my = ny + 2*gy;
-  int mz = nz + 2*gz;
+  int mx = nx + 2 * gx;
+  int my = ny + 2 * gy;
+  int mz = nz + 2 * gz;
 
   // clear all fields
 
-  for (int iv=0; iv<field.field_count(); iv++) {
+  for (int iv = 0; iv < field.field_count(); iv++) {
+    enzo_float* array = (enzo_float*)field.values(iv);
 
-    enzo_float * array = (enzo_float *) field.values (iv);
-
-    for (int iz=0; iz<mz; iz++) {
-      for (int iy=0; iy<my; iy++) {
-	for (int ix=0; ix<mx; ix++) {
-	  int i = INDEX(ix,iy,iz,mx,my);
-	  array[i] = 0.0;
-	}
+    for (int iz = 0; iz < mz; iz++) {
+      for (int iy = 0; iy < my; iy++) {
+        for (int ix = 0; ix < mx; ix++) {
+          int i = INDEX(ix, iy, iz, mx, my);
+          array[i] = 0.0;
+        }
       }
     }
   }
 
-  // background 
+  // background
 
-  for (int iz=0; iz<mz; iz++) {
-    for (int iy=0; iy<my; iy++) {
-      for (int ix=0; ix<mx; ix++) {
-
-	int i = INDEX(ix,iy,iz,mx,my);
-	d[i]  = density_;
-	te[i] = sedov_te_out;
-
+  for (int iz = 0; iz < mz; iz++) {
+    for (int iy = 0; iy < my; iy++) {
+      for (int ix = 0; ix < mx; ix++) {
+        int i = INDEX(ix, iy, iz, mx, my);
+        d[i] = density_;
+        te[i] = sedov_te_out;
       }
     }
   }
 
   // array of explosions
 
-  double xmd,ymd,zmd;
-  hierarchy->lower(&xmd,&ymd,&zmd);
-  double xpd,ypd,zpd;
-  hierarchy->upper(&xpd,&ypd,&zpd);
+  double xmd, ymd, zmd;
+  hierarchy->lower(&xmd, &ymd, &zmd);
+  double xpd, ypd, zpd;
+  hierarchy->upper(&xpd, &ypd, &zpd);
 
   // bounds of possible explosions intersecting this Block
 
   double r = sedov_radius;
-  
-  int kxm = MAX((int)floor((xmb-xmd-r)/(xpd-xmd)*array_[0])-1,0);
-  int kym = MAX((int)floor((ymb-ymd-r)/(ypd-ymd)*array_[1])-1,0);
-  int kzm = MAX((int)floor((zmb-zmd-r)/(zpd-zmd)*array_[2])-1,0);
-  int kxp = MIN( (int)ceil((xpb-xmd+r)/(xpd-xmd)*array_[0])+1,array_[0]);
-  int kyp = MIN( (int)ceil((ypb-ymd+r)/(ypd-ymd)*array_[1])+1,array_[1]);
-  int kzp = MIN( (int)ceil((zpb-zmd+r)/(zpd-zmd)*array_[2])+1,array_[2]);
-  
-  TRACE3 ("SEDOV: %d %d %d",kxp,kyp,kzp);
 
-  double hxa = (xpd-xmd) / array_[0];
-  double hya = (ypd-ymd) / array_[1];
-  double hza = (zpd-zmd) / array_[2];
+  int kxm = MAX((int)floor((xmb - xmd - r) / (xpd - xmd) * array_[0]) - 1, 0);
+  int kym = MAX((int)floor((ymb - ymd - r) / (ypd - ymd) * array_[1]) - 1, 0);
+  int kzm = MAX((int)floor((zmb - zmd - r) / (zpd - zmd) * array_[2]) - 1, 0);
+  int kxp =
+      MIN((int)ceil((xpb - xmd + r) / (xpd - xmd) * array_[0]) + 1, array_[0]);
+  int kyp =
+      MIN((int)ceil((ypb - ymd + r) / (ypd - ymd) * array_[1]) + 1, array_[1]);
+  int kzp =
+      MIN((int)ceil((zpb - zmd + r) / (zpd - zmd) * array_[2]) + 1, array_[2]);
+
+  TRACE3("SEDOV: %d %d %d", kxp, kyp, kzp);
+
+  double hxa = (xpd - xmd) / array_[0];
+  double hya = (ypd - ymd) / array_[1];
+  double hza = (zpd - zmd) / array_[2];
 
   // (kx,ky,kz) index bounds of explosions in domain
 
-  for (int kz=kzm; kz<kzp; kz++) {
-    double zc = hza*(0.5+kz);
-    for (int ky=kym; ky<kyp; ky++) {
-      double yc = hya*(0.5+ky);
-      for (int kx=kxm; kx<kxp; kx++) {
-	double xc = hxa*(0.5+kx);
-	TRACE3("xc,yc,zc = %f %f %f",xc,yc,zc);
+  for (int kz = kzm; kz < kzp; kz++) {
+    double zc = hza * (0.5 + kz);
+    for (int ky = kym; ky < kyp; ky++) {
+      double yc = hya * (0.5 + ky);
+      for (int kx = kxm; kx < kxp; kx++) {
+        double xc = hxa * (0.5 + kx);
+        TRACE3("xc,yc,zc = %f %f %f", xc, yc, zc);
 
-	// (explosion center xc,yc,zc)
+        // (explosion center xc,yc,zc)
 
-	for (int iz=0; iz<mz; iz++) {
-	  double z = zmb + (iz - gz + 0.5)*hz - zc;
-	  for (int iy=0; iy<my; iy++) {
-	    double y = ymb + (iy - gy + 0.5)*hy - yc;
-	    for (int ix=0; ix<mx; ix++) {
-	      double x = xmb + (ix - gx + 0.5)*hx - xc;
-	      double r2 = x*x + y*y + z*z;
+        for (int iz = 0; iz < mz; iz++) {
+          double z = zmb + (iz - gz + 0.5) * hz - zc;
+          for (int iy = 0; iy < my; iy++) {
+            double y = ymb + (iy - gy + 0.5) * hy - yc;
+            for (int ix = 0; ix < mx; ix++) {
+              double x = xmb + (ix - gx + 0.5) * hx - xc;
+              double r2 = x * x + y * y + z * z;
 
-	      int i = INDEX(ix,iy,iz,mx,my);
-	  
-	      if (r2 < sedov_radius_2) {
-		te[i] = sedov_te_in;
-	      }
-	    }
-	  }
-	}
+              int i = INDEX(ix, iy, iz, mx, my);
+
+              if (r2 < sedov_radius_2) {
+                te[i] = sedov_te_in;
+              }
+            }
+          }
+        }
       }
     }
   }
   block->initial_done();
 }
-

@@ -10,24 +10,22 @@
 
 #include "component.hpp"
 
-PARALLEL_MAIN_BEGIN
-{
-
+PARALLEL_MAIN_BEGIN {
   PARALLEL_INIT;
 
-  unit_init(0,1);
+  unit_init(0, 1);
 
   unit_class("Classname");
 
-  Classname * classname = new Classname;
+  Classname* classname = new Classname;
 
-  unit_assert (classname != NULL);
+  unit_assert(classname != NULL);
 
   //--------------------------------------------------
 
-  unit_func ("function()");
+  unit_func("function()");
 
-  unit_assert (false);
+  unit_assert(false);
 
   //--------------------------------------------------
 
@@ -39,4 +37,3 @@ PARALLEL_MAIN_BEGIN
 }
 
 PARALLEL_MAIN_END
-

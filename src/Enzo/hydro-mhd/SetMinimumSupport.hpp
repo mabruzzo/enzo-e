@@ -15,13 +15,13 @@
 #ifndef ENZO_HYDROMHD_SETMINIMUMSUPPORT_HPP
 #define ENZO_HYDROMHD_SETMINIMUMSUPPORT_HPP
 
-namespace enzo{
+namespace enzo {
 
-  /// Set the energy to provide minimal pressure support
-  int SetMinimumSupport(EnzoBlock& block,
-                        enzo_float &MinimumSupportEnergyCoefficient,
-                        enzo_float minimum_pressure_support_parameter,
-                        bool comoving_coordinates);
-}
+/// Set the energy to provide minimal pressure support
+int SetMinimumSupport(EnzoBlock& block,
+                      enzo_float& MinimumSupportEnergyCoefficient,
+                      enzo_float minimum_pressure_support_parameter,
+                      bool comoving_coordinates);
+}  // namespace enzo
 
 #endif /* ENZO_HYDROMHD_SETMINIMUMSUPPORT_HPP */

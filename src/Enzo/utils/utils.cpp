@@ -13,8 +13,7 @@
 
 //----------------------------------------------------------------------
 
-static enzo_float median(enzo_float x, enzo_float y, enzo_float z) noexcept
-{
+static enzo_float median(enzo_float x, enzo_float y, enzo_float z) noexcept {
   // we intentionally use bitwise-and rather than logical-and for speed
   if ((x >= y) & (x <= z)) {
     return x;
@@ -29,8 +28,7 @@ static enzo_float median(enzo_float x, enzo_float y, enzo_float z) noexcept
 }
 
 bool enzo_utils::consistent_cube_cellwidths(enzo_float dx, enzo_float dy,
-                                            enzo_float dz) noexcept
-{
+                                            enzo_float dz) noexcept {
   // we want to ensure the median of (dx,dy,dz) is within N ULPs of the other 2
   // values
   // - A ULP, or 'Unit in the Last Place', is the difference between 2 adjacent
@@ -49,7 +47,7 @@ bool enzo_utils::consistent_cube_cellwidths(enzo_float dx, enzo_float dy,
   const int N_ULP = 4;
 
   // find the median cell-width
-  const enzo_float median_cellwidth = median(dx,dy,dz);
+  const enzo_float median_cellwidth = median(dx, dy, dz);
 
   // in the following chunk of code, we search for 2 values:
   // 1. a value that is `N_ULP` smaller than median_cellwidth
@@ -66,7 +64,7 @@ bool enzo_utils::consistent_cube_cellwidths(enzo_float dx, enzo_float dy,
   //    we pass through the loop)
   enzo_float lower_val = median_cellwidth;
   enzo_float upper_val = median_cellwidth;
-  for (int i = 0; i < N_ULP; i++){
+  for (int i = 0; i < N_ULP; i++) {
     // we use `-INFINITY` and `+INFINITY` to specify whether std::nextafter
     // should returns a smaller or larger value
     lower_val = std::nextafter(lower_val, -INFINITY);
@@ -84,7 +82,6 @@ bool enzo_utils::consistent_cube_cellwidths(enzo_float dx, enzo_float dy,
   // - in other words, we return `true` if all 3 values are within `N_ULP` ULPs
   //   of each other. Otherwise, we return `false`.
   // - we intentionally use bitwise-and rather than logical-and for speed
-  return ((min_val <= dx) & (dx <= max_val) &
-          (min_val <= dy) & (dy <= max_val) &
-          (min_val <= dz) & (dz <= max_val));
+  return ((min_val <= dx) & (dx <= max_val) & (min_val <= dy) &
+          (dy <= max_val) & (min_val <= dz) & (dz <= max_val));
 }

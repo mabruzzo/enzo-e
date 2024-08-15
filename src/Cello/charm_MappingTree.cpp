@@ -9,9 +9,7 @@
 
 //======================================================================
 
-MappingTree::MappingTree(int nx, int ny, int nz)
-  :  CkArrayMap()
-{
+MappingTree::MappingTree(int nx, int ny, int nz) : CkArrayMap() {
   nx_ = nx;
   ny_ = ny;
   nz_ = nz;
@@ -19,8 +17,7 @@ MappingTree::MappingTree(int nx, int ny, int nz)
 
 //----------------------------------------------------------------------
 
-int MappingTree::procNum(int, const CkArrayIndex &idx) {
-
+int MappingTree::procNum(int, const CkArrayIndex& idx) {
   int v3[3];
 
   v3[0] = idx.data()[0];
@@ -32,24 +29,23 @@ int MappingTree::procNum(int, const CkArrayIndex &idx) {
 
   const int level = in.level();
 
-  int iax,iay,iaz;
-  int itx,ity,itz;
-  in.array (&iax,&iay,&iaz);
-  in.tree  (&itx,&ity,&itz);
-  
-  int ix=iax;
-  int iy=iay;
-  int iz=iaz;
-  for (int l=0; l<level; l++) {
-    int icx=0,icy=0,icz=0;
-    in.child(l+1,&icx,&icy,&icz);
-    ix = (ix<<1) | icx;
-    iy = (iy<<1) | icy;
-    iz = (iz<<1) | icz;
+  int iax, iay, iaz;
+  int itx, ity, itz;
+  in.array(&iax, &iay, &iaz);
+  in.tree(&itx, &ity, &itz);
+
+  int ix = iax;
+  int iy = iay;
+  int iz = iaz;
+  for (int l = 0; l < level; l++) {
+    int icx = 0, icy = 0, icz = 0;
+    in.child(l + 1, &icx, &icy, &icz);
+    ix = (ix << 1) | icx;
+    iy = (iy << 1) | icy;
+    iz = (iz << 1) | icz;
   }
 
-  int index = (ix + nx_*(iy + ny_*iz)) % CkNumPes();
+  int index = (ix + nx_ * (iy + ny_ * iz)) % CkNumPes();
 
   return index;
 }
-

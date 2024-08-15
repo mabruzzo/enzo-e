@@ -9,10 +9,6 @@
 
 //----------------------------------------------------------------------
 
-Restrict::Restrict() throw ()
-{
-  TRACE("Restrict::Restrict");
-}
+Restrict::Restrict() throw() { TRACE("Restrict::Restrict"); }
 
 //======================================================================
-

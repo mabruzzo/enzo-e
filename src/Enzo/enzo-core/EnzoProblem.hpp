@@ -9,13 +9,11 @@
 #define ENZO_ENZO_PROBLEM_HPP
 
 class EnzoProblem : public Problem {
-
   /// @class    EnzoProblem
   /// @ingroup  Enzo
-  /// @brief    [\ref Enzo] 
+  /// @brief    [\ref Enzo]
 
-public: // interface
-
+public:  // interface
   /// Constructor
   EnzoProblem() throw();
 
@@ -26,84 +24,57 @@ public: // interface
   PUPable_decl(EnzoProblem);
 
   /// CHARM++ migration constructor
-  EnzoProblem(CkMigrateMessage *m)
-    : Problem (m)
-  { }
+  EnzoProblem(CkMigrateMessage* m) : Problem(m) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
-  virtual Compute * create_compute
-  ( std::string name,
-    Config * config ) throw();
+  virtual Compute* create_compute(std::string name, Config* config) throw();
 
-private: // functions
-
+private:  // functions
   /// Create named boundary conditions object
-  virtual Boundary * create_boundary_ 
-  (std::string type,
-   int index,
-   Config * config,
-   Parameters * parameters
-   ) throw ();
+  virtual Boundary* create_boundary_(std::string type, int index,
+                                     Config* config,
+                                     Parameters* parameters) throw();
 
   /// Create named initialization object
-  virtual Initial *  create_initial_ 
-  (std::string type, 
-   int index,
-   Config * config,
-   Parameters * parameters) throw ();
+  virtual Initial* create_initial_(std::string type, int index, Config* config,
+                                   Parameters* parameters) throw();
 
   /// Create named physics object
-  virtual Physics *  create_physics_ 
-  (std::string type, 
-   int index,
-   Config * config,
-   Parameters * parameters) throw ();
+  virtual Physics* create_physics_(std::string type, int index, Config* config,
+                                   Parameters* parameters) throw();
 
   /// Create stopping criteria
-  virtual Stopping * create_stopping_ 
-  (std::string type, Config * config) throw ();
+  virtual Stopping* create_stopping_(std::string type, Config* config) throw();
 
   /// Create named refine object
-  virtual Refine * create_refine_ 
-  (std::string type,
-   int         index,
-   Config * config, 
-   Parameters * parameters) throw ();
+  virtual Refine* create_refine_(std::string type, int index, Config* config,
+                                 Parameters* parameters) throw();
 
   /// Create named solver object
-  virtual Solver * create_solver_ 
-  (std::string type,
-   int index_solver, 
-   Config * config) throw ();
+  virtual Solver* create_solver_(std::string type, int index_solver,
+                                 Config* config) throw();
 
   /// Create named method object
-  virtual Method * create_method_ 
-  (std::string type,
-   int index_method, 
-   Config * config,
-   const Factory * factory) throw ();
+  virtual Method* create_method_(std::string type, int index_method,
+                                 Config* config,
+                                 const Factory* factory) throw();
 
   /// Create named interpolation object
-  virtual Prolong * create_prolong_
-  (std::string type, Config * config) throw ();
+  virtual Prolong* create_prolong_(std::string type, Config* config) throw();
 
   /// Create named restriction object
-  virtual Restrict * create_restrict_
-  (std::string type, Config * config) throw ();
+  virtual Restrict* create_restrict_(std::string type, Config* config) throw();
 
   /// Create a Units object
-  virtual Units *  create_units_ 
-  (Config * config) throw ();
+  virtual Units* create_units_(Config* config) throw();
 
   /// Method that gets called at the end of initialize_physics
-  virtual void initialize_physics_coda_(Config * config,
-                                        Parameters * parameters) throw();
+  virtual void initialize_physics_coda_(Config* config,
+                                        Parameters* parameters) throw();
 
-protected: // attributes
-
+protected:  // attributes
 };
 
 #endif /* ENZO_ENZO_PROBLEM_HPP */
-

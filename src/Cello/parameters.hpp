@@ -16,4 +16,3 @@
 #include "_parameters.hpp"
 
 #endif /* PARAMETERS_HPP */
-

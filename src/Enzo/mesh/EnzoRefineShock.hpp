@@ -10,43 +10,34 @@
 #define ENZO_ENZO_REFINE_SHOCK_HPP
 
 class EnzoRefineShock : public Refine {
-
   /// @class    EnzoRefineShock
   /// @ingroup  Enzo
-  /// @brief    [\ref Enzo] 
+  /// @brief    [\ref Enzo]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  EnzoRefineShock
-  (double pressure_min_refine,
-   double pressure_max_coarsen,
-   double energy_ratio_min_refine,
-   double energy_ratio_max_coarsen,
-   double gamma,
-   bool comoving_coordinates,
-   int max_level,
-   bool include_ghosts,
-   std::string output) throw();
+  EnzoRefineShock(double pressure_min_refine, double pressure_max_coarsen,
+                  double energy_ratio_min_refine,
+                  double energy_ratio_max_coarsen, double gamma,
+                  bool comoving_coordinates, int max_level, bool include_ghosts,
+                  std::string output) throw();
 
   /// default constructor
   // EnzoRefineShock () throw() : Refine() {};
 
   PUPable_decl(EnzoRefineShock);
 
-  EnzoRefineShock(CkMigrateMessage *m)
-    : Refine (m),
-      pressure_min_refine_(0.0),
-      pressure_max_coarsen_(0.0),
-      energy_ratio_min_refine_(0.0),
-      energy_ratio_max_coarsen_(0.0),
-      gamma_(0.0),
-      comoving_coordinates_(false)
-  { }
+  EnzoRefineShock(CkMigrateMessage* m)
+      : Refine(m),
+        pressure_min_refine_(0.0),
+        pressure_max_coarsen_(0.0),
+        energy_ratio_min_refine_(0.0),
+        energy_ratio_max_coarsen_(0.0),
+        gamma_(0.0),
+        comoving_coordinates_(false) {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     // NOTE: change this function whenever attributes change
 
     Refine::pup(p);
@@ -62,26 +53,18 @@ public: // interface
   }
 
   /// Evaluate the refinement criteria, updating the refinement field
-  virtual int apply (Block * block) throw();
+  virtual int apply(Block* block) throw();
 
-  virtual std::string name () const { return "shock"; };
+  virtual std::string name() const { return "shock"; };
 
-private: // functions
+private:  // functions
+  void evaluate_block_(const enzo_float** v3, const enzo_float* te,
+                       const enzo_float* de, const enzo_float* p,
+                       enzo_float* output, int ndx, int ndy, int ndz, int nx,
+                       int ny, int nz, int gx, int gy, int gz, bool* any_refine,
+                       bool* all_coarsen, int rank);
 
-  void evaluate_block_( const enzo_float ** v3,
-			const enzo_float * te,
-			const enzo_float * de,
-			const enzo_float * p,
-			enzo_float * output,
-			int ndx, int ndy, int ndz,
-			int nx, int ny, int nz,
-			int gx, int gy, int gz,
-			bool *any_refine,
-			bool *all_coarsen, 
-			int rank);
-
-private: // attributes
-
+private:  // attributes
   /// Refine when pressure becomes greater than this somewhere
   double pressure_min_refine_;
 
@@ -102,4 +85,3 @@ private: // attributes
 };
 
 #endif /* ENZO_ENZO_REFINE_SHOCK_HPP */
-

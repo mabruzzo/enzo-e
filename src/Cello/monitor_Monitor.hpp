@@ -17,12 +17,11 @@
 /// @brief  Maximum length of monitor text output
 
 #define MONITOR_LENGTH 512
-   
+
 //----------------------------------------------------------------------
-class Timer; 
+class Timer;
 
 class Monitor {
-
   /// @class    Monitor
   /// @ingroup  Monitor
   /// @brief    [\ref Monitor] User monitoring of simulation execution status
@@ -37,7 +36,6 @@ class Monitor {
   //----------------------------------------------------------------------
 
 public:
-  
   /// Private constructor of the Monitor object [singleton design pattern]
   /// (MADE PUBLIC FOR Parameters::write())
   Monitor();
@@ -47,88 +45,74 @@ public:
   ~Monitor();
 
 private:
-
   friend class Simulation;
 
+  //----------------------------------------------------------------------
 
-//----------------------------------------------------------------------
-
-public: // interface
-
+public:  // interface
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     TRACEPUP;
-    WARNING("Monitor::pup","Monitor pup() disabled");
+    WARNING("Monitor::pup", "Monitor pup() disabled");
 
     // // NOTE: change this function whenever attributes change
     // p |  *timer_;
-    p |  mode_;
-    p |  verbose_;
+    p | mode_;
+    p | verbose_;
     // p |  group_default_;
     // p |  group_active_;
-
   }
 
   /// Return an instance of a Monitor object
-  static Monitor * instance()
-  { 
-    return & instance_[cello::index_static()];
-  };
+  static Monitor* instance() { return &instance_[cello::index_static()]; };
 
   /// Set whether the monitor is active for text output.  Useful for
   /// parallel, e.g. "monitor->set_active(parallel->is_root())"
   void set_mode(int mode) { mode_ = mode; };
 
   /// Return whether monitoring is active
-  int mode() const throw () { return mode_; };
+  int mode() const throw() { return mode_; };
 
   /// Set whether to monitor for the given component
-  void set_mode(const char * component, int mode) 
-  { group_mode_[component] = mode; };
+  void set_mode(const char* component, int mode) {
+    group_mode_[component] = mode;
+  };
 
   /// Return whether monitoring is active for this component
-  int is_active(const char *) const throw ();
+  int is_active(const char*) const throw();
 
-  /// Print the Cello header 
-  void header () const;
+  /// Print the Cello header
+  void header() const;
 
   /// Write a message to file
-  void write (FILE * fp, 
-	      const char * component, const char * buffer, ...) const;
+  void write(FILE* fp, const char* component, const char* buffer, ...) const;
 
   /// Print a message only if verbose is set
-  void verbose (FILE * fp, 
-	      const char * component, const char * buffer, ...) const;
+  void verbose(FILE* fp, const char* component, const char* buffer, ...) const;
   /// Write a message to file
-  void write_verbatim (FILE * fp, 
-	      const char * component, const char * buffer) const;
+  void write_verbatim(FILE* fp, const char* component,
+                      const char* buffer) const;
 
   /// Print a message with possible format specifications to stdout
-  void print (const char * component, const char * buffer, ...) const;
+  void print(const char* component, const char* buffer, ...) const;
 
-
-
-  void set_verbose (int verbose) 
-  { 
-    if (CkMyRank() == 0) verbose_ = verbose; 
+  void set_verbose(int verbose) {
+    if (CkMyRank() == 0) verbose_ = verbose;
   }
 
-  int is_verbose () const { return verbose_; }
+  int is_verbose() const { return verbose_; }
 
   /// Print a message without format specifications to stdout
-  void print_verbatim (const char * component, const char * buffer) const;
+  void print_verbatim(const char* component, const char* buffer) const;
 
-private: // functions
-
-  void write_ (FILE * fp, const char * component, const char * buffer) const;
+private:  // functions
+  void write_(FILE* fp, const char* component, const char* buffer) const;
 
   //----------------------------------------------------------------------
 
-private: // attributes
-
+private:  // attributes
   /// Timer for keeping track of time for output
-  Timer * timer_; 
+  Timer* timer_;
 
   /// Monitoring mode, either unknown, none, root, or all
   int mode_;
@@ -140,18 +124,14 @@ private: // attributes
   int group_default_;
 
   /// Override default of group_active_ for specific groups
-  std::map<std::string,int> group_mode_;
-
+  std::map<std::string, int> group_mode_;
 
   //----------------------------------------------------------------------
 
-private: // static attributes
-
+private:  // static attributes
   /// Single instance of the Monitor object [singleton design pattern]
   // static Monitor * instance_;
   static Monitor instance_[CONFIG_NODE_SIZE];
-
 };
 
 #endif /* MONITOR_MONITOR_HPP */
-

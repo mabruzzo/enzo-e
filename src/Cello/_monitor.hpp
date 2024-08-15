@@ -33,4 +33,3 @@ enum monitor_mode {
 #include "monitor_Monitor.hpp"
 
 #endif /* _MONITOR_HPP */
-

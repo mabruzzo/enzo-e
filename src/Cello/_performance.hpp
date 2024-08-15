@@ -20,10 +20,10 @@
 #include <sys/resource.h>
 
 #ifdef __linux__
-#   include <unistd.h>
+#include <unistd.h>
 #endif
 #ifdef CONFIG_USE_PAPI
-#  include "papi.h"
+#include "papi.h"
 #endif
 
 //----------------------------------------------------------------------
@@ -31,10 +31,9 @@
 //----------------------------------------------------------------------
 
 #include "performance_Timer.hpp"
-#ifdef CONFIG_USE_PAPI  
+#ifdef CONFIG_USE_PAPI
 #include "performance_Papi.hpp"
 #endif
 #include "performance_Performance.hpp"
-
 
 #endif /* _PERFORMANCE_HPP */

@@ -12,66 +12,51 @@ class Mask;
 class Parameters;
 
 class EnzoInitialPm : public Initial {
-
   /// @class    EnzoInitialPm
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Initialization routine for 2D implosion problem
 
-public: // interface
-
-  EnzoInitialPm (Parameters * parameters,
-		 const std::string parameter_name,
-		 int               init_cycle,
-		 double            init_time,
-		 std::string       field,
-		 double            mpp,
-		 int               level) throw ()
-    : Initial(init_cycle, init_time),
-      field_(field),
-      mpp_(mpp),
-      level_(level),
-      mask_()
-  {
+public:  // interface
+  EnzoInitialPm(Parameters* parameters, const std::string parameter_name,
+                int init_cycle, double init_time, std::string field, double mpp,
+                int level) throw()
+      : Initial(init_cycle, init_time),
+        field_(field),
+        mpp_(mpp),
+        level_(level),
+        mask_() {
     if (parameters) {
-      mask_ = Mask::create (parameters->param(parameter_name),parameters);
+      mask_ = Mask::create(parameters->param(parameter_name), parameters);
     } else {
       mask_ = nullptr;
-    } 
+    }
   }
-  
+
   /// CHARM++ PUP::able declaration
   PUPable_decl(EnzoInitialPm);
 
   /// CHARM++ migration constructor
-  EnzoInitialPm(CkMigrateMessage *m)
-    : Initial (m),
-      mpp_(0.0),
-      level_(0),
-      mask_(nullptr)
-  {  }
+  EnzoInitialPm(CkMigrateMessage* m)
+      : Initial(m), mpp_(0.0), level_(0), mask_(nullptr) {}
 
   /// Destructor
-  virtual ~EnzoInitialPm() throw()
-  {} ;
+  virtual ~EnzoInitialPm() throw(){};
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
+  void pup(PUP::er& p);
 
   /// Initialize the block
 
-  virtual void enforce_block
-  ( Block * block, const Hierarchy * hierarchy ) throw();
+  virtual void enforce_block(Block* block, const Hierarchy* hierarchy) throw();
 
-protected: // functions
-
+protected:  // functions
   /// Initial particle positions are a uniform array if mpp_ <= 0
-  void uniform_placement_ (Block * block, Field field, Particle particle);
+  void uniform_placement_(Block* block, Field field, Particle particle);
 
   /// Initial particle positions are random based on local density
-  void density_placement_ (Block * block, Field field, Particle particle);
+  void density_placement_(Block* block, Field field, Particle particle);
 
-private: // attributes
-
+private:  // attributes
   /// Field to use for initial particle placement--default "density"
   std::string field_;
 
@@ -83,8 +68,6 @@ private: // attributes
 
   /// To define cloud extents
   std::shared_ptr<Mask> mask_;
-
 };
 
 #endif /* ENZO_ENZO_INITIAL_PM_HPP */
-

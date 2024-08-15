@@ -3,7 +3,7 @@
 /// @file     _memory.hpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     Thu Mar 11 17:20:03 PST 2010
-/// @brief    Private include file for the \ref Memory component 
+/// @brief    Private include file for the \ref Memory component
 
 #ifndef _MEMORY_HPP
 #define _MEMORY_HPP
@@ -24,4 +24,3 @@
 #include "memory_Memory.hpp"
 
 #endif /* _MEMORY_HPP */
-

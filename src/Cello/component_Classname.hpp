@@ -9,36 +9,29 @@
 #define COMPONENT_CLASSNAME_HPP
 
 class Classname {
-
   /// @class    Classname
   /// @ingroup  Component
-  /// @brief    [\ref Component] 
+  /// @brief    [\ref Component]
 
-public: // interface
-
+public:  // interface
   /// Constructor
   Classname() throw();
 
   /// Copy constructor
-  Classname(const Classname & classname) throw();
+  Classname(const Classname& classname) throw();
 
   /// Assignment operator
-  Classname & operator= (const Classname & classname) throw();
+  Classname& operator=(const Classname& classname) throw();
 
   /// Destructor
   virtual ~Classname() throw();
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p);
-  
-private: // functions
+  void pup(PUP::er& p);
 
-
-private: // attributes
-
+private:  // functions
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
-
 };
 
 #endif /* COMPONENT_CLASSNAME_HPP */
-

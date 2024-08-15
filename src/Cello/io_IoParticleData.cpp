@@ -9,10 +9,10 @@
 
 //----------------------------------------------------------------------
 
-IoParticleData::IoParticleData() throw ()
-  : Io(),
-    particle_data_(0),
-    particle_index_(0)
+IoParticleData::IoParticleData() throw()
+    : Io(),
+      particle_data_(0),
+      particle_index_(0)
 
 {
   // meta_name_.push_back("particle_num_types");
@@ -23,9 +23,7 @@ IoParticleData::IoParticleData() throw ()
 
 //----------------------------------------------------------------------
 
-void IoParticleData::pup (PUP::er &p)
-{
-
+void IoParticleData::pup(PUP::er& p) {
   TRACEPUP;
 
   // NOTE: change this function whenever attributes change
@@ -33,18 +31,15 @@ void IoParticleData::pup (PUP::er &p)
   Io::pup(p);
 
   //  if (p.isUnpacking()) particle_data_ = new ParticleData;
-  WARNING ("IoParticleData::pup","skipping particle_data_");
+  WARNING("IoParticleData::pup", "skipping particle_data_");
   //  p | *particle_data_;
   p | particle_index_;
 }
 
 //----------------------------------------------------------------------
 
-void IoParticleData::meta_value
-(int index,
- void ** buffer, std::string * name, int * type,
- int * nxd, int * nyd, int * nzd) throw()
-{
-}
+void IoParticleData::meta_value(int index, void** buffer, std::string* name,
+                                int* type, int* nxd, int* nyd,
+                                int* nzd) throw() {}
 
 //----------------------------------------------------------------------

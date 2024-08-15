@@ -3,7 +3,7 @@
 /// @file     _control.hpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     2014-11-03 23:18:17
-/// @brief    Private include file for the \ref Control component 
+/// @brief    Private include file for the \ref Control component
 
 #ifndef _CONTROL_HPP
 #define _CONTROL_HPP
@@ -24,4 +24,3 @@ enum sync_id {
 #include <string>
 
 #endif /* _CONTROL_HPP */
-

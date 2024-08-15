@@ -16,65 +16,56 @@ long MsgCoarsen::counter[CONFIG_NODE_SIZE] = {0};
 //----------------------------------------------------------------------
 
 MsgCoarsen::MsgCoarsen()
-  : CMessage_MsgCoarsen(),
-    is_local_(true),
-    data_msg_(NULL),
-    buffer_(NULL),
-    adapt_child_(nullptr),
-    num_face_level_(0),
-    face_level_(NULL)
-{
+    : CMessage_MsgCoarsen(),
+      is_local_(true),
+      data_msg_(NULL),
+      buffer_(NULL),
+      adapt_child_(nullptr),
+      num_face_level_(0),
+      face_level_(NULL) {
   ic3_[0] = ic3_[1] = ic3_[2] = -1;
-  ++counter[cello::index_static()]; 
+  ++counter[cello::index_static()];
 }
 
 //----------------------------------------------------------------------
 
-MsgCoarsen::MsgCoarsen
-(int num_face_level,
- std::vector<int> & face_level,
- int ic3[3],
- Adapt * adapt_child)
-  : CMessage_MsgCoarsen(),
-    is_local_(true),
-    data_msg_(NULL),
-    buffer_(NULL),
-    adapt_child_(adapt_child),
-    num_face_level_(num_face_level),
-    face_level_(new int[num_face_level])
-{
+MsgCoarsen::MsgCoarsen(int num_face_level, std::vector<int>& face_level,
+                       int ic3[3], Adapt* adapt_child)
+    : CMessage_MsgCoarsen(),
+      is_local_(true),
+      data_msg_(NULL),
+      buffer_(NULL),
+      adapt_child_(adapt_child),
+      num_face_level_(num_face_level),
+      face_level_(new int[num_face_level]) {
+  ++counter[cello::index_static()];
 
-  ++counter[cello::index_static()]; 
-
-  for (int i=0; i<num_face_level_; i++) {
+  for (int i = 0; i < num_face_level_; i++) {
     face_level_[i] = face_level[i];
   }
-  ic3_[0]=ic3[0];
-  ic3_[1]=ic3[1];
-  ic3_[2]=ic3[2];
+  ic3_[0] = ic3[0];
+  ic3_[1] = ic3[1];
+  ic3_[2] = ic3[2];
 }
 
 //----------------------------------------------------------------------
 
-MsgCoarsen::~MsgCoarsen()
-{
+MsgCoarsen::~MsgCoarsen() {
   --counter[cello::index_static()];
 
   delete data_msg_;
   data_msg_ = 0;
-  delete [] face_level_;
+  delete[] face_level_;
   face_level_ = 0;
-  CkFreeMsg (buffer_);
-  buffer_=nullptr;
+  CkFreeMsg(buffer_);
+  buffer_ = nullptr;
 }
 
 //----------------------------------------------------------------------
 
-void MsgCoarsen::set_data_msg  (DataMsg * data_msg) 
-{
+void MsgCoarsen::set_data_msg(DataMsg* data_msg) {
   if (data_msg_) {
-    WARNING ("MsgCoarsen::set_data_msg()",
-	     "overwriting existing data_msg_");
+    WARNING("MsgCoarsen::set_data_msg()", "overwriting existing data_msg_");
     delete data_msg_;
   }
   data_msg_ = data_msg;
@@ -82,14 +73,13 @@ void MsgCoarsen::set_data_msg  (DataMsg * data_msg)
 
 //----------------------------------------------------------------------
 
-void * MsgCoarsen::pack (MsgCoarsen * msg)
-{
+void* MsgCoarsen::pack(MsgCoarsen* msg) {
   if (msg->buffer_ != NULL) return msg->buffer_;
 
   int size = 0;
 
   // have_data
-  size += sizeof(int); 
+  size += sizeof(int);
   int have_data = (msg->data_msg_ != NULL);
   if (have_data) {
     size += msg->data_msg_->data_size();
@@ -102,41 +92,41 @@ void * MsgCoarsen::pack (MsgCoarsen * msg)
   size += msg->num_face_level_ * sizeof(int);
 
   // ic3_[]
-  size += 3*sizeof(int);
+  size += 3 * sizeof(int);
 
   // Adapt class
-  SIZE_OBJECT_PTR_TYPE(size,Adapt,msg->adapt_child_);
+  SIZE_OBJECT_PTR_TYPE(size, Adapt, msg->adapt_child_);
 
   //--------------------------------------------------
   //  2. allocate buffer using CkAllocBuffer()
   //--------------------------------------------------
 
-  char * buffer = (char *) CkAllocBuffer (msg,size);
+  char* buffer = (char*)CkAllocBuffer(msg, size);
 
   //--------------------------------------------------
-  //  3. serialize message data into buffer 
+  //  3. serialize message data into buffer
   //--------------------------------------------------
 
   union {
-    char * pc;
-    int  * pi;
+    char* pc;
+    int* pi;
   };
 
   pc = buffer;
 
   // have_data
   have_data = (msg->data_msg_ != NULL);
-  (*pi++) = have_data; 
+  (*pi++) = have_data;
   if (have_data) {
     // data_msg_
-    pc = msg->data_msg_->save_data(pc);   
+    pc = msg->data_msg_->save_data(pc);
   }
 
   // num_face_level_
   (*pi++) = msg->num_face_level_;
 
   // face_level_[]
-  for (int i=0; i<msg->num_face_level_; i++) {
+  for (int i = 0; i < msg->num_face_level_; i++) {
     (*pi++) = msg->face_level_[i];
   }
 
@@ -146,43 +136,38 @@ void * MsgCoarsen::pack (MsgCoarsen * msg)
   (*pi++) = msg->ic3_[2];
 
   // Adapt class
-  SAVE_OBJECT_PTR_TYPE(pc,Adapt,msg->adapt_child_);
+  SAVE_OBJECT_PTR_TYPE(pc, Adapt, msg->adapt_child_);
 
-  ASSERT2("MsgCoarsen::pack()",
-	  "buffer size mismatch %ld allocated %d packed",
-	  (pc - (char*)buffer),size,
-	  (pc - (char*)buffer) == size);
+  ASSERT2("MsgCoarsen::pack()", "buffer size mismatch %ld allocated %d packed",
+          (pc - (char*)buffer), size, (pc - (char*)buffer) == size);
 
   delete msg;
 
   // Return the buffer
 
-  return (void *) buffer;
+  return (void*)buffer;
 }
 
 //----------------------------------------------------------------------
 
-MsgCoarsen * MsgCoarsen::unpack(void * buffer)
-{
-
+MsgCoarsen* MsgCoarsen::unpack(void* buffer) {
   // 1. Allocate message using CkAllocBuffer.  NOTE do not use new.
- 
-  MsgCoarsen * msg = 
-    (MsgCoarsen *) CkAllocBuffer (buffer,sizeof(MsgCoarsen));
+
+  MsgCoarsen* msg = (MsgCoarsen*)CkAllocBuffer(buffer, sizeof(MsgCoarsen));
 
   msg = new ((void*)msg) MsgCoarsen;
-  
+
   msg->is_local_ = false;
 
   // 2. De-serialize message data from input buffer into the allocated
   // message (must be consistent with pack())
 
   union {
-    char * pc;
-    int  * pi;
+    char* pc;
+    int* pi;
   };
 
-  pc = (char *) buffer;
+  pc = (char*)buffer;
 
   // have_data
   int have_data = (*pi++);
@@ -200,8 +185,8 @@ MsgCoarsen * MsgCoarsen::unpack(void * buffer)
 
   // face_level_[]
   if (msg->num_face_level_ > 0) {
-    msg->face_level_ = new int [msg->num_face_level_];
-    for (int i = 0; i<msg->num_face_level_; i++) {
+    msg->face_level_ = new int[msg->num_face_level_];
+    for (int i = 0; i < msg->num_face_level_; i++) {
       msg->face_level_[i] = (*pi++);
     }
   } else {
@@ -214,7 +199,7 @@ MsgCoarsen * MsgCoarsen::unpack(void * buffer)
   msg->ic3_[2] = (*pi++);
 
   // Adapt class
-  LOAD_OBJECT_PTR_TYPE(pc,Adapt,msg->adapt_child_);
+  LOAD_OBJECT_PTR_TYPE(pc, Adapt, msg->adapt_child_);
 
   // 3. Save the input buffer for freeing later
 
@@ -225,30 +210,27 @@ MsgCoarsen * MsgCoarsen::unpack(void * buffer)
 
 //----------------------------------------------------------------------
 
-void MsgCoarsen::update (Data * data)
-{
-
+void MsgCoarsen::update(Data* data) {
   if (data_msg_ == NULL) return;
 
-  FieldDescr * field_descr = cello::field_descr();
- 
+  FieldDescr* field_descr = cello::field_descr();
+
   Field field_dst = data->field();
 
-  FieldData    * fd = data_msg_->field_data();
-  ParticleData * pd = data_msg_->particle_data();
-  FieldFace    * ff = data_msg_->field_face();
-  char         * fa = data_msg_->field_array();
+  FieldData* fd = data_msg_->field_data();
+  ParticleData* pd = data_msg_->particle_data();
+  FieldFace* ff = data_msg_->field_face();
+  char* fa = data_msg_->field_array();
 
   if (pd != NULL) {
-
-    // Insert new particles 
+    // Insert new particles
 
     Particle particle = data->particle();
-    
-    for (int it=0; it<particle.num_types(); it++) {
-      particle.gather (it, 1, &pd);
+
+    for (int it = 0; it < particle.num_types(); it++) {
+      particle.gather(it, 1, &pd);
     }
-    
+
     // Don't delete particle data if local--done by child Block::data_
     // destructor()
     if (!is_local_) {
@@ -257,27 +239,24 @@ void MsgCoarsen::update (Data * data)
   }
 
   if (fa != NULL) {
-
     if (is_local_) {
-
-      Field field_src(field_descr,fd);
+      Field field_src(field_descr, fd);
       ff->face_to_face(field_src, field_dst);
 
       delete ff;
 
-    } else { // ! is_local_
+    } else {  // ! is_local_
 
       // Invert face since incoming not outgoing
 
       ff->invert_face();
 
-      ff->array_to_face(fa,field_dst);
-
+      ff->array_to_face(fa, field_dst);
     }
   }
 
   if (!is_local_) {
-    CkFreeMsg (buffer_);
+    CkFreeMsg(buffer_);
     buffer_ = nullptr;
   }
 }

@@ -9,31 +9,24 @@
 #define ENZO_ENZO_INITIAL_COSMOLOGY_HPP
 
 class EnzoInitialCosmology : public Initial {
-
   /// @class    EnzoInitialCosmology
   /// @ingroup  Enzo
-  /// @brief    [\ref Enzo] 
+  /// @brief    [\ref Enzo]
 
-public: // interface
-
+public:  // interface
   /// Constructor
-  EnzoInitialCosmology(int cycle, double time,
-		       double gamma,
-		       double temperature) throw();
+  EnzoInitialCosmology(int cycle, double time, double gamma,
+                       double temperature) throw();
 
   /// CHARM++ PUP::able declaration
   PUPable_decl(EnzoInitialCosmology);
 
   /// CHARM++ migration constructor
-  EnzoInitialCosmology(CkMigrateMessage *m) 
-    : Initial (m),
-      gamma_(0.0),
-      temperature_(0.0)
-  {}
+  EnzoInitialCosmology(CkMigrateMessage* m)
+      : Initial(m), gamma_(0.0), temperature_(0.0) {}
 
   /// CHARM++ Pack / Unpack function
-  void pup (PUP::er &p)
-  {
+  void pup(PUP::er& p) {
     // NOTE: update whenever attributes change
 
     TRACEPUP;
@@ -43,18 +36,13 @@ public: // interface
     p | gamma_;
     p | temperature_;
   }
-  
-public: // virtual methods
 
+public:  // virtual methods
   /// Initialize the block
-  virtual void enforce_block
-  ( Block * block, const Hierarchy * hierarchy ) throw();
+  virtual void enforce_block(Block* block, const Hierarchy* hierarchy) throw();
 
-private: // functions
-
-
-private: // attributes
-
+private:  // functions
+private:  // attributes
   // NOTE: change pup() function whenever attributes change
 
   /// Ideal gas law constant
@@ -62,8 +50,6 @@ private: // attributes
 
   /// Initial temperature
   double temperature_;
-
 };
 
 #endif /* ENZO_ENZO_INITIAL_COSMOLOGY_HPP */
-

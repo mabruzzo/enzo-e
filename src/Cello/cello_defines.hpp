@@ -21,7 +21,7 @@
 // modern C++11 syntax: #define FORCE_INLINE [[gnu::always_inline]] inline
 // (but the earliest compiler versions that supports this are unclear)
 #define FORCE_INLINE inline __attribute__((always_inline))
-#else // don't force inlining for unrecognized compilers
+#else  // don't force inlining for unrecognized compilers
 #define FORCE_INLINE inline
 #endif
 

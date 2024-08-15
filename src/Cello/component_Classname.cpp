@@ -3,20 +3,17 @@
 /// @file     component_Classname.cpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     yyyy-mm-dd
-/// @brief    
+/// @brief
 
 #include "component.hpp"
 
 //----------------------------------------------------------------------
 
-Classname::Classname() throw ()
-{
-  INCOMPLETE("Classname::Classname");
-}
+Classname::Classname() throw() { INCOMPLETE("Classname::Classname"); }
 
 //----------------------------------------------------------------------
 
-Classname::Classname(const Classname & classname) throw ()
+Classname::Classname(const Classname& classname) throw()
 /// @param     classname  Object being copied
 {
   INCOMPLETE("Classname::Classname(Classname)");
@@ -24,7 +21,7 @@ Classname::Classname(const Classname & classname) throw ()
 
 //----------------------------------------------------------------------
 
-Classname & Classname::operator= (const Classname & classname) throw ()
+Classname& Classname::operator=(const Classname& classname) throw()
 /// @param     classname  Source object of the assignment
 /// @return    The target assigned object
 {
@@ -34,18 +31,13 @@ Classname & Classname::operator= (const Classname & classname) throw ()
 
 //----------------------------------------------------------------------
 
-Classname::~Classname() throw ()
-{
-  INCOMPLETE("Classname::~Classname");
-}
+Classname::~Classname() throw() { INCOMPLETE("Classname::~Classname"); }
 
 //----------------------------------------------------------------------
 
-void Classname::pup (PUP::er &p)
-{
+void Classname::pup(PUP::er& p) {
   TRACEPUP;
   // NOTE: change this function whenever attributes change
 }
 
 //======================================================================
-

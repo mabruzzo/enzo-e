@@ -9,8 +9,7 @@
 
 #ifndef ENZO_ENZO_BFIELDMETHOD_HPP
 #define ENZO_ENZO_BFIELDMETHOD_HPP
-class EnzoBfieldMethod
-{
+class EnzoBfieldMethod {
   /// @class    EnzoBfieldMethod
   /// @ingroup  Enzo
   /// @brief    [\ref Enzo] Encapsulates methods for integrating magnetic
@@ -48,14 +47,12 @@ class EnzoBfieldMethod
   /// To the hydro solver the main effect observable effect of calling this
   /// class is updating the cell-centered Bfield components. However, the side
   /// effects of the operations implicity performed by this class may be
-  /// equally as important. For example, the subclass for Constrained Transport 
+  /// equally as important. For example, the subclass for Constrained Transport
   /// needs to updates the face-centered Bfield components (given that the
   /// face-centered fields are the primary represntation of the Bfield and the
   /// cell-centered values are derived directly from the face-centered values).
-  
 
-public: // interface
-
+public:  // interface
   /// Create a new EnzoBfieldMethod object.
   ///
   /// @param[in] num_partial_timesteps The number of partial timesteps over
@@ -63,8 +60,7 @@ public: // interface
   EnzoBfieldMethod(int num_partial_timesteps);
 
   /// Virtual destructor
-  virtual ~EnzoBfieldMethod()
-  {}
+  virtual ~EnzoBfieldMethod() {}
 
   // State machine Methods:
 
@@ -75,15 +71,14 @@ public: // interface
   /// it will initialize the scratch space.
   ///
   /// @param[in] block holds data to be processed
-  void register_target_block(Block *block) noexcept;
+  void register_target_block(Block* block) noexcept;
 
   /// Returns the partial timestep index.
   ///
   /// 0 means that the current interface bfields are stored in the permanent
   /// fields. 1 means that they are stored in the temporary arrays. An error
   /// will occur if no block is registered.
-  int partial_timestep_index() const noexcept
-  {
+  int partial_timestep_index() const noexcept {
     require_registered_block_();
     return partial_timestep_index_;
   }
@@ -91,14 +86,13 @@ public: // interface
   /// increments the partial timestep index
   void increment_partial_timestep() noexcept;
 
-
   // Descriptor methods
 
   /// checks that all required fields exist and have the required shapes
   virtual void check_required_fields() const noexcept = 0;
 
   // Physics methods
-  
+
   /// In the case of Constrained Transport, overwrites the component of the
   /// reconstructed bfield corresponding to `dim` with the corresponding
   /// face-centered bfield values (which is tracked internally).
@@ -113,8 +107,8 @@ public: // interface
   /// @param[in]     stale_depth The current staling depth. This is the stale
   ///     depth from just before reconstruction plus the reconstructor's
   ///     immediate staling rate.
-  virtual void correct_reconstructed_bfield(EnzoEFltArrayMap &l_map,
-                                            EnzoEFltArrayMap &r_map, int dim,
+  virtual void correct_reconstructed_bfield(EnzoEFltArrayMap& l_map,
+                                            EnzoEFltArrayMap& r_map, int dim,
                                             int stale_depth) noexcept = 0;
 
   /// In the case of Constrained Transport, identifies and stores the upwind
@@ -125,7 +119,7 @@ public: // interface
   /// @param[in] dim The dimension to identify the upwind direction along.
   /// @param[in] stale_depth The current staling depth. This should match the
   ///     staling depth used to compute the flux_group.
-  virtual void identify_upwind(const EnzoEFltArrayMap &flux_map, int dim,
+  virtual void identify_upwind(const EnzoEFltArrayMap& flux_map, int dim,
                                int stale_depth) noexcept = 0;
 
   /// Updates all components of the bfields (this is to be called before the
@@ -138,7 +132,7 @@ public: // interface
   ///
   /// @param[in]  cur_integration_map Map containing the current values of the
   ///     cell-centered integration quantities (before they have been updated
-  ///     over the current timestep). 
+  ///     over the current timestep).
   /// @param[in]  xflux_map,yflux_map,zflux_map Maps containing the values of
   ///     the fluxes computed along the x, y, and z directions. The function
   ///     namely makes use of the various magnetic field fluxes
@@ -151,14 +145,13 @@ public: // interface
   ///     supplied quantities. This should nominally be the same as the stale
   ///     depth used to compute the fluxes and that is passed to
   ///     EnzoIntegrationQuanUpdate::update_quantities.
-  virtual void update_all_bfield_components
-  (EnzoEFltArrayMap &cur_integration_map, const EnzoEFltArrayMap &xflux_map,
-   const EnzoEFltArrayMap &yflux_map, const EnzoEFltArrayMap &zflux_map,
-   EnzoEFltArrayMap &out_centered_bfield_map, enzo_float dt, int stale_depth)
-    noexcept=0;
+  virtual void update_all_bfield_components(
+      EnzoEFltArrayMap& cur_integration_map, const EnzoEFltArrayMap& xflux_map,
+      const EnzoEFltArrayMap& yflux_map, const EnzoEFltArrayMap& zflux_map,
+      EnzoEFltArrayMap& out_centered_bfield_map, enzo_float dt,
+      int stale_depth) noexcept = 0;
 
 protected:
-
   /// Virtual method that subclasses overide to preload any method specific
   /// data from the new target block and optionally initialize scratch space
   ///
@@ -166,23 +159,21 @@ protected:
   /// @param[in] first_initialization Indicates if this is the first call since
   ///    construction (including deserialization). When true, scratch space
   ///    data should be allocated.
-  virtual void register_target_block_(Block *target_block,
+  virtual void register_target_block_(Block* target_block,
                                       bool first_initialization) noexcept = 0;
 
   /// Helper method that raises an error if there isn't a registered block.
-  void require_registered_block_() const noexcept
-  {
-    if (target_block_ == nullptr){
+  void require_registered_block_() const noexcept {
+    if (target_block_ == nullptr) {
       ERROR("EnzoConstrainedTransport::require_registered_block_",
             "An invalid method has been executed that requires that a target "
             "block is registered.");
     }
   }
 
-  int num_partial_timesteps() const noexcept {return num_partial_timesteps_;}
+  int num_partial_timesteps() const noexcept { return num_partial_timesteps_; }
 
-private: // keep subclasses from touching these attributes
-
+private:  // keep subclasses from touching these attributes
   /// Number of partial timesteps in a cycle. A value of 1 would means that
   /// there is only a single update over the full timestep. A value of 2 means
   /// that there is a half timestep and a full timestep.
@@ -196,9 +187,7 @@ private: // keep subclasses from touching these attributes
   /// Pointer to the Block that this class is currently operating upon. To try
   /// to keep the physics as decoupled as possible, we avoid letting the
   /// subclasses from directly touching the target_block_
-  Block *target_block_;
-
+  Block* target_block_;
 };
 
 #endif /* ENZO_ENZO_BFIELDMETHOD_HPP */
-

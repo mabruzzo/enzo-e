@@ -1,7 +1,7 @@
 // See LICENSE_CELLO file for license and copyright information
 
-/// @file     io_Schedule.hpp 
-/// @author   James Bordner (jobordner@ucsd.edu) 
+/// @file     io_Schedule.hpp
+/// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     Mon Mar 14 17:35:56 PDT 2011
 /// @brief    [\ref Io] Declaration for the Schedule component
 
@@ -22,38 +22,30 @@ enum schedule_enum {
 typedef int schedule_type;
 
 class Schedule : public PUP::able {
-
   /// @class    Schedule
   /// @ingroup  Io
   /// @brief    [\ref Io] define interface for various types of output
 
-public: // static functions
+public:  // static functions
+  static Schedule* create(std::string var, std::string type, double start,
+                          double stop, double step, std::vector<double> list);
 
-  static Schedule * create 
-  (std::string var,
-   std::string type,
-   double start,double stop,double step,
-   std::vector<double> list);
-
-public: // functions
-
+public:  // functions
   /// Create an uninitialized Schedule object with the given file_name format
   Schedule() throw();
 
   /// CHARM++ PUP::able declaration
   PUPable_abstract(Schedule);
 
-  Schedule (CkMigrateMessage *m)
-    : PUP::able(m),
-      active_(false),
-      type_(schedule_type_unknown),
-      last_(-1),
-      timer_()
-  { }
+  Schedule(CkMigrateMessage* m)
+      : PUP::able(m),
+        active_(false),
+        type_(schedule_type_unknown),
+        last_(-1),
+        timer_() {}
 
   /// CHARM++ Pack / Unpack function
-  inline void pup (PUP::er &p)
-  {
+  inline void pup(PUP::er& p) {
     // NOTE: change this function whenever attributes change
     PUP::able::pup(p);
     TRACEPUP;
@@ -65,32 +57,26 @@ public: // functions
   }
 
   /// Set whether the Schedule object is active or not
-  void set_active(bool active) throw()
-  { active_ = active; };
+  void set_active(bool active) throw() { active_ = active; };
 
   /// Return whether the output object is active
-  bool is_active() const throw()
-  { return active_; };
+  bool is_active() const throw() { return active_; };
 
   /// Set whether the Schedule object is type or not
-  void set_type(int type) throw()
-  {
-    type_ = type; 
-  };
+  void set_type(int type) throw() { type_ = type; };
 
   /// Return whether the output object is type
-  int type() const throw()  { return type_; };
+  int type() const throw() { return type_; };
 
   /// Advance to next scheduled output
-  void next () throw () { ++last_; };
+  void next() throw() { ++last_; };
 
-public: // virtual functions
-
+public:  // virtual functions
   /// Reduce timestep if next write time is between time and time + dt
-  virtual double update_timestep(double time, double dt)  const throw() = 0;
+  virtual double update_timestep(double time, double dt) const throw() = 0;
 
   /// Whether to perform IO this cycle
-  virtual bool write_this_cycle ( int cycle, double time) throw() = 0;
+  virtual bool write_this_cycle(int cycle, double time) throw() = 0;
 
   /// Return the next scheduled time
   virtual double time_next() const throw() = 0;
@@ -99,15 +85,14 @@ public: // virtual functions
   virtual double seconds_next() const throw() = 0;
 
   /// Print the schedule for debugging
-  virtual void print () const throw() {
-    printf ("Schedule:active_ = %d\n",active_);
-    printf ("Schedule:type_   = %d\n",type_);
-    printf ("Schedule:last_   = %d\n",last_);
-    printf ("Schedule:timer   = %g\n",timer_.value());
+  virtual void print() const throw() {
+    printf("Schedule:active_ = %d\n", active_);
+    printf("Schedule:type_   = %d\n", type_);
+    printf("Schedule:last_   = %d\n", last_);
+    printf("Schedule:timer   = %g\n", timer_.value());
   }
 
-protected: // attributes
-
+protected:  // attributes
   /// Whether Schedule is currently active
   bool active_;
 
